@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第5讲 指令集体系结构（2）· 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="5">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 5 讲</div>
+    <h1 class="cover__title">指令集<em>体系结构</em>（2）</h1>
+    <p class="cover__sub">指令格式 · 机器语言的对应 · 数组访问</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    双見京介
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第5回 ―命令セットアーキテクチャ(2)―」<br>
+    中文翻译版
+  </div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令格式<span class="toc__item--jp">命令形式</span></div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">R 格式、I 格式是什么<span class="toc__item--jp">R形式、I形式とは</span></div>
+          <div class="toc__item">指令与机器语言的对应<span class="toc__item--jp">命令と機械語の対応</span></div>
+          <div class="toc__item">与数组使用对应的汇编代码<span class="toc__item--jp">配列の使用に対応するアセンブリコード</span></div>
+          <div class="toc__item">与分支处理对应的汇编代码<span class="toc__item--jp">分岐処理に対応するアセンブリコード</span></div>
+          <div class="toc__item">无条件转移与 J 格式<span class="toc__item--jp">無条件分岐とJ形式</span></div>
+          <div class="toc__item">大小比较指令<span class="toc__item--jp">大小比較命令</span></div>
+          <div class="toc__item">寻址模式<span class="toc__item--jp">アドレシング・モード</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本讲要点</span>
+      <span>本讲围绕 <span class="mono">MIPS</span> 的指令格式展开：先掌握 <span class="mono">R</span>／<span class="mono">I</span>／<span class="mono">J</span>
+        三种格式的字段构成，再把指令与<span class="kw">机器语言</span>对应起来，最后用<span class="kw">数组访问</span>这一典型代码加以练习。</span>
+    </div>
+  </div>
+  <div class="page-no">2 / 24</div>
+</section>
+
+<!-- ======================================================== 3 MIPS 的指令格式 -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">MIPS 的指令格式</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="panel panel--tight">
+      <div class="panel__title panel__title--red">R 格式</div>
+      <table class="tbl tbl--sm" style="table-layout:fixed">
+        <tbody>
+          <tr>
+            <td class="c" style="width:18.75%">op</td>
+            <td class="c" style="width:15.625%">rs</td>
+            <td class="c" style="width:15.625%">rt</td>
+            <td class="c" style="width:15.625%">rd</td>
+            <td class="c" style="width:15.625%">shamt</td>
+            <td class="c" style="width:18.75%">funct</td>
+          </tr>
+          <tr>
+            <td class="c num">6bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">6bit</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel panel--tight mt12">
+      <div class="panel__title panel__title--red">I 格式</div>
+      <table class="tbl tbl--sm" style="table-layout:fixed">
+        <tbody>
+          <tr>
+            <td class="c" style="width:18.75%">op</td>
+            <td class="c" style="width:15.625%">rs</td>
+            <td class="c" style="width:15.625%">rt</td>
+            <td class="c" style="width:50%">immediate</td>
+          </tr>
+          <tr>
+            <td class="c num">6bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">16bit</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel panel--tight mt12">
+      <div class="panel__title panel__title--red">J 格式</div>
+      <table class="tbl tbl--sm" style="table-layout:fixed">
+        <tbody>
+          <tr>
+            <td class="c" style="width:18.75%">op</td>
+            <td class="c" style="width:81.25%">address</td>
+          </tr>
+          <tr>
+            <td class="c num">6bit</td>
+            <td class="c num">26bit</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--blue mt16">
+      <span class="callout__tag">三种格式一览</span>
+      <span><span class="mono">R</span> 格式在寄存器之间做运算（<span class="mono">op</span> + <span class="mono">funct</span> 共同决定操作）；
+        <span class="mono">I</span> 格式额外带 16bit 立即数，用于常数与访存；
+        <span class="mono">J</span> 格式只保留 6bit 的 <span class="mono">op</span> 与 26bit 的 <span class="mono">address</span>，用于跳转。
+        三种格式都以开头的 6bit <span class="mono">op</span> 开头，因此指令长度恒为 <span class="mono">32</span> 位。</span>
+    </div>
+  </div>
+  <div class="page-no">3 / 24</div>
+</section>
+
+<!-- ======================================================== 4 R 格式 -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">R 格式</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <table class="tbl tbl--sm" style="table-layout:fixed">
+      <tbody>
+        <tr>
+          <td class="c" style="width:18.75%">op</td>
+          <td class="c" style="width:15.625%">rs</td>
+          <td class="c" style="width:15.625%">rt</td>
+          <td class="c" style="width:15.625%">rd</td>
+          <td class="c" style="width:15.625%">shamt</td>
+          <td class="c" style="width:18.75%">funct</td>
+        </tr>
+        <tr>
+          <td class="c num">6bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">6bit</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="tbl mt16">
+      <thead>
+        <tr>
+          <th style="width:120px">字段</th>
+          <th style="width:90px">位宽</th>
+          <th>含义</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">op</td>
+          <td class="c num">6bit</td>
+          <td>指令操作码（<span class="mono">opcode</span>：操作码）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">rs</td>
+          <td class="c num">5bit</td>
+          <td>第 1 源操作数（<span class="mono">source operand</span>）</td>
+        </tr>
+        <tr>
+          <td class="c">rt</td>
+          <td class="c num">5bit</td>
+          <td>第 2 源操作数（<span class="mono">source operand</span>）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">rd</td>
+          <td class="c num">5bit</td>
+          <td>目的操作数（<span class="mono">destination operand</span>）</td>
+        </tr>
+        <tr>
+          <td class="c">shamt</td>
+          <td class="c num">5bit</td>
+          <td>移位量（<span class="mono">shift amount</span>）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">funct</td>
+          <td class="c num">6bit</td>
+          <td>功能码（<span class="mono">function code</span>）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt16">
+      <span class="callout__tag">说明</span>
+      <span>R 格式是「寄存器—寄存器」型运算指令的通用格式。<span class="kw-blue">op</span> 与 <span class="kw-blue">funct</span>
+        组合起来才能唯一确定是哪一条指令；<span class="kw-blue">shamt</span> 只在<span class="kw">移位指令</span>中使用，其它指令中为 <span class="mono">0</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">4 / 24</div>
+</section>
+
+<!-- ======================================================== 5 R 格式（add 指令的情况） -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">R 格式（<span class="mono">add</span> 指令的情况）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="panel panel--tight">
+      <div class="panel__title panel__title--red">各字段与指令的对应</div>
+      <table class="tbl tbl--sm" style="table-layout:fixed">
+        <tbody>
+          <tr>
+            <td class="c" style="width:18.75%">op</td>
+            <td class="c" style="width:15.625%">rs</td>
+            <td class="c" style="width:15.625%">rt</td>
+            <td class="c" style="width:15.625%">rd</td>
+            <td class="c" style="width:15.625%">shamt</td>
+            <td class="c" style="width:18.75%">funct</td>
+          </tr>
+          <tr>
+            <td class="c num">6bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">6bit</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td colspan="3" class="c red">32 个寄存器中指定 1 个 → 5bit</td>
+            <td class="c red">不使用</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+      <pre class="code code--sm mt12">add $s0, $s1, $s2</pre>
+    </div>
+
+    <table class="tbl mt16">
+      <thead>
+        <tr>
+          <th style="width:120px">字段</th>
+          <th>含义</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">op:</td>
+          <td>指令操作码（<span class="mono">opcode</span>：操作码）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">rs:</td>
+          <td>第 1 源操作数（<span class="mono">source operand</span>）</td>
+        </tr>
+        <tr>
+          <td class="c">rt:</td>
+          <td>第 2 源操作数（<span class="mono">source operand</span>）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">rd:</td>
+          <td>目的操作数（<span class="mono">destination operand</span>）</td>
+        </tr>
+        <tr>
+          <td class="c">shamt:</td>
+          <td>移位量（<span class="mono">shift amount</span>）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">funct:</td>
+          <td>功能码（<span class="mono">function code</span>）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note mt10">原文对照：<span class="mono">32個のレジスタのうち1つを示す→5bit</span> ／ <span class="mono">各フィールドと命令の対応</span></div>
+  </div>
+  <div class="page-no">5 / 24</div>
+</section>
+
+<!-- ======================================================== 6 立即数操作数 -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">立即数操作数</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top" style="gap:22px">
+      <div class="col grow">
+<pre class="code code--sm">add  a, b, c    <span class="cmt"># a = b+c</span>
+add  a, b, 4    <span class="cmt"># a = b+4 ???</span>
+addi a, b, 4    <span class="cmt"># a = b+4</span></pre>
+      </div>
+      <div class="col shrink0" style="width:430px">
+        <div class="callout callout--red">
+          <span class="callout__tag">为什么不行？</span>
+          <span><span class="mono">add</span> 是 R 格式指令，三个操作数都必须是<span class="kw">寄存器</span>；
+            常数 <span class="mono">4</span> 无法放进 R 格式的字段里书写。</span>
+        </div>
+      </div>
+    </div>
+
+    <table class="tbl mt20">
+      <thead>
+        <tr>
+          <th style="width:250px">写作</th>
+          <th style="width:170px">含义</th>
+          <th>可否</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">add a, b, c</td>
+          <td>a = b + c</td>
+          <td>可以（三个操作数都是寄存器）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">add a, b, 4</td>
+          <td>a = b + 4</td>
+          <td>不可以（<span class="mono">add</span> 不能直接写常数）</td>
+        </tr>
+        <tr>
+          <td class="c">addi a, b, 4</td>
+          <td>a = b + 4</td>
+          <td>可以（用 <span class="mono">addi</span> 指令）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">结论</span>
+      <span>要进行<span class="kw">常数的加法</span>时，使用 <span class="mono">addi</span> 指令。<br>
+        <span class="mono">addi</span>：<span class="mono">add immediate</span>（立即数加法）　│　
+        <span class="kw-blue">立即数</span>（<span class="mono">immediate</span>）：直接写在运算所用操作数中的值。</span>
+    </div>
+  </div>
+  <div class="page-no">6 / 24</div>
+</section>
+
+<!-- ======================================================== 7 I 格式 -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">I 格式</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <table class="tbl tbl--sm" style="table-layout:fixed">
+      <tbody>
+        <tr>
+          <td class="c" style="width:18.75%">op</td>
+          <td class="c" style="width:15.625%">rs</td>
+          <td class="c" style="width:15.625%">rt</td>
+          <td class="c" style="width:50%">immediate</td>
+        </tr>
+        <tr>
+          <td class="c num">6bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">16bit</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="tbl mt16">
+      <thead>
+        <tr>
+          <th style="width:150px">字段</th>
+          <th style="width:90px">位宽</th>
+          <th>含义</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">op</td>
+          <td class="c num">6bit</td>
+          <td>指令操作码（<span class="mono">opcode</span>：操作码）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">rs</td>
+          <td class="c num">5bit</td>
+          <td>第 1 源操作数（<span class="mono">source operand</span>）</td>
+        </tr>
+        <tr>
+          <td class="c">rt</td>
+          <td class="c num">5bit</td>
+          <td>第 2 源操作数（<span class="mono">source operand</span>）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">immediate</td>
+          <td class="c num">16bit</td>
+          <td>立即数操作数</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout--blue mt16">
+      <span class="callout__tag">说明</span>
+      <span>I 格式用 <span class="kw-blue">16bit 的立即数字段</span>取代了 R 格式中的 <span class="mono">rd</span>、<span class="mono">shamt</span>、<span class="mono">funct</span>，
+        因此可以处理<span class="kw">常数</span>；但立即数只有 16 位宽，并且该字段在不同指令中还可以表示<span class="kw">偏移量</span>或<span class="kw">地址</span>（见后续寻址模式）。</span>
+    </div>
+  </div>
+  <div class="page-no">7 / 24</div>
+</section>
+
+<!-- ======================================================== 8 立即数操作数（R 格式与 I 格式） -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">立即数操作数（R 格式与 I 格式的对比）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:26px">
+      <div class="col grow">
+        <div class="code-label">R 格式：在 32 个寄存器中指定 1 个 → 5bit</div>
+        <table class="tbl tbl--sm" style="table-layout:fixed">
+          <tbody>
+            <tr>
+              <td class="c" style="width:18.75%">op</td>
+              <td class="c" style="width:15.625%">rs</td>
+              <td class="c" style="width:15.625%">rt</td>
+              <td class="c" style="width:15.625%">rd</td>
+              <td class="c" style="width:15.625%">shamt</td>
+              <td class="c" style="width:18.75%">funct</td>
+            </tr>
+            <tr>
+              <td class="c num">6bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">6bit</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td colspan="3" class="c red">32 个寄存器中指定 1 个 → 5bit</td>
+              <td class="c red">不使用</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+        <pre class="code code--sm mt10">add a, b, c    <span class="cmt"># a = b+c</span></pre>
+      </div>
+
+      <div class="col grow">
+        <div class="code-label">I 格式：16bit → -32768 ～ 32767</div>
+        <table class="tbl tbl--sm" style="table-layout:fixed">
+          <tbody>
+            <tr>
+              <td class="c" style="width:18.75%">op</td>
+              <td class="c" style="width:15.625%">rs</td>
+              <td class="c" style="width:15.625%">rt</td>
+              <td class="c" style="width:50%">immediate</td>
+            </tr>
+            <tr>
+              <td class="c num">6bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">16bit</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td colspan="2" class="c red">寄存器编号</td>
+              <td class="c red">16bit → -32768 ～ 32767</td>
+            </tr>
+          </tbody>
+        </table>
+<pre class="code code--sm mt10">addi a, b, 4    <span class="cmt"># a = b+4</span>
+lw   $s1, 8($s2) <span class="cmt"># 8 is immediate</span>
+sw   $s1, 8($s2) <span class="cmt"># 8 is immediate</span></pre>
+      </div>
+    </div>
+
+    <div class="callout mt16">
+      <span class="callout__tag">说明</span>
+      <span>R 格式只能处理<span class="kw">寄存器中的值</span>；I 格式则额外带有一块 <span class="kw-blue">16bit</span> 的立即数字段，
+        所以既可以写常数（<span class="mono">addi</span>），也可以写访存偏移量（<span class="mono">lw</span>、<span class="mono">sw</span>）。<br>
+        原文对照：<span class="mono">32個のレジスタのうち1つを示す→5bit</span> ／ <span class="mono">16bit → -32768～32767</span></span>
+    </div>
+  </div>
+  <div class="page-no">8 / 24</div>
+</section>
+
+<!-- ======================================================== 9 无符号立即数 -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">无符号立即数（<span class="mono">unsigned immediate</span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+<pre class="code">addi  a, b, -4   <span class="cmt"># a = b-4</span>
+addiu a, b, 4    <span class="cmt"># a = b+4</span></pre>
+
+    <div class="row row--top mt20" style="gap:24px">
+      <div class="col grow">
+        <ul class="bullets bullets--compact">
+          <li><span class="mono">addiu</span> 指令进行<span class="kw-blue">无符号整数</span>（<span class="mono">unsigned integer</span>）的加法。</li>
+          <li><span class="mono">addi</span> 与 <span class="mono">addiu</span> 的区别只在于<span class="kw">把 16 位立即数解释为有符号还是无符号</span>。</li>
+        </ul>
+      </div>
+      <div class="col shrink0" style="width:420px">
+        <div class="callout callout--red">
+          <span class="callout__tag">注意</span>
+          <span>两者都不会因立即数相加而产生<span class="kw">溢出异常</span>；需要检测溢出时要使用 <span class="mono">add</span> 系列指令。</span>
+        </div>
+      </div>
+    </div>
+
+    <table class="tbl mt20">
+      <thead>
+        <tr>
+          <th style="width:230px">指令</th>
+          <th style="width:320px">可处理的常数范围</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">addi</td>
+          <td class="c num">-32768 ～ 32767</td>
+          <td>把 16bit 立即数视为<span class="kw">带符号整数</span></td>
+        </tr>
+        <tr class="alt">
+          <td class="c">addiu</td>
+          <td class="c num">0 ～ 65535</td>
+          <td>把 16bit 立即数视为<span class="kw-blue">无符号整数</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note mt16">小结：立即数字段永远是 16bit，能表示的范围由指令对它的<span class="kw">解释方式</span>决定 —— 带符号解释得到 −32768～32767，无符号解释得到 0～65535。</div>
+  </div>
+  <div class="page-no">9 / 24</div>
+</section>
+
+<!-- ======================================================== 10 确认问题 -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="quiz">
+      <div class="quiz__col">
+        <div class="quiz__item">
+          <span class="quiz__key">(1)</span>
+          <span>以下各指令分别属于 <span class="mono">R</span> 格式还是 <span class="mono">I</span> 格式？<br>
+            <span class="mono">add</span>　<span class="mono">addi</span>　<span class="mono">addiu</span>　<span class="mono">lw</span>　<span class="mono">sw</span></span>
+        </div>
+        <div class="quiz__item">
+          <span class="quiz__key">(2)</span>
+          <span><span class="mono">I</span> 格式中的「<span class="mono">I</span>」表示什么？</span>
+        </div>
+      </div>
+      <div class="quiz__col">
+        <div class="quiz__item">
+          <span class="quiz__key">(3)</span>
+          <span><span class="mono">R</span> 格式的指令中，存在几个操作数？</span>
+        </div>
+        <div class="quiz__item">
+          <span class="quiz__key">(4)</span>
+          <span><span class="mono">I</span> 格式的指令所能保存的立即数位宽是多少？</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel--tight mt20">
+      <div class="panel__title panel__title--teal">解题提示</div>
+      <ul class="bullets bullets--sub" style="gap:6px">
+        <li>先看指令有没有<span class="kw">立即数或偏移量</span>：有则是 I 格式，只有寄存器之间的运算则是 R 格式。</li>
+        <li><span class="mono">lw</span>／<span class="mono">sw</span> 虽然名字里没有「<span class="mono">i</span>」，但它们需要 16bit 的<span class="kw">偏移量</span>，因此也是 I 格式。</li>
+        <li>R 格式的 32 位被 6 个字段瓜分：<span class="mono">op</span>、<span class="mono">rs</span>、<span class="mono">rt</span>、<span class="mono">rd</span>、<span class="mono">shamt</span>、<span class="mono">funct</span>。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-no">10 / 24</div>
+</section>
+
+<!-- ======================================================== 11 确认问题（解答与小结） -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题：解答与小结</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:70px">题号</th>
+          <th style="width:230px">参考答案</th>
+          <th>理由</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">(1)</td>
+          <td class="c">R 格式：add<br>I 格式：addi、addiu、lw、sw</td>
+          <td>凡是需要 16bit 立即数／偏移量的指令都是 I 格式；<span class="mono">add</span> 的三个操作数全是寄存器，故为 R 格式。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">(2)</td>
+          <td class="c">Immediate（立即数）</td>
+          <td>I 格式的特征字段就是 16bit 的 <span class="mono">immediate</span>，所以 <span class="mono">I</span> 取自 <span class="mono">Immediate</span>。</td>
+        </tr>
+        <tr>
+          <td class="c">(3)</td>
+          <td class="c">3 个</td>
+          <td>由 <span class="mono">rs</span>（第 1 源）、<span class="mono">rt</span>（第 2 源）、<span class="mono">rd</span>（目的）三个操作数构成，另加 <span class="mono">op</span>、<span class="mono">shamt</span>、<span class="mono">funct</span> 三个控制字段。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">(4)</td>
+          <td class="c">16bit</td>
+          <td>立即数字段固定为 16bit；带符号解释时范围为 −32768～32767，无符号解释时为 0～65535。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本节小结</span>
+      <span>指令格式决定了「一条 32 位指令里，哪些位用来表示什么」。<span class="mono">R</span> 格式面向<span class="kw">寄存器间运算</span>，
+        <span class="mono">I</span> 格式面向<span class="kw">立即数与访存</span>，<span class="mono">J</span> 格式面向<span class="kw">跳转</span>。记住字段的排列与宽度，
+        就能把汇编指令翻译成机器语言（二进制），也能反过来从二进制还原出指令。</span>
+    </div>
+  </div>
+  <div class="page-no">11 / 24</div>
+</section>
+
+<!-- ======================================================== 12 讲义内容 -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令格式</div>
+        <div class="toc__items">
+          <div class="toc__item">R 格式、I 格式是什么</div>
+          <div class="toc__item toc__item--active">指令与机器语言的对应</div>
+          <div class="toc__item">与数组使用对应的汇编代码</div>
+          <div class="toc__item">与分支处理对应的汇编代码</div>
+          <div class="toc__item">无条件转移与 J 格式</div>
+          <div class="toc__item">大小比较指令</div>
+          <div class="toc__item">寻址模式</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本段目标</span>
+      <span>把已经学过的指令格式<span class="kw">落到具体的二进制上</span>：给定一条汇编指令，能够填出每个字段的十进制值，
+        并写出完整的 32 位机器码；反过来也能根据前 6 位判断指令属于哪种格式。</span>
+    </div>
+  </div>
+  <div class="page-no">12 / 24</div>
+</section>
+
+<!-- ======================================================== 13 指令与机器语言的对应 -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">指令与机器语言的对应</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="panel panel--tight">
+      <div class="panel__title panel__title--red">先复习两种格式（原图的重建）</div>
+      <div class="row row--top" style="gap:22px">
+        <div class="col grow">
+          <table class="tbl tbl--sm" style="table-layout:fixed">
+            <tbody>
+              <tr>
+                <td class="c" style="width:18.75%">op</td>
+                <td class="c" style="width:15.625%">rs</td>
+                <td class="c" style="width:15.625%">rt</td>
+                <td class="c" style="width:15.625%">rd</td>
+                <td class="c" style="width:15.625%">shamt</td>
+                <td class="c" style="width:18.75%">funct</td>
+              </tr>
+              <tr>
+                <td class="c num">6bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">6bit</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="note mt8 center">R 格式</div>
+        </div>
+        <div class="col grow">
+          <table class="tbl tbl--sm" style="table-layout:fixed">
+            <tbody>
+              <tr>
+                <td class="c" style="width:18.75%">op</td>
+                <td class="c" style="width:15.625%">rs</td>
+                <td class="c" style="width:15.625%">rt</td>
+                <td class="c" style="width:50%">immediate</td>
+              </tr>
+              <tr>
+                <td class="c num">6bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">16bit</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="note mt8 center">I 格式</div>
+        </div>
+      </div>
+    </div>
+
+    <table class="tbl mt16">
+      <thead>
+        <tr>
+          <th style="width:120px">指令</th>
+          <th style="width:180px">opcode／funct</th>
+          <th style="width:120px">指令</th>
+          <th>opcode／funct</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">add</td>
+          <td class="c num">0 / 20<sub>16</sub></td>
+          <td class="c">sub</td>
+          <td class="c num">0 / 22<sub>16</sub></td>
+        </tr>
+        <tr class="alt">
+          <td class="c">addi</td>
+          <td class="c num">8<sub>16</sub></td>
+          <td class="c">lw</td>
+          <td class="c num">23<sub>16</sub></td>
+        </tr>
+        <tr>
+          <td class="c">addiu</td>
+          <td class="c num">9<sub>16</sub></td>
+          <td class="c">sw</td>
+          <td class="c num">2B<sub>16</sub></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt16">
+      <span class="callout__tag">参照</span>
+      <span>参照 <span class="mono">"MIPS reference data"</span>（不需要为了考试而记住这些数值）。</span>
+    </div>
+  </div>
+  <div class="page-no">13 / 24</div>
+</section>
+
+<!-- ======================================================== 14 指令与机器语言的对应（寄存器种类） -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">指令与机器语言的对应：寄存器的种类</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col grow">
+        <div class="code-label">R 格式</div>
+        <table class="tbl tbl--sm" style="table-layout:fixed">
+          <tbody>
+            <tr>
+              <td class="c" style="width:18.75%">op</td>
+              <td class="c" style="width:15.625%;background:#fdeff1">rs</td>
+              <td class="c" style="width:15.625%;background:#fdeff1">rt</td>
+              <td class="c" style="width:15.625%;background:#fdeff1">rd</td>
+              <td class="c" style="width:15.625%">shamt</td>
+              <td class="c" style="width:18.75%">funct</td>
+            </tr>
+            <tr>
+              <td class="c num">6bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">6bit</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note mt8">标红的三列就是「寄存器的编号」，即下表中的 0～31 号。</div>
+
+        <div class="code-label mt16">I 格式</div>
+        <table class="tbl tbl--sm" style="table-layout:fixed">
+          <tbody>
+            <tr>
+              <td class="c" style="width:18.75%">op</td>
+              <td class="c" style="width:15.625%;background:#fdeff1">rs</td>
+              <td class="c" style="width:15.625%;background:#fdeff1">rt</td>
+              <td class="c" style="width:50%">immediate</td>
+            </tr>
+            <tr>
+              <td class="c num">6bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">5bit</td>
+              <td class="c num">16bit</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col shrink0" style="width:560px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">寄存器的种类（原图的重建）</div>
+          <table class="tbl tbl--sm">
+            <thead>
+              <tr>
+                <th style="width:150px">寄存器名</th>
+                <th style="width:130px">编号</th>
+                <th>用途</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="c">$zero</td>
+                <td class="c num" style="background:#fdeff1">0</td>
+                <td>始终为 <span class="mono">0</span></td>
+              </tr>
+              <tr class="alt">
+                <td class="c">$at</td>
+                <td class="c num" style="background:#fdeff1">1</td>
+                <td>由汇编器临时使用</td>
+              </tr>
+              <tr>
+                <td class="c">$v0-v1</td>
+                <td class="c num" style="background:#fdeff1">2-3</td>
+                <td>用于返回值</td>
+              </tr>
+              <tr class="alt">
+                <td class="c">$a0-a3</td>
+                <td class="c num" style="background:#fdeff1">4-7</td>
+                <td>用于参数（引数）</td>
+              </tr>
+              <tr>
+                <td class="c">$t0-t9</td>
+                <td class="c num" style="background:#fdeff1">8-15, 24-25</td>
+                <td>临时寄存器（用于临时变量）</td>
+              </tr>
+              <tr class="alt">
+                <td class="c">$s0-s7</td>
+                <td class="c num" style="background:#fdeff1">16-23</td>
+                <td>保存寄存器（用于变量）</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout--blue mt16">
+      <span class="callout__tag">说明</span>
+      <span>原图中用红色方括号把 R 格式的 <span class="mono">rs/rt/rd</span> 与 I 格式的 <span class="mono">rs/rt</span> 括起来，
+        再指向右侧表格的<span class="kw-blue">编号列</span>，表示这些字段里放的就是寄存器编号；例如 <span class="mono">$s0</span> 就是编号 <span class="mono">16</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">14 / 24</div>
+</section>
+
+<!-- ======================================================== 15 指令与机器语言的对应：add -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">指令与机器语言的对应（例：<span class="mono">add</span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--center" style="gap:18px">
+      <div class="col shrink0" style="width:70px">
+        <div class="note center">（例）</div>
+      </div>
+      <div class="col grow">
+<pre class="code code--sm">add $s0, $s1, $s2</pre>
+      </div>
+      <div class="col shrink0" style="width:360px">
+        <div class="note center"><span class="mono">op</span>　　<span class="mono">rd</span>　　<span class="mono">rs</span>　　<span class="mono">rt</span></div>
+        <div class="note center">↑ 书写顺序对应 <span class="mono">rd, rs, rt</span></div>
+      </div>
+    </div>
+
+    <table class="tbl tbl--sm mt12" style="table-layout:fixed">
+      <tbody>
+        <tr>
+          <td class="c" style="width:18.75%">op</td>
+          <td class="c" style="width:15.625%">rs</td>
+          <td class="c" style="width:15.625%">rt</td>
+          <td class="c" style="width:15.625%">rd</td>
+          <td class="c" style="width:15.625%">shamt</td>
+          <td class="c" style="width:18.75%">funct</td>
+        </tr>
+        <tr>
+          <td class="c num">6bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">6bit</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="tbl mt12">
+      <thead>
+        <tr>
+          <th style="width:130px">字段</th>
+          <th>含义</th>
+          <th style="width:150px">本条指令的值</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">op:</td>
+          <td>指令操作码</td>
+          <td class="c num red">0</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">rs:</td>
+          <td>第 1 源操作数</td>
+          <td class="c num red">17<sub>10</sub></td>
+        </tr>
+        <tr>
+          <td class="c">rt:</td>
+          <td>第 2 源操作数</td>
+          <td class="c num red">18<sub>10</sub></td>
+        </tr>
+        <tr class="alt">
+          <td class="c">rd:</td>
+          <td>目的操作数</td>
+          <td class="c num red">16<sub>10</sub></td>
+        </tr>
+        <tr>
+          <td class="c">shamt:</td>
+          <td>移位量（<span class="mono">shift amount</span>）</td>
+          <td class="c num red">0</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">funct:</td>
+          <td>功能码（<span class="mono">function code</span>）</td>
+          <td class="c num red">32<sub>10</sub></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="code-label mt12">机器语言（二进制）</div>
+<pre class="code code--sm">000000 10001 10010 10000 00000 100000</pre>
+  </div>
+  <div class="page-no">15 / 24</div>
+</section>
+
+<!-- ======================================================== 16 指令与机器语言的对应：addi -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">指令与机器语言的对应（例：<span class="mono">addi</span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--center" style="gap:18px">
+      <div class="col shrink0" style="width:70px">
+        <div class="note center">（例）</div>
+      </div>
+      <div class="col grow">
+<pre class="code code--sm">addi $s0, $s1,  5</pre>
+      </div>
+      <div class="col shrink0" style="width:360px">
+        <div class="note center"><span class="mono">op</span>　　<span class="mono">rt</span>　　<span class="mono">rs</span>　　<span class="mono">immediate</span></div>
+        <div class="note center">↑ 书写顺序对应 <span class="mono">rt, rs, imm.</span></div>
+      </div>
+    </div>
+
+    <table class="tbl tbl--sm mt12" style="table-layout:fixed">
+      <tbody>
+        <tr>
+          <td class="c" style="width:18.75%">op</td>
+          <td class="c" style="width:15.625%">rs</td>
+          <td class="c" style="width:15.625%">rt</td>
+          <td class="c" style="width:50%">immediate</td>
+        </tr>
+        <tr>
+          <td class="c num">6bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">5bit</td>
+          <td class="c num">16bit</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="tbl mt12">
+      <thead>
+        <tr>
+          <th style="width:160px">字段</th>
+          <th>含义</th>
+          <th style="width:150px">本条指令的值</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">op:</td>
+          <td>指令操作码</td>
+          <td class="c num red">8</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">rs:</td>
+          <td>第 1 源操作数</td>
+          <td class="c num red">17<sub>10</sub></td>
+        </tr>
+        <tr>
+          <td class="c">rt:</td>
+          <td>第 2 源操作数</td>
+          <td class="c num red">16<sub>10</sub></td>
+        </tr>
+        <tr class="alt">
+          <td class="c">immediate:</td>
+          <td>立即数操作数</td>
+          <td class="c num red">5</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="code-label mt12">机器语言（二进制）</div>
+<pre class="code code--sm">001000 10001 10000 0000000000000101</pre>
+  </div>
+  <div class="page-no">16 / 24</div>
+</section>
+
+<!-- ======================================================== 17 指令格式的判别 -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">指令格式的判别</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="callout callout--blue">
+      <span class="callout__tag">问题</span>
+      <span>计算机是如何区分指令的<span class="kw">格式</span>的？</span>
+    </div>
+
+    <ul class="bullets mt20">
+      <li>只要读取每条指令开头的 <span class="kw">6 位</span>（<span class="mono">opcode</span>），就能知道格式。</li>
+      <li>例如：为 <span class="mono">0</span> 则是 <span class="mono">R</span> 格式，为 <span class="mono">35<sub>10</sub></span>（<span class="mono">lw</span>）则是 <span class="mono">I</span> 格式。</li>
+    </ul>
+
+    <div class="panel panel--tight mt20">
+      <div class="panel__title panel__title--red">开头的 6 位决定一切</div>
+      <table class="tbl tbl--sm" style="table-layout:fixed">
+        <tbody>
+          <tr>
+            <td class="c" style="width:18.75%;background:#fdeff1">op（前 6 位）</td>
+            <td class="c" style="width:15.625%">rs</td>
+            <td class="c" style="width:15.625%">rt</td>
+            <td class="c" style="width:15.625%">rd</td>
+            <td class="c" style="width:15.625%">shamt</td>
+            <td class="c" style="width:18.75%">funct</td>
+          </tr>
+          <tr>
+            <td class="c" style="width:18.75%;background:#fdeff1">op（前 6 位）</td>
+            <td class="c" style="width:15.625%">rs</td>
+            <td class="c" style="width:15.625%">rt</td>
+            <td class="c" style="width:50%" colspan="3">immediate</td>
+          </tr>
+          <tr>
+            <td class="c" style="width:18.75%;background:#fdeff1">op（前 6 位）</td>
+            <td class="c" style="width:81.25%" colspan="5">address</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note mt8">三种格式的前 6 位都放在同一位置，所以解码器只需先看这 6 位即可分流。</div>
+    </div>
+
+    <table class="tbl tbl--sm mt16">
+      <thead>
+        <tr>
+          <th style="width:260px">开头的 6 位（opcode）</th>
+          <th style="width:180px">判别的格式</th>
+          <th>例子</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c num">0</td>
+          <td class="c">R 格式</td>
+          <td class="c">add、sub、sll、srl</td>
+        </tr>
+        <tr class="alt">
+          <td class="c num">35<sub>10</sub></td>
+          <td class="c">I 格式</td>
+          <td class="c">lw</td>
+        </tr>
+        <tr>
+          <td class="c num">2 或 3</td>
+          <td class="c">J 格式</td>
+          <td class="c">j、jal</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">17 / 24</div>
+</section>
+
+<!-- ======================================================== 18 移位运算 -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">移位运算</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col shrink0" style="width:400px">
+<pre class="code code--sm">sll $s0, $s1, 4
+srl $s0, $s1, 4</pre>
+      </div>
+      <div class="col grow">
+        <ul class="bullets bullets--sub" style="gap:10px">
+          <li><span class="mono">sll $s0, $s1, 4</span> …把 <span class="mono">$s1</span> 的值<span class="kw">逻辑左移</span> 4 位后存入 <span class="mono">$s0</span>（<span class="mono">shift left logical</span>）</li>
+          <li><span class="mono">srl $s0, $s1, 4</span> …把 <span class="mono">$s1</span> 的值<span class="kw">逻辑右移</span> 4 位后存入 <span class="mono">$s0</span>（<span class="mono">shift right logical</span>）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="panel panel--tight mt16">
+      <div class="panel__title panel__title--red">R 格式</div>
+      <table class="tbl tbl--sm" style="table-layout:fixed">
+        <tbody>
+          <tr>
+            <td class="c" style="width:18.75%">op</td>
+            <td class="c" style="width:15.625%">rs</td>
+            <td class="c" style="width:15.625%">rt</td>
+            <td class="c" style="width:15.625%">rd</td>
+            <td class="c" style="width:15.625%;background:#fdeff1">shamt</td>
+            <td class="c" style="width:18.75%">funct</td>
+          </tr>
+          <tr>
+            <td class="c num">6bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">5bit</td>
+            <td class="c num">6bit</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <table class="tbl tbl--sm mt16">
+      <thead>
+        <tr>
+          <th style="width:420px">书写形式</th>
+          <th style="width:200px">op</th>
+          <th>funct</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">sll (rd), (rt), (shamt)</td>
+          <td class="c num">0</td>
+          <td class="c num">0</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">srl (rd), (rt), (shamt)</td>
+          <td class="c num">0</td>
+          <td class="c num">2</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note mt12">移位指令是 <span class="mono">R</span> 格式中<span class="kw">唯一真正使用 <span class="mono">shamt</span></span> 的一类；移位量只有 5 位，因此一次最多移动 31 位。</div>
+  </div>
+  <div class="page-no">18 / 24</div>
+</section>
+
+<!-- ======================================================== 19 讲义内容 -->
+<section class="slide" id="s19">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令格式</div>
+        <div class="toc__items">
+          <div class="toc__item">R 格式、I 格式是什么</div>
+          <div class="toc__item">指令与机器语言的对应</div>
+          <div class="toc__item toc__item--active">与数组使用对应的汇编代码</div>
+          <div class="toc__item">与分支处理对应的汇编代码</div>
+          <div class="toc__item">无条件转移与 J 格式</div>
+          <div class="toc__item">大小比较指令</div>
+          <div class="toc__item">寻址模式</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本段目标</span>
+      <span>理解 C 语言的<span class="kw">数组访问</span> <span class="mono">a[i]</span> 在汇编层面如何实现：先把下标乘以 <span class="kw">4</span> 得到<span class="kw-blue">字节偏移</span>，
+        再与数组首地址相加，最后用 <span class="mono">lw</span>／<span class="mono">sw</span> 读写存储器。</span>
+    </div>
+  </div>
+  <div class="page-no">19 / 24</div>
+</section>
+
+<!-- ======================================================== 20 与数组使用对应的汇编代码 -->
+<section class="slide" id="s20">
+  <div class="slide__head">
+    <h2 class="slide__title">与数组使用对应的汇编代码</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--center" style="gap:18px">
+      <div class="col shrink0" style="width:70px">
+        <div class="note center">（例）</div>
+      </div>
+      <div class="col grow">
+<pre class="code code--sm">a[300] = b + a[200]</pre>
+      </div>
+      <div class="col shrink0" style="width:230px">
+        <div class="regmap" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:15px">寄存器分配</div>
+          <div class="regmap__grid regmap__grid--one" style="font-size:15px">
+            <div class="regmap__cell">a : $t1</div>
+            <div class="regmap__cell">b : $s1</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-label mt16">汇编代码</div>
+<pre class="code">lw  $t0, 800($t1)     <span class="cmt"># $t0 = a[200]（200×4 = 800）</span>
+add $t0, $s1, $t0     <span class="cmt"># $t0 = b + a[200]</span>
+sw  $t0, 1200($t1)    <span class="cmt"># a[300] = $t0（300×4 = 1200）</span></pre>
+
+    <div class="callout mt18">
+      <span class="callout__tag">关键</span>
+      <span>存储器地址的偏移量是数组<span class="kw">下标（元素个数）的 4 倍</span>。因为 1 个 <span class="mono">int</span> 占 <span class="mono">4</span> 字节，
+        所以第 <span class="mono">n</span> 个元素的字节偏移是 <span class="mono">n × 4</span>。</span>
+    </div>
+
+    <div class="panel panel--tight mt16">
+      <div class="panel__title panel__title--teal">为什么用「基址 + 偏移」</div>
+      <ul class="bullets bullets--sub" style="gap:6px">
+        <li><span class="mono">$t1</span> 中保存的是数组的<span class="kw">首地址</span>，作为<span class="kw-blue">基址寄存器</span>。</li>
+        <li>偏移量以<span class="kw">常数</span>形式写在括号之前（<span class="mono">800($t1)</span>），这正是 <span class="mono">I</span> 格式 16bit 立即数字段的用武之地。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-no">20 / 24</div>
+</section>
+
+<!-- ======================================================== 21 与数组使用对应的汇编代码（下标是变量） -->
+<section class="slide" id="s21">
+  <div class="slide__head">
+    <h2 class="slide__title">与数组使用对应的汇编代码（下标是变量）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--center" style="gap:18px">
+      <div class="col shrink0" style="width:70px">
+        <div class="note center">（例）</div>
+      </div>
+      <div class="col grow">
+<pre class="code code--sm">a[i] = b + a[i]</pre>
+      </div>
+      <div class="col shrink0" style="width:230px">
+        <div class="regmap" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:15px">寄存器分配</div>
+          <div class="regmap__grid regmap__grid--one" style="font-size:15px">
+            <div class="regmap__cell">a : $t1</div>
+            <div class="regmap__cell">b : $s1</div>
+            <div class="regmap__cell">i : $s2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-label mt16">汇编代码</div>
+<pre class="code">sll $t2, $s2, 2       <span class="cmt"># $t2 = i×4（用移位运算计算 4 倍）</span>
+add $t2, $t2, $t1     <span class="cmt"># $t2 = &amp;a[i]（首地址 + 偏移）</span>
+lw  $t0, 0($t2)       <span class="cmt"># $t0 = a[i]</span>
+add $t0, $s1, $t0     <span class="cmt"># $t0 = b + a[i]</span>
+sw  $t0, 0($t2)       <span class="cmt"># a[i] = $t0</span></pre>
+
+    <div class="callout mt18">
+      <span class="callout__tag">要点</span>
+      <span>使用<span class="kw-blue">移位运算</span>来计算 4 倍：<span class="mono">sll $t2, $s2, 2</span> 等价于 <span class="mono">$t2 = $s2 × 4</span>，
+        比乘法指令更快；随后把「首地址 <span class="mono">$t1</span>」与「偏移 <span class="mono">$t2</span>」相加，得到元素 <span class="mono">a[i]</span> 的<span class="kw">实际地址</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">21 / 24</div>
+</section>
+
+<!-- ======================================================== 22 确认问题 -->
+<section class="slide" id="s22">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--center" style="gap:18px">
+      <div class="col shrink0" style="width:70px">
+        <div class="note center">（例）</div>
+      </div>
+      <div class="col grow">
+<pre class="code code--sm">a[50] = b - a[i]</pre>
+      </div>
+      <div class="col shrink0" style="width:230px">
+        <div class="regmap" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:15px">寄存器分配</div>
+          <div class="regmap__grid regmap__grid--one" style="font-size:15px">
+            <div class="regmap__cell">a : $t1</div>
+            <div class="regmap__cell">b : $s1</div>
+            <div class="regmap__cell">i : $s2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-label mt16">请把下面的汇编代码补充完整</div>
+<pre class="code"><span class="blank">(1)</span> $t2, $s2, 2          <span class="cmt"># … 计算 i 的 4 倍</span>
+<span class="blank">(2)</span> $t2, $t2, $t1        <span class="cmt"># … 把 a[i] 的地址存入 $t2</span>
+<span class="blank">(3)</span> $t0, 0($t2)          <span class="cmt"># … 把 a[i] 的值装入 $t0</span>
+<span class="blank">(4)</span> $t0, $s1, $t0        <span class="cmt"># … $t0 = $s1 - $t0</span>
+sw  $t0, <span class="blank">(5)</span>(<span class="blank">(6)</span>)       <span class="cmt"># … 把 $t0 的值存入 a[50]</span></pre>
+
+    <div class="callout callout--blue mt18">
+      <span class="callout__tag">提示</span>
+      <span>按「<span class="kw">下标 ×4 → 加首地址 → 访存</span>」的顺序逐步写出：先算偏移，再算 <span class="mono">a[i]</span> 的地址，
+        再取出 <span class="mono">a[i]</span>，然后做减法；最后一行要用<span class="kw">常数偏移</span>的形式表示 <span class="mono">a[50]</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">22 / 24</div>
+</section>
+
+<!-- ======================================================== 23 确认问题（解答与小结） -->
+<section class="slide" id="s23">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题：解答与小结</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:80px">空栏</th>
+          <th style="width:250px">参考答案</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c red">(1)</td>
+          <td class="c">sll</td>
+          <td>用逻辑左移 2 位求出 <span class="mono">i×4</span>，即元素 <span class="mono">a[i]</span> 相对首地址的字节偏移。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c red">(2)</td>
+          <td class="c">add</td>
+          <td>首地址 <span class="mono">$t1</span> 与偏移 <span class="mono">$t2</span> 相加，把 <span class="mono">a[i]</span> 的<span class="kw">实际地址</span>存入 <span class="mono">$t2</span>。</td>
+        </tr>
+        <tr>
+          <td class="c red">(3)</td>
+          <td class="c">lw</td>
+          <td>从该地址装入数据：<span class="mono">$t0 = a[i]</span>。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c red">(4)</td>
+          <td class="c">sub</td>
+          <td>做减法：<span class="mono">$t0 = $s1 - $t0</span>，即 <span class="mono">b - a[i]</span>。</td>
+        </tr>
+        <tr>
+          <td class="c red">(5)</td>
+          <td class="c">200</td>
+          <td><span class="mono">a[50]</span> 的偏移是 <span class="mono">50 × 4 = 200</span>。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c red">(6)</td>
+          <td class="c">$t1</td>
+          <td>基址寄存器（数组首地址）。完整写法：<span class="mono">sw $t0, 200($t1)</span>。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout--blue mt16">
+      <span class="callout__tag">小结</span>
+      <span>数组访问的固定套路：<span class="kw">下标 ×4 → 加首地址 → 访存</span>。乘法用 <span class="mono">sll</span> 代替，
+        地址相加用 <span class="mono">add</span>，读写用 <span class="mono">lw</span>／<span class="mono">sw</span>，常数下标则直接写进偏移量。</span>
+    </div>
+  </div>
+  <div class="page-no">23 / 24</div>
+</section>
+
+<!-- ======================================================== 24 参考文献 -->
+<section class="slide" id="s24">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:26px">
+    <div class="refs">
+      <div class="refs__item">
+        《计算机组成与设计：硬件／软件接口》第 5 版（上）
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span>
+      </div>
+      <div class="refs__item">
+        David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社
+        <span class="refs__en">David A.Patterson, John L. Hennessy 著、成田光彰 訳、日経BP社</span>
+      </div>
+      <div class="refs__item">
+        山下茂《计算机组成原理 1》课程讲义
+        <span class="refs__en">山下茂「計算機構成論１」講義資料</span>
+      </div>
+    </div>
+
+    <div class="callout mt24" style="font-size:18px">
+      <span class="callout__tag">本讲小结</span>
+      <span><span class="mono">MIPS</span> 的指令固定为 32 位，分为 <span class="mono">R</span>／<span class="mono">I</span>／<span class="mono">J</span> 三种格式；
+        前 6 位的 <span class="mono">opcode</span> 决定格式，字段的组合决定具体的操作。掌握了格式，就能在<span class="kw">汇编指令</span>与<span class="kw">机器语言</span>之间自由转换，
+        也能读懂编译器生成的数组访问代码。</span>
+    </div>
+  </div>
+  <div class="page-no">24 / 24</div>
+</section>
+
+</div>
+</body>
+</html>

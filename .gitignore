@@ -1,0 +1,17 @@
+# 制作 HTML 过程中使用的工具与工作产物
+.tools/
+
+# 密钥（火山引擎 API KEY）
+火山引擎API KEY.txt
+*API KEY*.txt
+*api_key*.txt
+*apikey*.txt
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# 系统垃圾文件
+Thumbs.db
+.DS_Store
+desktop.ini

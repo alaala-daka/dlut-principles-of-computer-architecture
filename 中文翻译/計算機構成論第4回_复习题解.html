@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第4回 复习题解 · 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="4">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 复习题解</div>
+    <h1 class="cover__title cover__title--long">第 4 回 <em>确认问题</em>题解</h1>
+    <p class="cover__sub">指令集 · 寄存器 · 存储器寻址 · 对齐限制</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    配套「計算機構成論 第4回」讲义
+  </div>
+  <div class="cover__badge">
+    原题解「確認問題（Sol4）」<br>
+    中文翻译版
+  </div>
+</section>
+
+<!-- ======================================================== 2 术语题 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（1）:写出符合说明的术语</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <table class="tbl tbl--sm">
+      <thead>
+        <tr><th style="width:52px">小题</th><th>说明</th><th style="width:230px">答案</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="c">(1)</td><td>计算机语言中的「词语」</td><td class="c red">指令（命令）</td></tr>
+        <tr class="alt"><td class="c">(2)</td><td>计算机的词汇（一整套指令）</td><td class="c red">指令集（命令セット）</td></tr>
+        <tr><td class="c">(3)</td><td>一条指令能做的事较少，但指令变得简单的指令集设计方针</td><td class="c red">RISC</td></tr>
+        <tr class="alt"><td class="c">(4)</td><td>一条指令能做的事较多，但指令变得复杂的指令集设计方针</td><td class="c red">CISC</td></tr>
+        <tr><td class="c">(5)</td><td>MIPS Technologies 公司（原 MIPS Computer Systems）开发的指令集</td><td class="c red">MIPS</td></tr>
+        <tr class="alt"><td class="c">(6)</td><td>CPU 内用于存放运算对象数据的存储区域</td><td class="c red">寄存器（レジスタ）</td></tr>
+        <tr><td class="c">(7)</td><td>表示寄存器或 ALU 一次处理的位宽的数据量单位</td><td class="c red">字（Word / 語）</td></tr>
+        <tr class="alt"><td class="c">(8)</td><td>指令的运算对象</td><td class="c red">操作数（オペランド）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">1 / 4</div>
+</section>
+
+<!-- ======================================================== 3 MIPS 指令与存储器 -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（2）:MIPS 指令与存储器相关术语</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:20px">
+      <div class="col shrink0" style="width:560px">
+        <table class="tbl tbl--sm">
+          <thead>
+            <tr><th>处理</th><th style="width:150px">MIPS 运算指令</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>加法</td><td class="c red">add</td></tr>
+            <tr class="alt"><td>减法</td><td class="c red">sub</td></tr>
+            <tr><td>从存储器读出 1 个字</td><td class="c red">lw</td></tr>
+            <tr class="alt"><td>向存储器写入 1 个字</td><td class="c red">sw</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col grow">
+        <table class="tbl tbl--sm">
+          <thead>
+            <tr><th>提问</th><th style="width:290px">答案</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>按对齐限制存放的字，顺序读出时存储器访问以多少字节为单位？</td><td class="c red">4 字节（= 32 位 = 1 字）</td></tr>
+            <tr class="alt"><td>把字按高位字节到低位字节的顺序存入存储器，这种方式叫什么？</td><td class="c red">大端序（big-endian）</td></tr>
+            <tr><td>把字按低位字节到高位字节的顺序存入存储器，这种方式叫什么？</td><td class="c red">小端序（little-endian）</td></tr>
+            <tr class="alt"><td>指出下一条要执行的程序存储器地址的东西叫什么？</td><td class="c red">程序计数器（PC: program counter）</td></tr>
+            <tr><td>把处理所需的数据和程序预先存放在存储器中的方式叫什么？</td><td class="c red">存储程序方式</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout callout--blue mt16" style="font-size:16px">
+      <span class="callout__tag">回顾</span>
+      <span><span class="kw">对齐限制</span>要求字的起始地址是 4 的倍数；因此在 32 位 MIPS 上，
+        一次 <span class="mono">lw</span> / <span class="mono">sw</span> 正好访问 4 个连续字节。</span>
+    </div>
+  </div>
+  <div class="page-no">2 / 4</div>
+</section>
+
+<!-- ======================================================== 4 汇编到 C -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（3）:汇编指令对应的 C 语句</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:18px">
+    <div class="callout callout--blue" style="font-size:18px">
+      <span class="callout__tag">题目</span>
+      <span>写出下列汇编指令所对应的 C 语句。</span>
+    </div>
+
+    <div class="row row--top mt20" style="gap:26px">
+      <div class="col shrink0" style="width:520px">
+        <div class="code-label">汇编指令</div>
+<pre class="code">add $s0, $s1, $s2
+sub $s0, $s0, $s3
+add $s0, $s0, $s4</pre>
+      </div>
+
+      <div class="col shrink0" style="width:330px">
+        <div class="regmap">
+          <div class="regmap__title">寄存器的对应</div>
+          <div class="regmap__grid">
+            <div class="regmap__cell">f : $s0</div>
+            <div class="regmap__cell">g : $s1</div>
+            <div class="regmap__cell">h : $s2</div>
+            <div class="regmap__cell">i : $s3</div>
+            <div class="regmap__cell">j : $s4</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">答案</div>
+<pre class="code">f = g + h - i + j;</pre>
+        </div>
+        <div class="callout mt12" style="font-size:15px;padding:7px 11px">
+          <span class="callout__tag">逐条对照</span>
+          <span>
+            <span class="mono">add $s0,$s1,$s2</span> → <span class="mono">f = g + h</span><br>
+            <span class="mono">sub $s0,$s0,$s3</span> → <span class="mono">f = f - i</span><br>
+            <span class="mono">add $s0,$s0,$s4</span> → <span class="mono">f = f + j</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">3 / 4</div>
+</section>
+
+<!-- ======================================================== 5 数组与大端序 -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（4）:数组地址与大端序</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue" style="font-size:17px;padding:8px 13px">
+      <span class="callout__tag">题目</span>
+      <span>在 MIPS 中声明了 <span class="mono">int</span> 型数组 <span class="mono">A[100]</span>。
+        设存放 <span class="mono">A[0]</span> 的存储器地址为 <span class="mono">1000</span>。</span>
+    </div>
+
+    <div class="row row--top mt14" style="gap:22px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title">(1) 求 <span class="mono">A[50]</span> 所在存储单元的首地址</div>
+<pre class="code code--sm">提示：int 型 → 4 字节（32 位）
+
+1000 + 4 × 50 = 1200</pre>
+        </div>
+        <div class="callout mt12" style="font-size:16px">
+          <span class="callout__tag">答案</span>
+          <span><span class="mono">A[50]</span> 的首地址 = <span class="kw">1200</span></span>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">(2) MIPS 为大端序，求各字节内容</div>
+<pre class="code code--sm">A[0] = FF332211₁₆
+
+地址 1000 : 11111111   <span class="cmt"># FF</span>
+地址 1001 : 00110011   <span class="cmt"># 33</span>
+地址 1002 : 00100010   <span class="cmt"># 22</span>
+地址 1003 : 00010001   <span class="cmt"># 11</span></pre>
+        </div>
+        <div class="callout mt12" style="font-size:16px">
+          <span class="callout__tag">要点</span>
+          <span>大端序把字的<span class="kw">高位字节</span>放在低地址处，因此 <span class="mono">FF</span> 位于 <span class="mono">1000</span>，
+            顺序依次为 <span class="mono">FF → 33 → 22 → 11</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">4 / 4</div>
+</section>
+
+</div>
+</body>
+</html>

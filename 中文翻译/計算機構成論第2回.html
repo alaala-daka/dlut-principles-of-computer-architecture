@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第2讲 计算机中的数值表示（1）· 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+<style>
+  /* 门电路的 SVG 尺寸微调 */
+  .gate__sym--tall { height: 56px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="gate-nand" viewBox="0 0 96 52">
+    <path d="M8 8 H44 A18 18 0 0 1 44 44 H8 Z" fill="#fdf4e7" stroke="#10314f" stroke-width="2"/>
+    <circle cx="68" cy="26" r="5.5" fill="#fff" stroke="#10314f" stroke-width="2"/>
+    <line x1="0" y1="16" x2="8" y2="16" stroke="#10314f" stroke-width="2"/>
+    <line x1="0" y1="36" x2="8" y2="36" stroke="#10314f" stroke-width="2"/>
+    <line x1="74" y1="26" x2="96" y2="26" stroke="#10314f" stroke-width="2"/>
+  </symbol>
+</svg><div class="deck" data-chapter="2">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 2 讲</div>
+    <h1 class="cover__title cover__title--long">计算机中的<em>数值表示</em>(1)</h1>
+    <p class="cover__sub">晶体管 · 逻辑门 · 二进制 · 补码</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    山下 茂 · 双见 京介
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第2回 ―計算機における数値表現(1)―」<br>
+    中文翻译版
+  </div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">构成处理器与存储器的基本元件</div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">晶体管、逻辑元件、IC<span class="toc__item--jp">トランジスタ、論理素子、IC</span></div>
+        </div>
+      </div>
+      <div class="toc__group">
+        <div class="toc__lead">二进制</div>
+        <div class="toc__items">
+          <div class="toc__item">什么是二进制、十六进制<span class="toc__item--jp">2進数、16進数とは</span></div>
+          <div class="toc__item">二进制与十进制的相互转换<span class="toc__item--jp">2進数と10進数の変換</span></div>
+          <div class="toc__item">负数的表示、2 的补码<span class="toc__item--jp">負数の表現、2の補数</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">2 / 31</div>
+</section>
+
+<!-- ======================================================== 3 晶体管 -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">构成处理器与存储器的元件:晶体管</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:26px">
+      <div class="col shrink0" style="width:660px">
+        <div class="xsec">
+          <div class="xsec__al xsec__al--s">铝布线</div>
+          <div class="xsec__al xsec__al--d">铝布线</div>
+          <div class="xsec__al xsec__al--g">铝布线</div>
+          <div class="xsec__gate">栅极（多晶硅）</div>
+          <div class="xsec__ox">绝缘膜（SiO<sub>2</sub>）</div>
+          <div class="xsec__ch">沟道</div>
+          <div class="xsec__sub">p 型衬底</div>
+          <div class="xsec__n xsec__n--l"><span>n 型</span><span class="xsec__n-sub">源极 source</span></div>
+          <div class="xsec__n xsec__n--r"><span>n 型</span><span class="xsec__n-sub">漏极 drain</span></div>
+          
+          
+        </div>
+      </div>
+
+      <div class="col grow">
+        <ul class="bullets bullets--compact">
+          <li>晶体管能够进行<span class="kw">电气上的 ON / OFF 切换</span>。</li>
+          <li>目前以 <span class="kw-blue">CMOS</span>（Complementary Metal Oxide Semiconductor，互补金属氧化物半导体）为主流。</li>
+        </ul>
+        <div class="callout mt16" style="font-size:16px">
+          <span class="callout__tag">结构</span>
+          <span>在 p 型衬底上形成两个 n 型区（源极、漏极）；栅极与衬底之间夹有绝缘膜（SiO<sub>2</sub>），
+            因此栅极<b>不会</b>有电流流过，只起电场控制作用。</span>
+        </div>
+        <div class="note mt12">
+          详见第 27 页补充资料中的 nMOS 晶体管工作原理。
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">3 / 31</div>
+</section>
+
+<!-- ======================================================== 4 逻辑门 -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">构成处理器与存储器的元件:逻辑门（逻辑元件）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:18px">
+    <p class="bullets" style="margin-bottom:20px">
+      <span style="font-size:23px">逻辑门是<span class="kw">实现基本逻辑运算的电子电路</span>：<span class="mono">AND、OR、NOT、NAND、NOR、XOR</span> 等等。</span>
+    </p>
+
+    <div class="gates">
+      <div class="gate">
+        <div class="gate__sym">
+          <svg viewBox="0 0 96 52"><path d="M8 8 H48 A18 18 0 0 1 48 44 H8 Z" fill="#eaf3fc" stroke="#10314f" stroke-width="2"/><line x1="0" y1="16" x2="8" y2="16" stroke="#10314f" stroke-width="2"/><line x1="0" y1="36" x2="8" y2="36" stroke="#10314f" stroke-width="2"/><line x1="66" y1="26" x2="96" y2="26" stroke="#10314f" stroke-width="2"/></svg>
+        </div>
+        <div class="gate__name">AND</div>
+        <div class="gate__cn">与</div>
+      </div>
+      <div class="gate">
+        <div class="gate__sym">
+          <svg viewBox="0 0 96 52"><path d="M8 6 Q34 6 46 26 Q34 46 8 46 Q22 26 8 6 Z" fill="#eaf3fc" stroke="#10314f" stroke-width="2"/><line x1="0" y1="16" x2="14" y2="16" stroke="#10314f" stroke-width="2"/><line x1="0" y1="36" x2="14" y2="36" stroke="#10314f" stroke-width="2"/><line x1="46" y1="26" x2="96" y2="26" stroke="#10314f" stroke-width="2"/></svg>
+        </div>
+        <div class="gate__name">OR</div>
+        <div class="gate__cn">或</div>
+      </div>
+      <div class="gate">
+        <div class="gate__sym">
+          <svg viewBox="0 0 96 52"><polygon points="22,6 66,26 22,46" fill="#eaf3fc" stroke="#10314f" stroke-width="2"/><circle cx="67" cy="25" r="5" fill="#fff" stroke="#10314f" stroke-width="2"/><line x1="0" y1="26" x2="22" y2="26" stroke="#10314f" stroke-width="2"/><line x1="78" y1="26" x2="96" y2="26" stroke="#10314f" stroke-width="2"/></svg>
+        </div>
+        <div class="gate__name">NOT</div>
+        <div class="gate__cn">非</div>
+      </div>
+      <div class="gate">
+        <div class="gate__sym">
+          <svg viewBox="0 0 96 52"><path d="M8 8 H44 A18 18 0 0 1 44 44 H8 Z" fill="#eaf3fc" stroke="#10314f" stroke-width="2"/><circle cx="68" cy="26" r="5.5" fill="#fff" stroke="#10314f" stroke-width="2"/><line x1="0" y1="16" x2="8" y2="16" stroke="#10314f" stroke-width="2"/><line x1="0" y1="36" x2="8" y2="36" stroke="#10314f" stroke-width="2"/><line x1="74" y1="26" x2="96" y2="26" stroke="#10314f" stroke-width="2"/></svg>
+        </div>
+        <div class="gate__name">NAND</div>
+        <div class="gate__cn">与非</div>
+      </div>
+      <div class="gate">
+        <div class="gate__sym">
+          <svg viewBox="0 0 96 52"><path d="M8 6 Q32 6 44 26 Q32 46 8 46 Q22 26 8 6 Z" fill="#eaf3fc" stroke="#10314f" stroke-width="2"/><circle cx="50" cy="26" r="5.5" fill="#fff" stroke="#10314f" stroke-width="2"/><line x1="0" y1="16" x2="14" y2="16" stroke="#10314f" stroke-width="2"/><line x1="0" y1="36" x2="14" y2="36" stroke="#10314f" stroke-width="2"/><line x1="56" y1="26" x2="96" y2="26" stroke="#10314f" stroke-width="2"/></svg>
+        </div>
+        <div class="gate__name">NOR</div>
+        <div class="gate__cn">或非</div>
+      </div>
+      <div class="gate">
+        <div class="gate__sym">
+          <svg viewBox="0 0 96 52"><path d="M8 6 Q32 6 44 26 Q32 46 8 46 Q22 26 8 6 Z" fill="#eaf3fc" stroke="#10314f" stroke-width="2"/><path d="M2 6 Q16 26 2 46" fill="none" stroke="#10314f" stroke-width="2"/><line x1="0" y1="16" x2="16" y2="16" stroke="#10314f" stroke-width="2"/><line x1="0" y1="36" x2="16" y2="36" stroke="#10314f" stroke-width="2"/><line x1="44" y1="26" x2="96" y2="26" stroke="#10314f" stroke-width="2"/></svg>
+        </div>
+        <div class="gate__name">XOR</div>
+        <div class="gate__cn">异或</div>
+      </div>
+    </div>
+
+    <div class="callout mt20">
+      <span class="callout__tag">复习要点</span>
+      <span>逻辑门由晶体管组合而成；<span class="kw">与、或、非</span>是三种最基本的逻辑运算，
+        与非门（NAND）在集成电路中实现最为简单，因此常作为基本单元使用。</span>
+    </div>
+  </div>
+  <div class="page-no">4 / 31</div>
+</section>
+
+<!-- ======================================================== 5 集成电路 -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">构成处理器与存储器的元件:集成电路</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col grow">
+        <ul class="bullets bullets--compact">
+          <li><span class="kw">集成电路</span>（integrated circuit，IC）：把几十个到几百万个晶体管集成在一起的电子元件。</li>
+          <li>也称为<span class="kw-blue">芯片</span>（chip）。</li>
+        </ul>
+        <div class="callout callout--blue mt16">
+          <span class="callout__tag">例</span>
+          <span>由 <span class="mono">4</span> 个 NAND 门构成的 IC。</span>
+        </div>
+        <div class="note mt12">
+          芯片内部的门电路通过金属布线相互连接，外部只引出输入/输出引脚与电源引脚。
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:520px">
+        <div class="panel panel--tight">
+          <div class="panel__title">（例）4 个 NAND 门构成的 IC</div>
+          <div style="display:flex;align-items:center;gap:14px;justify-content:center;padding:6px 0">
+            <div class="gate__sym" style="width:64px;height:40px">
+              <svg viewBox="0 0 96 52"><use href="#gate-nand"/></svg>
+            </div>
+            <div style="font-size:20px;color:#6b7c8d">+</div>
+            <div class="gate__sym" style="width:64px;height:40px">
+              <svg viewBox="0 0 96 52"><use href="#gate-nand"/></svg>
+            </div>
+            <div style="font-size:20px;color:#6b7c8d">+</div>
+            <div class="gate__sym" style="width:64px;height:40px">
+              <svg viewBox="0 0 96 52"><use href="#gate-nand"/></svg>
+            </div>
+            <div style="font-size:20px;color:#6b7c8d">+</div>
+            <div class="gate__sym" style="width:64px;height:40px">
+              <svg viewBox="0 0 96 52"><use href="#gate-nand"/></svg>
+            </div>
+          </div>
+          <div class="note center" style="font-size:13px">
+            输入引脚 ──► [ 门电路阵列 ] ──► 输出引脚
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">5 / 31</div>
+</section>
+
+<!-- ======================================================== 6 存储电路 -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">构成处理器与存储器的元件:用存储电路记忆信息</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="callout callout--blue" style="font-size:19px">
+      <span class="callout__tag">例</span>
+      <span>用存储电路记忆信息（例如：<span class="kw">寄存器</span>）。</span>
+    </div>
+
+    <div class="row row--top mt20" style="gap:22px">
+      <div class="col" style="flex:1 1 0">
+        <div class="panel panel--tight">
+          <div class="panel__title">4 位<b>移位寄存器</b></div>
+          <div style="display:flex;align-items:center;gap:6px;justify-content:center;padding:8px 0">
+            <span class="mono" style="font-size:14px;color:#6b7c8d">输入 →</span>
+            <div class="frame" style="width:78px">
+              <div class="frame__head">D-FF</div>
+              <div class="frame__row" style="justify-content:center">Q0</div>
+            </div>
+            <span style="color:#93a3b3">→</span>
+            <div class="frame" style="width:78px">
+              <div class="frame__head">D-FF</div>
+              <div class="frame__row" style="justify-content:center">Q1</div>
+            </div>
+            <span style="color:#93a3b3">→</span>
+            <div class="frame" style="width:78px">
+              <div class="frame__head">D-FF</div>
+              <div class="frame__row" style="justify-content:center">Q2</div>
+            </div>
+            <span style="color:#93a3b3">→</span>
+            <div class="frame" style="width:78px">
+              <div class="frame__head">D-FF</div>
+              <div class="frame__row" style="justify-content:center">Q3</div>
+            </div>
+          </div>
+          <div class="note center">4 个 D 触发器串联，每个时钟沿把数据向右移一位</div>
+        </div>
+      </div>
+
+      <div class="col" style="flex:0 0 470px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">触发器的种类与特性</div>
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:74px">名称</th><th style="width:150px">特性</th><th>说明</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="c">D-FF</td><td>时序电路</td><td>时钟沿到来时把输入 D 的值保存为 Q</td></tr>
+              <tr class="alt"><td class="c">JK-FF</td><td>时序电路</td><td>在置位、复位、保持、翻转四种动作间切换</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout mt16" style="font-size:16px">
+          <span class="callout__tag">要点</span>
+          <span>由触发器构成的存储电路可以<span class="kw">保持 1 位</span>信息；
+            <span class="mono">n</span> 个触发器组合起来就能保存 <span class="mono">n</span> 位数据，
+            这就是寄存器能够保存一个「字」的原因。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">6 / 31</div>
+</section>
+
+<!-- ======================================================== 7 LSI -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">构成处理器与存储器的元件:LSI</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:280px">名称</th>
+          <th style="width:170px">中文含义</th>
+          <th>集成的晶体管数量</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">LSI (large scale integration)</td>
+          <td><span class="kw">大规模集成电路</span></td>
+          <td>集成<span class="kw">一千～几十万个</span>晶体管；特别指规模很大的 IC</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">VLSI (very <span style="color:#93a3b3">-</span>)</td>
+          <td><span class="kw">超大规模集成电路</span></td>
+          <td>集成<span class="kw">几十万～几百万个</span>晶体管</td>
+        </tr>
+        <tr>
+          <td class="c">ULSI (ultra <span style="color:#93a3b3">-</span>)</td>
+          <td><span class="kw">特大规模集成电路</span></td>
+          <td>集成<span class="kw">一千万个以上</span>晶体管</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout--blue mt24">
+      <span class="callout__tag">术语</span>
+      <span>LSI 中的 <span class="mono">scale</span> 指的是<span class="kw">集成度</span>，
+        即一块芯片上能做出多少个晶体管/门电路；集成度越高，同一块芯片能实现的功能越复杂。</span>
+    </div>
+  </div>
+  <div class="page-no">7 / 31</div>
+</section>
+
+<!-- ======================================================== 8 Pentium4 制造 -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">Pentium 4 芯片的制造</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout" style="font-size:16px;padding:8px 13px">
+      <span class="callout__tag">参考</span>
+      <span>从硅锭到成品的八道工序。</span>
+    </div>
+
+    <div class="row row--top mt12" style="gap:20px">
+      <div class="col grow">
+        <table class="tbl tbl--sm">
+          <thead>
+            <tr><th style="width:44px">序号</th><th>工序内容</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">1</td><td>把硅锭切成薄片（～<span class="mono">2.5 mm</span>），制成<span class="kw-blue">晶圆</span>（wafer）</td></tr>
+            <tr class="alt"><td class="c">2</td><td>对晶圆进行一系列加工，形成由晶体管、导体、绝缘体构成的电路</td></tr>
+            <tr><td class="c">3</td><td>对晶圆进行测试（发现缺陷的不作为成品使用）</td></tr>
+            <tr class="alt"><td class="c">4</td><td>从晶圆上切出<span class="kw-blue">裸片</span>（die，即芯片）</td></tr>
+            <tr><td class="c">5</td><td>对裸片进行测试（发现缺陷的不作为成品使用）</td></tr>
+            <tr class="alt"><td class="c">6</td><td>对裸片进行<span class="kw-blue">封装</span></td></tr>
+            <tr><td class="c">7</td><td>进行部件测试</td></tr>
+            <tr class="alt"><td class="c">8</td><td>没有问题的产品<span class="kw">出厂</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col shrink0" style="width:360px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--amber">工序流程</div>
+          <div class="steps steps--tight">
+            <div class="steps__item"><span class="steps__no">1</span> 硅锭 → 晶圆</div>
+            <div class="steps__item"><span class="steps__no">2</span> 晶圆上形成电路</div>
+            <div class="steps__item"><span class="steps__no">3</span> 晶圆测试</div>
+            <div class="steps__item"><span class="steps__no">4</span> 切出裸片</div>
+            <div class="steps__item"><span class="steps__no">5</span> 裸片测试</div>
+            <div class="steps__item"><span class="steps__no">6</span> 封装</div>
+            <div class="steps__item"><span class="steps__no">7</span> 部件测试</div>
+            <div class="steps__item"><span class="steps__no">8</span> 出厂</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">8 / 31</div>
+</section>
+
+<!-- ======================================================== 9 源代码到机器语言 -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">从源代码到机器语言</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="row row--top" style="gap:14px">
+      <div class="col" style="flex:1.05 1 0">
+        <div class="code-label">C 语言</div>
+<pre class="code code--sm">int a,b,c,d;
+a = b + c;
+d = a * b;
+...</pre>
+      </div>
+      <div class="col" style="flex:1 1 0">
+        <div class="code-label">汇编语言</div>
+<pre class="code code--sm">lw  $9, 4($1)
+lw  $10, 8($1)
+add $8,$9,$10
+...</pre>
+      </div>
+      <div class="col" style="flex:1 1 0">
+        <div class="code-label">机器语言</div>
+<pre class="code code--sm">01001101
+00100100
+01001000
+00100000</pre>
+      </div>
+    </div>
+
+    <div class="row row--center mt12" style="gap:14px">
+      <div class="col" style="flex:1.05 1 0"><div class="note center">不能直接执行</div></div>
+      <div class="col" style="flex:1 1 0">
+        <div class="callout callout--blue center" style="justify-content:center;padding:6px 10px">
+          <span class="callout__tag">编译器</span><span>转换</span>
+        </div>
+      </div>
+      <div class="col" style="flex:1 1 0">
+        <div class="callout callout--blue center" style="justify-content:center;padding:6px 10px">
+          <span class="callout__tag">汇编器</span><span>转换</span>
+        </div>
+      </div>
+    </div>
+    <div class="note center mt8">可以直接在电路上执行</div>
+
+    <ul class="bullets bullets--compact mt16">
+      <li>高级语言的程序由<span class="kw">编译器</span>、<span class="kw">汇编器</span>等转换成机器语言的代码。</li>
+      <li>汇编语言与机器语言的指令是<span class="kw">一一对应</span>的。</li>
+    </ul>
+  </div>
+  <div class="page-no">9 / 31</div>
+</section>
+
+<!-- ======================================================== 10 确认问题 -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:20px">
+    <div class="quiz">
+      <div class="quiz__col">
+        <div class="quiz__item">
+          <span class="quiz__key">( 1 )</span>
+          <span>实现 <span class="mono">AND、OR、NOT</span> 等逻辑的元件称为（　　　）。</span>
+        </div>
+        <div class="quiz__item">
+          <span class="quiz__key">( 4 )</span>
+          <span>从高级编程语言到汇编语言代码的转换由（　　　）完成。</span>
+        </div>
+      </div>
+      <div class="quiz__col">
+        <div class="quiz__item">
+          <span class="quiz__key">( 2 )</span>
+          <span>把下列术语译成英文：集成电路</span>
+        </div>
+        <div class="quiz__item">
+          <span class="quiz__key">( 3 )</span>
+          <span>把下列术语译成英文：大规模集成电路</span>
+        </div>
+        <div class="quiz__item">
+          <span class="quiz__key">( 5 )</span>
+          <span>从汇编语言到机器语言的转换由（　　　）完成。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout--blue mt24">
+      <span class="callout__tag">提示</span>
+      <span>(2) 与 (3) 的答案分别是 <span class="mono">integrated circuit</span> 与
+        <span class="mono">large scale integration</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">10 / 31</div>
+</section>
+
+<!-- ======================================================== 11 讲义内容 -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">构成处理器与存储器的基本元件</div>
+        <div class="toc__items">
+          <div class="toc__item">晶体管、逻辑元件、IC</div>
+        </div>
+      </div>
+      <div class="toc__group">
+        <div class="toc__lead">二进制</div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">什么是二进制、十六进制</div>
+          <div class="toc__item">二进制与十进制的相互转换</div>
+          <div class="toc__item">负数的表示、2 的补码</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">11 / 31</div>
+</section>
+
+<!-- ======================================================== 12 二进制十进制十六进制 -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制、十进制、十六进制</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:26px">
+      <div class="col grow">
+        <ul class="bullets">
+          <li><span class="kw">二进制</span>：只用 <span class="mono">0～1</span> 表示的数。</li>
+          <li><span class="kw">十进制</span>：用 <span class="mono">0～9</span> 表示的数。</li>
+          <li><span class="kw">十六进制</span>：用 <span class="mono">0～9、a～f</span> 表示的数。
+            <ul class="bullets bullets--sub">
+              <li>※ 用大写（<span class="mono">A～F</span>）也可以。</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="col shrink0" style="width:330px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th>十进制</th><th>二进制</th><th>十六进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">0</td><td class="c">00000</td><td class="c">00</td></tr>
+            <tr class="alt"><td class="c">1</td><td class="c">00001</td><td class="c">01</td></tr>
+            <tr><td class="c">2</td><td class="c">00010</td><td class="c">02</td></tr>
+            <tr class="alt"><td class="c">3</td><td class="c">00011</td><td class="c">03</td></tr>
+            <tr><td class="c">4</td><td class="c">00100</td><td class="c">04</td></tr>
+            <tr class="alt"><td class="c">5</td><td class="c">00101</td><td class="c">05</td></tr>
+            <tr><td class="c">6</td><td class="c">00110</td><td class="c">06</td></tr>
+            <tr class="alt"><td class="c">7</td><td class="c">00111</td><td class="c">07</td></tr>
+            <tr><td class="c">8</td><td class="c">01000</td><td class="c">08</td></tr>
+            <tr class="alt"><td class="c">9</td><td class="c">01001</td><td class="c">09</td></tr>
+            <tr><td class="c">10</td><td class="c">01010</td><td class="c">0a</td></tr>
+            <tr class="alt"><td class="c">11</td><td class="c">01011</td><td class="c">0b</td></tr>
+            <tr><td class="c">12</td><td class="c">01100</td><td class="c">0c</td></tr>
+            <tr class="alt"><td class="c">13</td><td class="c">01101</td><td class="c">0d</td></tr>
+            <tr><td class="c">14</td><td class="c">01110</td><td class="c">0e</td></tr>
+            <tr class="alt"><td class="c">15</td><td class="c">01111</td><td class="c">0f</td></tr>
+            <tr><td class="c">16</td><td class="c">10000</td><td class="c">10</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">12 / 31</div>
+</section>
+
+<!-- ======================================================== 13 二进制与计算机 -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制与计算机</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <ul class="bullets bullets--compact">
+      <li>在计算机内部，把电位（电压 voltage）的<span class="kw">高低</span>分别对应为 <span class="mono">1</span> 和 <span class="mono">0</span>。</li>
+      <li>计算机内部的<span class="kw">数据与指令全部用二进制表示</span>。</li>
+    </ul>
+
+    <div class="row row--top mt20" style="gap:24px">
+      <div class="col shrink0" style="width:480px">
+        <table class="tbl">
+          <thead>
+            <tr><th style="width:230px">（相同的二进制数）</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>123（整数）</td><td class="c">01111011</td></tr>
+            <tr class="alt"><td>A（字符）</td><td class="c">01000001</td></tr>
+            <tr><td>load word 指令</td><td class="c">00100011</td></tr>
+            <tr class="alt"><td>35（整数）</td><td class="c">00100011</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col grow">
+        <div class="callout callout--red" style="font-size:19px">
+          <span class="callout__tag">相同?</span>
+          <span>即使是相同的二进制数，也可能有<span class="kw">各种不同的解释</span>
+            —— 因此<span class="kw">解释的规则非常重要</span>。</span>
+        </div>
+        <div class="note mt12">
+          例如，<span class="mono">00100011</span> 既可以被解释为整数 <span class="mono">35</span>，
+          也可以被解释为 <span class="mono">load word</span> 指令。
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">13 / 31</div>
+</section>
+
+<!-- ======================================================== 14 二进制 -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:18px">
+    <ul class="bullets">
+      <li>二进制：只用 <span class="mono">0</span> 和 <span class="mono">1</span> 表示的数。</li>
+      <li>数的<span class="kw">基数写在右下角</span>，用小字标注。</li>
+    </ul>
+
+    <table class="tbl mt20" style="width:760px">
+      <thead>
+        <tr><th style="width:300px">写法</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="c">十进制的 1111 → 1111<sub>10</sub></td><td>基数为 <span class="mono">10</span>，表示一千一百一十一</td></tr>
+        <tr class="alt"><td class="c">二进制的 1111 → 1111<sub>2</sub></td><td>基数为 <span class="mono">2</span>，表示 <span class="mono">8+4+2+1 = 15</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt20">
+      <span class="callout__tag">位</span>
+      <span><span class="kw">最高位</span>（MSB: most significant bit，最高有效位）与
+        <span class="kw">最低位</span>（LSB: least significant bit，最低有效位）：基数写在下标处，
+        最左边是最高位，最右边是最低位。</span>
+    </div>
+  </div>
+  <div class="page-no">14 / 31</div>
+</section>
+
+<!-- ======================================================== 15 二进制与十进制转换 -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制与十进制的相互转换</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title">二进制 → 十进制</div>
+<pre class="code code--sm">1111₂ = 1×2³ + 1×2² + 1×2¹ + 1×2⁰
+      = 1×8 + 1×4 + 1×2 + 1×1
+      = 15₁₀</pre>
+        </div>
+
+        <div class="panel panel--tight mt16">
+          <div class="panel__title panel__title--teal">十进制 → 二进制（反复除以 2，取余数）</div>
+<pre class="code code--sm">11 / 2 = 5  余 1
+ 5 / 2 = 2  余 1
+ 2 / 2 = 1  余 0
+ 1 / 2 = 0  余 1
+
+11₁₀ → 1011₂   <span class="cmt"># 余数自下而上排列</span></pre>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:450px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--amber">权重对照（十进制 1111 的展开）</div>
+<pre class="code code--sm">1111₁₀ = 1×1000 + 1×100 + 1×10 + 1×1
+       = 1×10³  + 1×10² + 1×10¹ + 1×10⁰
+
+位权： 10³   10²   10¹   10⁰
+      1000   100    10     1</pre>
+        </div>
+        <div class="callout mt16" style="font-size:16px">
+          <span class="callout__tag">对比</span>
+          <span>二进制的位权是 <span class="mono">2³ 2² 2¹ 2⁰ = 8 4 2 1</span>，
+            十进制的位权是 <span class="mono">10³ 10² 10¹ 10⁰ = 1000 100 10 1</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">15 / 31</div>
+</section>
+
+<!-- ======================================================== 16 二进制与十六进制转换 -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制与十六进制的相互转换</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:26px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title">二进制 → 十六进制</div>
+          <ul class="bullets bullets--sub" style="margin-top:4px">
+            <li>按<span class="kw">每 4 位</span>分组。</li>
+            <li>按右侧的表进行转换。</li>
+          </ul>
+<pre class="code code--sm mt12">例) 01011110₂
+   0101 1110
+   →   5    E
+   = 5E₁₆</pre>
+        </div>
+
+        <div class="panel panel--tight mt16">
+          <div class="panel__title panel__title--teal">十六进制 → 二进制</div>
+          <ul class="bullets bullets--sub" style="margin-top:4px">
+            <li>按右侧的表<span class="kw">每 4 位</span>展开。</li>
+          </ul>
+<pre class="code code--sm mt12">例) 5E₁₆ → 0101 1110₂</pre>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:380px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th>十六进制</th><th>二进制</th><th>十六进制</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">0</td><td class="c">0000</td><td class="c">8</td><td class="c">1000</td></tr>
+            <tr class="alt"><td class="c">1</td><td class="c">0001</td><td class="c">9</td><td class="c">1001</td></tr>
+            <tr><td class="c">2</td><td class="c">0010</td><td class="c">A</td><td class="c">1010</td></tr>
+            <tr class="alt"><td class="c">3</td><td class="c">0011</td><td class="c">B</td><td class="c">1011</td></tr>
+            <tr><td class="c">4</td><td class="c">0100</td><td class="c">C</td><td class="c">1100</td></tr>
+            <tr class="alt"><td class="c">5</td><td class="c">0101</td><td class="c">D</td><td class="c">1101</td></tr>
+            <tr><td class="c">6</td><td class="c">0110</td><td class="c">E</td><td class="c">1110</td></tr>
+            <tr class="alt"><td class="c">7</td><td class="c">0111</td><td class="c">F</td><td class="c">1111</td></tr>
+          </tbody>
+        </table>
+        <div class="note center mt8">每 4 位一组进行转换</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">16 / 31</div>
+</section>
+
+<!-- ======================================================== 17 绝对値表現 -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制的负数表示:绝对值表示法（原码）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout" style="font-size:17px;padding:8px 13px">
+      <span class="callout__tag">规则</span>
+      <span>符号位（<span class="mono">1</span>: 负数，<span class="mono">0</span>: 正数）<span class="kw">＋</span> 绝对值</span>
+    </div>
+
+    <div class="row row--top mt14" style="gap:34px">
+      <div class="col shrink0" style="width:350px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th colspan="2">负数部分</th></tr>
+            <tr><th style="width:50%">十进制</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">-8</td><td class="c">-</td></tr>
+            <tr class="alt"><td class="c">-7</td><td class="c">1111</td></tr>
+            <tr><td class="c">-6</td><td class="c">1110</td></tr>
+            <tr class="alt"><td class="c">-5</td><td class="c">1101</td></tr>
+            <tr><td class="c">-4</td><td class="c">1100</td></tr>
+            <tr class="alt"><td class="c">-3</td><td class="c">1011</td></tr>
+            <tr><td class="c">-2</td><td class="c">1010</td></tr>
+            <tr class="alt"><td class="c">-1</td><td class="c">1001</td></tr>
+            <tr><td class="c">-0</td><td class="c">1000</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col shrink0" style="width:350px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th colspan="2">正数部分</th></tr>
+            <tr><th style="width:50%">十进制</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">8</td><td class="c">-</td></tr>
+            <tr class="alt"><td class="c">7</td><td class="c">0111</td></tr>
+            <tr><td class="c">6</td><td class="c">0110</td></tr>
+            <tr class="alt"><td class="c">5</td><td class="c">0101</td></tr>
+            <tr><td class="c">4</td><td class="c">0100</td></tr>
+            <tr class="alt"><td class="c">3</td><td class="c">0011</td></tr>
+            <tr><td class="c">2</td><td class="c">0010</td></tr>
+            <tr class="alt"><td class="c">1</td><td class="c">0001</td></tr>
+            <tr><td class="c">0</td><td class="c">0000</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col grow">
+        <div class="callout callout--red">
+          <span class="callout__tag">注意</span>
+          <span>用 4 位<span class="kw">无法表示</span> <span class="mono">-8</span> 和 <span class="mono">8</span>。</span>
+        </div>
+        <div class="note mt16">
+          表中最左列是符号位。绝对值表示法存在两个零（<span class="mono">+0 = 0000</span>、<span class="mono">-0 = 1000</span>），
+          这会给加法的实现带来麻烦。
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">17 / 31</div>
+</section>
+
+<!-- ======================================================== 18 1 的补数 -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制的负数表示:1 的补数（反码）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout" style="font-size:17px;padding:8px 13px">
+      <span class="callout__tag">规则</span>
+      <span>把 <span class="mono">0</span> 和 <span class="mono">1</span> <span class="kw">逐位取反</span>。</span>
+    </div>
+
+    <div class="row row--top mt14" style="gap:34px">
+      <div class="col shrink0" style="width:350px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th colspan="2">负数部分</th></tr>
+            <tr><th style="width:50%">十进制</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">-8</td><td class="c">-</td></tr>
+            <tr class="alt"><td class="c">-7</td><td class="c">1000</td></tr>
+            <tr><td class="c">-6</td><td class="c">1001</td></tr>
+            <tr class="alt"><td class="c">-5</td><td class="c">1010</td></tr>
+            <tr><td class="c">-4</td><td class="c">1011</td></tr>
+            <tr class="alt"><td class="c">-3</td><td class="c">1100</td></tr>
+            <tr><td class="c">-2</td><td class="c">1101</td></tr>
+            <tr class="alt"><td class="c">-1</td><td class="c">1110</td></tr>
+            <tr><td class="c">-0</td><td class="c">1111</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col shrink0" style="width:350px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th colspan="2">正数部分</th></tr>
+            <tr><th style="width:50%">十进制</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">8</td><td class="c">-</td></tr>
+            <tr class="alt"><td class="c">7</td><td class="c">0111</td></tr>
+            <tr><td class="c">6</td><td class="c">0110</td></tr>
+            <tr class="alt"><td class="c">5</td><td class="c">0101</td></tr>
+            <tr><td class="c">4</td><td class="c">0100</td></tr>
+            <tr class="alt"><td class="c">3</td><td class="c">0011</td></tr>
+            <tr><td class="c">2</td><td class="c">0010</td></tr>
+            <tr class="alt"><td class="c">1</td><td class="c">0001</td></tr>
+            <tr><td class="c">0</td><td class="c">0000</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col grow">
+        <div class="callout callout--red">
+          <span class="callout__tag">注意</span>
+          <span>用 4 位<span class="kw">无法表示</span> <span class="mono">-8</span> 和 <span class="mono">8</span>。</span>
+        </div>
+        <div class="note mt16">
+          例如 <span class="mono">-1</span>：先写出 <span class="mono">1 = 0001</span>，
+          逐位取反得到 <span class="mono">1110</span>。1 的补数表示法中同样存在
+          <span class="mono">+0 = 0000</span> 与 <span class="mono">-0 = 1111</span> 两个零。
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">18 / 31</div>
+</section>
+
+<!-- ======================================================== 19 2 的补数 -->
+<section class="slide" id="s19">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制的负数表示:2 的补数（补码）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout" style="font-size:17px;padding:8px 13px">
+      <span class="callout__tag">规则</span>
+      <span><span class="kw">1 的补数 ＋ 1</span></span>
+    </div>
+
+    <div class="row row--top mt14" style="gap:34px">
+      <div class="col shrink0" style="width:350px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th colspan="2">负数部分</th></tr>
+            <tr><th style="width:50%">十进制</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">-8</td><td class="c">1000</td></tr>
+            <tr class="alt"><td class="c">-7</td><td class="c">1001</td></tr>
+            <tr><td class="c">-6</td><td class="c">1010</td></tr>
+            <tr class="alt"><td class="c">-5</td><td class="c">1011</td></tr>
+            <tr><td class="c">-4</td><td class="c">1100</td></tr>
+            <tr class="alt"><td class="c">-3</td><td class="c">1101</td></tr>
+            <tr><td class="c">-2</td><td class="c">1110</td></tr>
+            <tr class="alt"><td class="c">-1</td><td class="c">1111</td></tr>
+            <tr><td class="c">-0</td><td class="c">0000</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col shrink0" style="width:350px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th colspan="2">正数部分</th></tr>
+            <tr><th style="width:50%">十进制</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">8</td><td class="c">-</td></tr>
+            <tr class="alt"><td class="c">7</td><td class="c">0111</td></tr>
+            <tr><td class="c">6</td><td class="c">0110</td></tr>
+            <tr class="alt"><td class="c">5</td><td class="c">0101</td></tr>
+            <tr><td class="c">4</td><td class="c">0100</td></tr>
+            <tr class="alt"><td class="c">3</td><td class="c">0011</td></tr>
+            <tr><td class="c">2</td><td class="c">0010</td></tr>
+            <tr class="alt"><td class="c">1</td><td class="c">0001</td></tr>
+            <tr><td class="c">0</td><td class="c">0000</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col grow">
+        <div class="callout callout--blue">
+          <span class="callout__tag">关键</span>
+          <span>在 2 的补数表示法下，4 位可以表示 <span class="mono">-8</span> 了
+            （<span class="mono">1000</span>），并且 <span class="mono">-0</span> 与 <span class="mono">0</span>
+            合并为同一个 <span class="mono">0000</span>。</span>
+        </div>
+        <div class="note mt16">
+          例如 <span class="mono">-1</span>：<span class="mono">1 = 0001</span> → 取反 <span class="mono">1110</span> → 加 1 → <span class="mono">1111</span>。
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">19 / 31</div>
+</section>
+
+<!-- ======================================================== 20 负数取 2 的补数 -->
+<section class="slide" id="s20">
+  <div class="slide__head">
+    <h2 class="slide__title">对负数再取 2 的补数会怎样?</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout" style="font-size:17px;padding:8px 13px">
+      <span class="callout__tag">规则</span>
+      <span><span class="kw">1 的补数 ＋ 1</span></span>
+    </div>
+
+    <div class="row row--top mt14" style="gap:34px">
+      <div class="col shrink0" style="width:350px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th colspan="2">负数部分</th></tr>
+            <tr><th style="width:50%">十进制</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">-8</td><td class="c">1000</td></tr>
+            <tr class="alt"><td class="c">-7</td><td class="c">1001</td></tr>
+            <tr><td class="c">-6</td><td class="c">1010</td></tr>
+            <tr class="alt"><td class="c">-5</td><td class="c">1011</td></tr>
+            <tr><td class="c">-4</td><td class="c">1100</td></tr>
+            <tr class="alt"><td class="c">-3</td><td class="c">1101</td></tr>
+            <tr><td class="c">-2</td><td class="c">1110</td></tr>
+            <tr class="alt"><td class="c">-1</td><td class="c">1111</td></tr>
+            <tr><td class="c">-0</td><td class="c">0000</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col shrink0" style="width:350px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th colspan="2">正数部分</th></tr>
+            <tr><th style="width:50%">十进制</th><th>二进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">8</td><td class="c">-</td></tr>
+            <tr class="alt"><td class="c">7</td><td class="c">0111</td></tr>
+            <tr><td class="c">6</td><td class="c">0110</td></tr>
+            <tr class="alt"><td class="c">5</td><td class="c">0101</td></tr>
+            <tr><td class="c">4</td><td class="c">0100</td></tr>
+            <tr class="alt"><td class="c">3</td><td class="c">0011</td></tr>
+            <tr><td class="c">2</td><td class="c">0010</td></tr>
+            <tr class="alt"><td class="c">1</td><td class="c">0001</td></tr>
+            <tr><td class="c">0</td><td class="c">0000</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">验证：对负数取 2 的补数，得到对应的正数</div>
+<pre class="code code--sm code--wrap">-1 = 1111  → 取反 0000 → 加 1 → 0001 = 1
+-2 = 1110  → 取反 0001 → 加 1 → 0010 = 2
+-4 = 1100  → 取反 0011 → 加 1 → 0100 = 4
+-8 = 1000  → 取反 0111 → 加 1 → 1000 ？</pre>
+        </div>
+        <div class="callout mt14" style="font-size:16px">
+          <span class="callout__tag">注意</span>
+          <span>取 <span class="mono">-8</span> 的 2 的补数后仍然得到 <span class="mono">1000</span>：
+            4 位 2 的补数能表示的最小值是 <span class="mono">-8</span>，而 <span class="mono">+8</span> 无法表示，
+            这也是<span class="kw">溢出</span>产生的原因。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">20 / 31</div>
+</section>
+
+<!-- ======================================================== 21 2 的补数的优点 -->
+<section class="slide" id="s21">
+  <div class="slide__head">
+    <h2 class="slide__title">2 的补数的优点</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:18px">
+    <ul class="bullets">
+      <li>看<span class="kw">最高位</span>就能知道符号：
+        <ul class="bullets bullets--sub">
+          <li><span class="mono">1</span> → 负，<span class="mono">0</span> → 正。</li>
+        </ul>
+      </li>
+      <li><span class="kw">没有 -0</span>。</li>
+      <li>加法可以<span class="kw">简单地实现</span>（减法可以转换为加法）。</li>
+      <li><span class="kw">符号扩展</span>也很容易。
+        <ul class="bullets bullets--sub">
+          <li><span class="kw-blue">符号扩展</span>：把值转换为使用更多位的值（<span class="mono">8 bit → 16 bit</span>）。</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">对比</span>
+      <span>绝对值表示法与 1 的补数都存在 <span class="mono">-0</span>，因此需要为「零」做特殊判断；
+        2 的补数把 <span class="mono">0</span> 与 <span class="mono">-0</span> 统一为 <span class="mono">0000</span>，
+        使得加法器电路可以不加修改地同时处理正负数。</span>
+    </div>
+  </div>
+  <div class="page-no">21 / 31</div>
+</section>
+
+<!-- ======================================================== 22 有符号与无符号 -->
+<section class="slide" id="s22">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制与十进制的转换（有符号 / 无符号）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title">二进制 → 十进制（无符号）<span class="note" style="font-weight:400">（再次给出）</span></div>
+<pre class="code code--sm">1111₂ = 1×2³ + 1×2² + 1×2¹ + 1×2⁰
+      = 1×8 + 1×4 + 1×2 + 1×1
+      = 15₁₀</pre>
+        </div>
+
+        <div class="panel panel--tight mt16">
+          <div class="panel__title panel__title--red">二进制 → 十进制（有符号，2 的补数）</div>
+<pre class="code code--sm">1111₂ = <span class="hi">-</span>1×2³ + 1×2² + 1×2¹ + 1×2⁰
+      = <span class="hi">-</span>1×8 + 1×4 + 1×2 + 1×1
+      = <span class="hi">-1</span>₁₀</pre>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:430px">
+        <div class="callout callout--red" style="font-size:17px">
+          <span class="callout__tag">要点</span>
+          <span>符号位的位权是<span class="kw">负数</span>：最高位的权为 <span class="mono">-2³</span>；
+            其余各位的权仍为 <span class="mono">2² 2¹ 2⁰</span>。</span>
+        </div>
+        <table class="tbl tbl--sm mt16">
+          <thead>
+            <tr><th style="width:110px">位</th><th style="width:90px">b₃（MSB）</th><th>b₂</th><th>b₁</th><th>b₀</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>位权（有符号）</td><td class="c red">-2³</td><td class="c">2²</td><td class="c">2¹</td><td class="c">2⁰</td></tr>
+            <tr class="alt"><td class="c">值</td><td class="c red">-8</td><td class="c">4</td><td class="c">2</td><td class="c">1</td></tr>
+            <tr><td>1111₂ 各位</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td></tr>
+          </tbody>
+        </table>
+        <div class="note mt8">同一个 <span class="mono">1111₂</span>：无符号解释为 <span class="mono">15</span>，有符号解释为 <span class="mono">-1</span>。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">22 / 31</div>
+</section>
+
+<!-- ======================================================== 23 正当性 -->
+<section class="slide" id="s23">
+  <div class="slide__head">
+    <h2 class="slide__title">2 的补数转换的正当性</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue" style="font-size:18px;padding:8px 13px">
+      <span class="callout__tag">问题</span>
+      <span>为什么「逐位取反再加 1」就能得到负数？</span>
+    </div>
+
+    <div class="row row--top mt14" style="gap:22px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title">证明</div>
+<pre class="code code--sm">①  a₃a₂a₁a₀ + ~a₃~a₂~a₁~a₀ = 1111₂
+②  a₃a₂a₁a₀ + (~a₃~a₂~a₁~a₀ + 1) = 10000₂ = 0
+    (a₃a₂a₁a₀ + 1) + ~a₃~a₂~a₁~a₀ = 10000₂ = 0</pre>
+        </div>
+
+        <div class="panel panel--tight mt14">
+          <div class="panel__title panel__title--teal">位权展开</div>
+<pre class="code code--sm">a₃a₂a₁a₀   = -2³·a₃ + 2²·a₂ + 2¹·a₁ + 2⁰·a₀
+~a₃~a₂~a₁~a₀ = -2³·~a₃ + 2²·~a₂ + 2¹·~a₁ + 2⁰·~a₀
+
+a₃a₂a₁a₀ + ~a₃~a₂~a₁~a₀
+  = -2³ + 2² + 2¹ + 2⁰ = -1</pre>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:430px">
+        <div class="callout">
+          <span class="callout__tag">结论</span>
+          <span>把 <span class="mono">a₃a₂a₁a₀</span> 与它的逐位取反相加，与 <span class="mono">-1</span> 同值；
+            因此「取反 ＋ 1」得到的就是该数的<span class="kw">相反数</span>。</span>
+        </div>
+
+        <table class="tbl tbl--sm mt16">
+          <thead>
+            <tr><th style="width:150px">表达式</th><th>值</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">a₃a₂a₁a₀ + ~a₃~a₂~a₁~a₀</td><td class="c">1111₂</td></tr>
+            <tr class="alt"><td class="c">1111₂ 按有符号解释</td><td class="c red">-1</td></tr>
+            <tr><td class="c">10000₂（4 位溢出后）</td><td class="c">0</td></tr>
+          </tbody>
+        </table>
+        <div class="note mt8">※ 4 位寄存器保存不了 <span class="mono">10000₂</span>，最高位自然丢失，结果即为 <span class="mono">0</span>。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">23 / 31</div>
+</section>
+
+<!-- ======================================================== 24 确认问题 -->
+<section class="slide" id="s24">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="quiz">
+      <div class="quiz__col">
+        <div class="quiz__item"><span class="quiz__key">(1)</span><span>把无符号整数 <span class="mono">10101010₂</span> 转换成十进制。</span></div>
+        <div class="quiz__item"><span class="quiz__key">(2)</span><span>把无符号整数 <span class="mono">11110010₂</span> 转换成十六进制。</span></div>
+        <div class="quiz__item"><span class="quiz__key">(3)</span><span>把 <span class="mono">23₁₀</span> 转换成 8 位二进制数。</span></div>
+        <div class="quiz__item"><span class="quiz__key">(4)</span><span>把 <span class="mono">23₁₀</span> 转换成十六进制。</span></div>
+      </div>
+      <div class="quiz__col">
+        <div class="quiz__item"><span class="quiz__key">(5)</span><span>把 <span class="mono">-21₁₀</span> 用<span class="kw">绝对值表示法</span>转换成 8 位二进制数。</span></div>
+        <div class="quiz__item"><span class="quiz__key">(6)</span><span>把 <span class="mono">-21₁₀</span> 用<span class="kw">1 的补数</span>表示转换成 8 位二进制数。</span></div>
+        <div class="quiz__item"><span class="quiz__key">(7)</span><span>把 <span class="mono">-21₁₀</span> 用<span class="kw">2 的补数</span>表示转换成 8 位二进制数。</span></div>
+        <div class="quiz__item"><span class="quiz__key">(8)</span><span>用 2 的补数表示时，8 位能表示的数值范围是多少？</span></div>
+      </div>
+    </div>
+
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">提示</span>
+      <span>先写出 <span class="mono">21₁₀ = 00010101₂</span>，再分别按三种表示法的规则处理符号位(或取反、取反加 1)。</span>
+    </div>
+  </div>
+  <div class="page-no">24 / 31</div>
+</section>
+
+<!-- ======================================================== 25 参考文献 -->
+<section class="slide" id="s25">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:26px">
+    <div class="refs">
+      <div class="refs__item">
+        《计算机组成与设计:硬件 / 软件接口》第 5 版（上）
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span>
+      </div>
+      <div class="refs__item">
+        David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社
+      </div>
+      <div class="refs__item">
+        山下茂《计算机组成原理 1》课程讲义
+        <span class="refs__en">山下茂「計算機構成論１」講義資料</span>
+      </div>
+    </div>
+
+    <div class="callout callout--red mt24" style="font-size:17px">
+      <span class="callout__tag">注意</span>
+      <span>图片可能受版权保护，禁止公开与分发。</span>
+    </div>
+  </div>
+  <div class="page-no">25 / 31</div>
+</section>
+
+<!-- ======================================================== 26 追加参考资料 -->
+<section class="slide" id="s26">
+  <div class="slide__head">
+    <h2 class="slide__title">以下为补充参考资料</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:26px">
+    <div class="callout callout--blue" style="font-size:19px">
+      <span class="callout__tag">补充</span>
+      <span>以下，补充参考资料。</span>
+    </div>
+
+    <ul class="bullets bullets--compact mt20">
+      <li>nMOS 晶体管（作为开关工作）——参考资料</li>
+      <li>LSI 的制造工艺流程</li>
+      <li>无符号整数的二进制表示（1/2、2/2）——复习</li>
+      <li>有符号整数的表示——复习</li>
+    </ul>
+  </div>
+  <div class="page-no">26 / 31</div>
+</section>
+
+<!-- ======================================================== 27 nMOS -->
+<section class="slide" id="s27">
+  <div class="slide__head">
+    <h2 class="slide__title">nMOS 晶体管（作为开关工作）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:26px">
+      <div class="col shrink0" style="width:660px">
+        <div class="xsec">
+          <div class="xsec__al xsec__al--s">铝布线</div>
+          <div class="xsec__al xsec__al--d">铝布线</div>
+          <div class="xsec__al xsec__al--g">铝布线</div>
+          <div class="xsec__gate">栅极（多晶硅）</div>
+          <div class="xsec__ox">绝缘膜（SiO<sub>2</sub>）</div>
+          <div class="xsec__ch">沟道</div>
+          <div class="xsec__sub">p 型衬底</div>
+          <div class="xsec__n xsec__n--l"><span>n 型</span><span class="xsec__n-sub">源极 source</span></div>
+          <div class="xsec__n xsec__n--r"><span>n 型</span><span class="xsec__n-sub">漏极 drain</span></div>
+          
+          
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">工作原理</div>
+          <ul class="bullets bullets--sub" style="margin-top:2px">
+            <li>当栅极加上电压时，源极与漏极之间会聚集电子。</li>
+            <li><span class="kw">→ 电流流通</span>（导通）。</li>
+          </ul>
+        </div>
+
+        <div class="panel panel--tight mt14">
+          <div class="panel__title panel__title--amber">输入（栅极电压）</div>
+          <table class="tbl tbl--sm">
+            <thead>
+              <tr><th style="width:190px">栅极输入</th><th>状态</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="c">0 V</td><td><span class="kw">关断</span>（OFF）</td></tr>
+              <tr class="alt"><td class="c">5 V</td><td><span class="kw-blue">导通</span>（ON）</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note mt12">nMOS 晶体管就是这样一个由电压控制的开关，CMOS 电路由 nMOS 与 pMOS 成对组成。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">27 / 31</div>
+</section>
+
+<!-- ======================================================== 28 LSI 制造工程 -->
+<section class="slide" id="s28">
+  <div class="slide__head">
+    <h2 class="slide__title">LSI 的制造工艺流程</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="callout" style="font-size:16px;padding:8px 13px">
+      <span class="callout__tag">参考</span>
+      <span>参考书图 1.12（英文版）。</span>
+    </div>
+
+    <div class="row row--center mt24" style="gap:10px;flex-wrap:nowrap">
+      <div class="pipe__node" style="white-space:normal;width:132px">硅锭<br><span class="note">单晶硅</span></div>
+      <div class="note">→</div>
+      <div class="pipe__node" style="white-space:normal;width:132px">晶圆<br><span class="note">wafer</span></div>
+      <div class="note">→</div>
+      <div class="pipe__node" style="white-space:normal;width:150px">光刻 / 蚀刻 / 掺杂<br><span class="note">circuit</span></div>
+      <div class="note">→</div>
+      <div class="pipe__node" style="white-space:normal;width:132px">晶圆测试<br><span class="note">wafer test</span></div>
+      <div class="note">→</div>
+      <div class="pipe__node" style="white-space:normal;width:132px">切出裸片<br><span class="note">dicing</span></div>
+    </div>
+    <div class="row row--center mt20" style="gap:10px;flex-wrap:nowrap">
+      <div class="pipe__node" style="white-space:normal;width:132px">封装<br><span class="note">package</span></div>
+      <div class="note">→</div>
+      <div class="pipe__node" style="white-space:normal;width:132px">裸片测试<br><span class="note">die test</span></div>
+      <div class="note">→</div>
+      <div class="pipe__node" style="white-space:normal;width:132px">部件测试<br><span class="note">parts test</span></div>
+      <div class="note">→</div>
+      <div class="pipe__node" style="white-space:normal;width:160px">出厂<br><span class="note">shipment</span></div>
+    </div>
+
+    <div class="callout callout--blue mt24">
+      <span class="callout__tag">与第 8 页的关系</span>
+      <span>第 8 页的八道工序是这里的<span class="kw">细化版本</span>：晶圆制造 → 电路形成 → 晶圆测试 →
+        切出裸片 → 裸片测试 → 封装 → 部件测试 → 出厂。</span>
+    </div>
+  </div>
+  <div class="page-no">28 / 31</div>
+</section>
+
+<!-- ======================================================== 29 无符号整数 1/2 -->
+<section class="slide" id="s29">
+  <div class="slide__head">
+    <h2 class="slide__title">无符号整数的二进制表示 (1/2)（复习?）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <ul class="bullets bullets--compact">
+      <li>给每一位分配权重 <span class="mono">2ⁿ⁻¹ … 2³ 2² 2¹ 2⁰</span>。</li>
+      <li>用 <span class="mono">0、1</span> 的排列来表示整数的方法。</li>
+      <li>以 <span class="mono">2</span> 为基数（radix / base number）来表示整数的方法。</li>
+      <li><span class="mono">0000, 0001, 0010, 0011, …, 1110, 1111</span></li>
+    </ul>
+
+    <div class="row row--top mt20" style="gap:24px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title">正整数的位权展开</div>
+<pre class="code code--sm">对于正整数 X 的 n 位二进制数
+ (xₙ₋₁ xₙ₋₂ … x₁ x₀)₂      xᵢ ∈ {0, 1}
+
+ X = xₙ₋₁·2ⁿ⁻¹ + xₙ₋₂·2ⁿ⁻² + … + x₁·2 + x₀·2⁰
+
+ 位权： 2ⁿ⁻¹ …  2³  2²  2¹  2⁰
+          ↑                    ↑
+        MSB                  LSB</pre>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:430px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--amber">术语</div>
+          <table class="tbl tbl--sm">
+            <thead>
+              <tr><th style="width:150px">术语</th><th>含义</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="c">bit</td><td>每一位称为一个比特（bit: binary digit）</td></tr>
+              <tr class="alt"><td class="c">MSB</td><td>最高有效位（Most Significant Bit）</td></tr>
+              <tr><td class="c">LSB</td><td>最低有效位（Least Significant Bit）</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note mt12">例：<span class="mono">1011₂</span> 的 MSB 是 <span class="mono">1</span>，LSB 是 <span class="mono">1</span>。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">29 / 31</div>
+</section>
+
+<!-- ======================================================== 30 无符号整数 2/2 -->
+<section class="slide" id="s30">
+  <div class="slide__head">
+    <h2 class="slide__title">无符号整数的二进制表示 (2/2)</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="three">
+      <div class="col shrink0" style="width:300px">
+        <div class="callout" style="font-size:16px">
+          <span class="callout__tag">表示范围</span>
+          <span><span class="mono">n</span> 位可以表示 <span class="mono">0</span> 到
+            <span class="mono">2ⁿ - 1</span> 的数。</span>
+        </div>
+        <div class="panel panel--tight mt12">
+          <div class="panel__title panel__title--teal" style="font-size:16px">8 位的例子</div>
+          <ul class="bullets bullets--sub" style="margin-top:2px">
+            <li><span class="mono">0</span> 到 <span class="mono">255</span> 为止</li>
+            <li><span class="mono">00000000</span> … <span class="mono">0</span></li>
+            <li><span class="mono">11111111</span> … <span class="mono">255</span></li>
+            <li>例如 <span class="mono">00101010</span></li>
+          </ul>
+        </div>
+        <div class="note mt12">
+          8 位的位权：<br>
+          <span class="mono">2⁷ 2⁶ 2⁵ 2⁴ 2³ 2² 2¹ 2⁰</span><br>
+          <span class="mono">128 64 32 16 8 4 2 1</span>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:176px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th>十进制</th><th>二进制</th><th>十六进制</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">0</td><td class="c">00000</td><td class="c">00</td></tr>
+            <tr class="alt"><td class="c">1</td><td class="c">00001</td><td class="c">01</td></tr>
+            <tr><td class="c">2</td><td class="c">00010</td><td class="c">02</td></tr>
+            <tr class="alt"><td class="c">3</td><td class="c">00011</td><td class="c">03</td></tr>
+            <tr><td class="c">4</td><td class="c">00100</td><td class="c">04</td></tr>
+            <tr class="alt"><td class="c">5</td><td class="c">00101</td><td class="c">05</td></tr>
+            <tr><td class="c">6</td><td class="c">00110</td><td class="c">06</td></tr>
+            <tr class="alt"><td class="c">7</td><td class="c">00111</td><td class="c">07</td></tr>
+            <tr><td class="c">8</td><td class="c">01000</td><td class="c">08</td></tr>
+            <tr class="alt"><td class="c">9</td><td class="c">01001</td><td class="c">09</td></tr>
+            <tr><td class="c">10</td><td class="c">01010</td><td class="c">0a</td></tr>
+            <tr class="alt"><td class="c">11</td><td class="c">01011</td><td class="c">0b</td></tr>
+            <tr><td class="c">12</td><td class="c">01100</td><td class="c">0c</td></tr>
+            <tr class="alt"><td class="c">13</td><td class="c">01101</td><td class="c">0d</td></tr>
+            <tr><td class="c">14</td><td class="c">01110</td><td class="c">0e</td></tr>
+            <tr class="alt"><td class="c">15</td><td class="c">01111</td><td class="c">0f</td></tr>
+            <tr><td class="c">16</td><td class="c">10000</td><td class="c">10</td></tr>
+            <tr class="alt"><td class="c">17</td><td class="c">10001</td><td class="c">11</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title">位权示意</div>
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th>位</th><th class="c">2⁷</th><th class="c">2⁶</th><th class="c">2⁵</th><th class="c">2⁴</th><th class="c">2³</th><th class="c">2²</th><th class="c">2¹</th><th class="c">2⁰</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>权</td><td class="c">128</td><td class="c">64</td><td class="c">32</td><td class="c">16</td><td class="c">8</td><td class="c">4</td><td class="c">2</td><td class="c">1</td></tr>
+              <tr class="alt"><td class="c">00101010</td><td class="c">0</td><td class="c">0</td><td class="c">1</td><td class="c">0</td><td class="c">1</td><td class="c">0</td><td class="c">1</td><td class="c">0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout--blue mt12" style="font-size:16px">
+          <span class="callout__tag">核对</span>
+          <span><span class="mono">00101010₂ = 32 + 8 + 2 = 42₁₀</span>，而 8 位的最大值是
+            <span class="mono">11111111₂ = 255₁₀</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">30 / 31</div>
+</section>
+
+<!-- ======================================================== 31 有符号整数 -->
+<section class="slide" id="s31">
+  <div class="slide__head">
+    <h2 class="slide__title">有符号整数的表示（复习?）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:22px">
+      <div class="col shrink0" style="width:430px">
+        <div class="panel panel--tight">
+          <div class="panel__title">表示法</div>
+          <ul class="bullets bullets--sub" style="margin-top:2px">
+            <li>让最高位具有<span class="kw">负权重</span>的表示法（2 的补数）。</li>
+            <li><span class="mono">n</span> 位可以表示 <span class="mono">-2ⁿ⁻¹</span> 到 <span class="mono">2ⁿ⁻¹-1</span> 的数。</li>
+            <li>8 位的例子：<span class="mono">-128</span> 到 <span class="mono">127</span> 为止。</li>
+            <li><span class="mono">10000000, 01111111, 10000001, 11111111</span></li>
+          </ul>
+        </div>
+        <div class="callout callout--red mt14" style="font-size:16px">
+          <span class="callout__tag">术语</span>
+          <span>最高位称为<span class="kw">符号位</span>。</span>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">位权与取值（8 位）</div>
+          <table class="tbl tbl--sm">
+            <thead>
+              <tr>
+                <th class="c">-2⁷</th><th class="c">2⁶</th><th class="c">2⁵</th><th class="c">2⁴</th>
+                <th class="c">2³</th><th class="c">2²</th><th class="c">2¹</th><th class="c">2⁰</th>
+                <th style="width:190px">计算结果</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="c">1</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">= -2⁷ = <span class="kw">-128</span></td></tr>
+              <tr class="alt"><td class="c">1</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">1</td><td class="c">= -2⁷ + 2⁰ = <span class="kw">-127</span></td></tr>
+              <tr><td class="c">0</td><td class="c">1</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">0</td><td class="c">1</td><td class="c">= 2⁶ + 2⁰ = <span class="kw">65</span></td></tr>
+              <tr class="alt"><td class="c">0</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">= <span class="kw">127</span>（= 2ⁿ⁻¹ - 1）</td></tr>
+              <tr><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">= <span class="kw">-1</span>？</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note mt12">
+          范围上限 <span class="mono">2ⁿ⁻¹ - 1</span>；范围下限 <span class="mono">-2ⁿ⁻¹</span>。
+          8 位时即 <span class="mono">-128 ～ 127</span>。
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">31 / 31</div>
+</section>
+
+</div>
+</body>
+</html>
+
+
+

@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第8讲 指令的执行（2）· 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+<style>
+  .cover__art { --cover-art: url("assets/ch8-cover-bg.png"); }
+</style>
+</head>
+<body>
+<div class="deck" data-chapter="8">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__art"></div>
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 8 讲</div>
+    <h1 class="cover__title">指令的<em>执行</em>（2）</h1>
+    <p class="cover__sub">编译器 · 汇编器 · 链接器 · 加载器</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    薛昕惟
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第8回 ―命令の実行(2)―」<br>
+    中文翻译版
+  </div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">编译器<span class="toc__item--jp">コンパイラ — 编译器</span></div>
+          <div class="toc__item toc__item--active">汇编器<span class="toc__item--jp">アセンブラ — 汇编器</span></div>
+          <div class="toc__item">链接器<span class="toc__item--jp">リンカ — 链接器</span></div>
+          <div class="toc__item">加载器<span class="toc__item--jp">ローダ — 加载器</span></div>
+        </div>
+      </div>
+      <div class="toc__group">
+        <div class="toc__lead">从 C 程序到汇编代码的转换</div>
+        <div class="toc__items">
+          <div class="toc__item">以 swap、sort 为例<span class="toc__item--jp">swap, sort を例に</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">2 / 33</div>
+</section>
+
+<!-- ======================================================== 3 C 语言开发 -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">使用 C 语言进行开发</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col" style="width:300px">
+        <div class="code-label">main.c</div>
+        <pre class="code code--sm">int main(){
+    ...
+    printf("Hello");
+    ...
+    proc();
+    ...
+}</pre>
+      </div>
+      <div class="col" style="width:300px">
+        <div class="code-label">proc.c</div>
+        <pre class="code code--sm">void proc(){
+    ...
+    ...
+    ...
+}
+
+</pre>
+      </div>
+      <div class="col grow">
+        <div class="callout callout--blue">
+          <span class="callout__tag">标准库</span>
+          <span>在 C 语言程序开发中，通常会把程序拆分到<span class="kw-blue">多个文件</span>中，并且还会使用<span class="kw-blue">标准库</span>：<span class="mono">stdio.h</span>、<span class="mono">stdlib.h</span> 等等。</span>
+        </div>
+      </div>
+    </div>
+
+    <ul class="bullets mt24">
+      <li>在 C 语言的程序开发中，使用多个文件是<span class="kw">通常做法</span>。</li>
+      <li>同时也会使用标准库（<span class="mono">stdio.h</span>、<span class="mono">stdlib.h</span> 等）。</li>
+    </ul>
+  </div>
+  <div class="page-no">3 / 33</div>
+</section>
+
+<!-- ======================================================== 4 启动流程 -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">C 程序启动之前</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <img class="figure" src="assets/ch8-p04-compile-flow.png" alt="C 程序从源文件到装入内存的编译、汇编、链接、加载流程"
+         style="height:548px">
+  </div>
+  <div class="page-no">4 / 33</div>
+</section>
+
+<!-- ======================================================== 5 编译器 -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">编译器</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets">
+      <li>把<span class="kw">源代码</span>转换为<span class="kw">汇编代码</span>。</li>
+      <li>汇编代码是用<span class="kw-blue">符号（助记符）</span>表示机器所能解释的代码的产物。
+        <ul class="bullets bullets--sub">
+          <li>（原则上）可以与机器语言<span class="kw">一一对应</span>地转换。</li>
+        </ul>
+      </li>
+      <li>汇编代码中有时会包含<span class="kw">伪指令</span>。
+        <ul class="bullets bullets--sub">
+          <li><span class="kw-blue">伪指令</span>：并不包含在汇编语言的指令集中，但为了方便而提供的指令。
+            <ul class="bullets bullets--deep">
+              <li>例如：<span class="mono">blt</span>（branch less than，小于则转移）</li>
+              <li>例如：<span class="mono">move</span>（寄存器之间的数据复制）</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="page-no">5 / 33</div>
+</section>
+
+<!-- ======================================================== 6 讲义内容 -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">编译器</div>
+          <div class="toc__item toc__item--active">汇编器</div>
+          <div class="toc__item">链接器</div>
+          <div class="toc__item">加载器</div>
+        </div>
+      </div>
+      <div class="toc__group">
+        <div class="toc__lead">从 C 程序到汇编代码的转换</div>
+        <div class="toc__items">
+          <div class="toc__item">以 swap、sort 为例</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">6 / 33</div>
+</section>
+
+<!-- ======================================================== 7 汇编器 -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">汇编器</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li>把<span class="kw">汇编代码</span>转换为<span class="kw">机器语言</span>（这一过程称为<span class="kw-blue">汇编</span>）。</li>
+      <li>输出到<span class="kw">目标文件</span>（目的文件）中（后述）。</li>
+      <li>把<span class="kw">伪指令</span>替换为实际的指令。</li>
+    </ul>
+
+    <div class="row row--top mt16">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">伪指令的展开（例）</div>
+<pre class="code code--sm">blt $t0, $t1, Label   <span class="cmt"># 小于则转移（伪指令）</span>
+  <span class="hi">→</span> slt $t2, $t0, $t1    <span class="cmt"># $t2 = ($t0 &lt; $t1)</span>
+    bne $t2, $zero, Label <span class="cmt"># $t2 ≠ 0 则转移到 Label</span>
+
+move $t0, $t1         <span class="cmt"># 寄存器间复制（伪指令）</span>
+  <span class="hi">→</span> add $t0, $zero, $t1   <span class="cmt"># $t0 = 0 + $t1</span></pre>
+        </div>
+      </div>
+      <div class="col shrink0" style="width:290px">
+        <div class="callout">
+          <span class="callout__tag">要点</span>
+          <span>汇编器把「一条」伪指令展开为「多条」实际指令，展开结果与原本的语义完全等价。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">7 / 33</div>
+</section>
+
+<!-- ======================================================== 8 汇编器：远程转移 -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">汇编器：把远程转移转换为「条件转移 + 跳转」</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:300px">
+        <div class="code-label">源代码（伪指令形式）</div>
+<pre class="code code--sm">beq $s0, $s1, L1</pre>
+        <div class="code-label mt16">展开后的实际指令</div>
+<pre class="code code--sm">bne $s0, $s1, L2
+j   L1
+L2:</pre>
+        <div class="callout mt16">
+          <span class="callout__tag">说明</span>
+          <span>若转移目标较远，条件转移指令的<span class="kw">偏移量字段</span>无法容纳，就先条件转移跳过，再用 <span class="mono">j</span> 指令跳转到目标标号。</span>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title">MIPS 指令格式与可表示范围</div>
+          <div class="ibox">
+            <div class="ibox__tag">beq</div>
+            <div class="iformat grow">
+              <div class="iformat__row">
+                <div class="iformat__cell" style="flex:2 1 0">op</div>
+                <div class="iformat__cell" style="flex:2 1 0">$s0</div>
+                <div class="iformat__cell" style="flex:2 1 0">$s1</div>
+                <div class="iformat__cell" style="flex:6 1 0">Label（偏移量）</div>
+              </div>
+            </div>
+          </div>
+          <div class="note mt8 center">偏移量 <span class="mono">-32768 ～ 32767</span>（以指令为单位的相对地址）</div>
+
+          <div class="ibox mt16">
+            <div class="ibox__tag">j</div>
+            <div class="iformat grow">
+              <div class="iformat__row">
+                <div class="iformat__cell" style="flex:2 1 0">op</div>
+                <div class="iformat__cell" style="flex:10 1 0">Label（目标地址）</div>
+              </div>
+            </div>
+          </div>
+          <div class="note mt8 center">目标地址 <span class="mono">0 ～ 67108863</span>（26 位地址字段）</div>
+        </div>
+
+        <div class="callout callout--blue mt16">
+          <span class="callout__tag">符号表</span>
+          <span>汇编器同时生成<span class="kw-blue">符号表</span>，管理<span class="mono">标号名</span>与<span class="mono">指令地址</span>之间的对应关系，供后续的转移与重定位使用。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">8 / 33</div>
+</section>
+
+<!-- ======================================================== 9 汇编器：目标文件 -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">汇编器：目标文件的生成</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:18px">
+    <div class="callout callout--blue" style="font-size:20px">
+      <span class="callout__tag">结构</span>
+      <span>目标文件由以下 <span class="kw-blue">6 个段（section）</span>构成（UNIX 的情形）。</span>
+    </div>
+
+    <table class="tbl mt20">
+      <thead>
+        <tr>
+          <th style="width:250px">段名</th>
+          <th style="width:280px">英文名</th>
+          <th>保存的内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="red">① 目标文件头</td>
+          <td class="c">object file header</td>
+          <td>给出正文段、静态数据段的<span class="kw">大小</span></td>
+        </tr>
+        <tr class="alt">
+          <td class="red">② 正文段</td>
+          <td class="c">text segment</td>
+          <td><span class="kw">机器语言</span>的程序代码</td>
+        </tr>
+        <tr>
+          <td class="red">③ 静态数据段</td>
+          <td class="c">static data segment</td>
+          <td>程序运行期间所分配的<span class="kw">数据</span></td>
+        </tr>
+        <tr class="alt">
+          <td class="red">④ 重定位信息</td>
+          <td class="c">relocation information</td>
+          <td>指出把程序装入内存时，哪些<span class="kw">指令字、数据字</span>依赖于<span class="kw">绝对地址</span></td>
+        </tr>
+        <tr>
+          <td class="red">⑤ 符号表</td>
+          <td class="c">symbol table</td>
+          <td>保存<span class="kw">未定义的标号</span>（用于外部引用）</td>
+        </tr>
+        <tr class="alt">
+          <td class="red">⑥ 调试信息</td>
+          <td class="c">debugging information</td>
+          <td>与编译有关的信息，供调试器等使用</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">9 / 33</div>
+</section>
+
+<!-- ======================================================== 10 讲义内容 -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">编译器</div>
+          <div class="toc__item">汇编器</div>
+          <div class="toc__item toc__item--active">链接器</div>
+          <div class="toc__item">加载器</div>
+        </div>
+      </div>
+      <div class="toc__group">
+        <div class="toc__lead">从 C 程序到汇编代码的转换</div>
+        <div class="toc__items">
+          <div class="toc__item">以 swap、sort 为例</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">10 / 33</div>
+</section>
+
+<!-- ======================================================== 11 链接器 -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">链接器</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li>把分别独立编译、汇编好的程序<span class="kw">拼接</span>起来，生成<span class="kw">一个</span>可执行的目标文件。</li>
+      <li>于是<span class="kw-blue">不必</span>为了改动而重新编译整个大型程序。</li>
+      <li>可以在事后链接像库那样<span class="kw-blue">复用性高</span>的模块。</li>
+      <li>解决<span class="kw">外部引用</span>（例如：位于其它文件中的标号名）。</li>
+      <li>决定程序在内存中的<span class="kw">布局</span>。</li>
+    </ul>
+
+    <div class="callout mt20">
+      <span class="callout__tag">重定位</span>
+      <span>对采用<span class="kw">绝对寻址</span>（即非基址相对寻址）的指令，要调整其<span class="kw">地址</span>（relocation）。</span>
+    </div>
+
+    <div class="row mt20">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">链接器解决的问题</div>
+          <ul class="two-col-list" style="font-size:17px">
+            <li>合并多个目标模块</li>
+            <li>解决外部符号引用</li>
+            <li>分配并确定各段地址</li>
+            <li>修正绝对地址（重定位）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">11 / 33</div>
+</section>
+
+<!-- ======================================================== 12 启动流程（再掲） -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">C 程序启动之前（再次给出）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <img class="figure" src="assets/ch8-p04-compile-flow.png" alt="C 程序从源文件到装入内存的编译、汇编、链接、加载流程（再掲）"
+         style="height:548px">
+  </div>
+  <div class="page-no">12 / 33</div>
+</section>
+
+<!-- ======================================================== 13 链接器的工作示例（1） -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">（例）链接器的工作</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--red" style="font-size:17px;padding:9px 13px">
+      <span class="callout__tag">※</span>
+      <span><span class="kw">标红的位置</span>是在链接过程中会被更新的数据。</span>
+    </div>
+
+    <div class="row row--top mt12" style="gap:26px">
+      <div class="col grow" style="min-width:0">
+        <div class="code-label">ProcA.o</div>
+        <div class="tbl-stack">
+          <table class="tbl tbl--xs">
+            <tbody>
+              <tr><th style="width:22%">头部</th><th style="width:34%">名称</th><td class="c">ProcA</td></tr>
+              <tr><th>头部</th><th>正文大小</th><td class="c num">100<sub>16</sub></td></tr>
+              <tr><th>头部</th><th>数据大小</th><td class="c num">20<sub>16</sub></td></tr>
+            </tbody>
+          </table>
+
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:22%">正文段</th><th style="width:34%">地址</th><th>指令</th></tr>
+            </thead>
+            <tbody>
+              <tr><td></td><td class="c num">0</td><td class="c">lw $a0, <span class="red">0</span>($gp)</td></tr>
+              <tr class="alt"><td></td><td class="c num">4</td><td class="c">jal <span class="red">0</span></td></tr>
+                          </tbody>
+          </table>
+
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:22%">静态数据段</th><th style="width:34%">地址</th><th>数据</th></tr>
+            </thead>
+            <tbody>
+              <tr><td></td><td class="c num"><span class="red">0</span></td><td class="c">(<span class="red">x</span>)</td></tr>
+                          </tbody>
+          </table>
+
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:22%">重定位信息</th><th style="width:30%">地址</th><th>指令类型 / 依存关系</th></tr>
+            </thead>
+            <tbody>
+              <tr><td></td><td class="c num">0</td><td class="c">lw / <span class="red">x</span></td></tr>
+              <tr class="alt"><td></td><td class="c num">4</td><td class="c">jal / <span class="red">ProcB</span></td></tr>
+                          </tbody>
+          </table>
+
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:22%">符号表</th><th style="width:34%">标号</th><th>地址</th></tr>
+            </thead>
+            <tbody>
+              <tr><td></td><td class="c"><span class="red">x</span></td><td class="c">-</td></tr>
+              <tr class="alt"><td></td><td class="c"><span class="red">procB</span></td><td class="c">-</td></tr>
+              
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col grow" style="min-width:0">
+        <div class="code-label">ProcB.o</div>
+        <div class="tbl-stack">
+          <table class="tbl tbl--xs">
+            <tbody>
+              <tr><th style="width:22%">头部</th><th style="width:34%">名称</th><td class="c">ProcB</td></tr>
+              <tr><th>头部</th><th>正文大小</th><td class="c num">200<sub>16</sub></td></tr>
+              <tr><th>头部</th><th>数据大小</th><td class="c num">30<sub>16</sub></td></tr>
+            </tbody>
+          </table>
+
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:22%">正文段</th><th style="width:34%">地址</th><th>指令</th></tr>
+            </thead>
+            <tbody>
+              <tr><td></td><td class="c num">0</td><td class="c">sw $a1, <span class="red">0</span>($gp)</td></tr>
+              <tr class="alt"><td></td><td class="c num">4</td><td class="c">jal <span class="red">0</span></td></tr>
+                          </tbody>
+          </table>
+
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:22%">静态数据段</th><th style="width:34%">地址</th><th>数据</th></tr>
+            </thead>
+            <tbody>
+              <tr><td></td><td class="c num"><span class="red">0</span></td><td class="c">(<span class="red">y</span>)</td></tr>
+                          </tbody>
+          </table>
+
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:22%">重定位信息</th><th style="width:30%">地址</th><th>指令类型 / 依存关系</th></tr>
+            </thead>
+            <tbody>
+              <tr><td></td><td class="c num">0</td><td class="c">sw / <span class="red">y</span></td></tr>
+              <tr class="alt"><td></td><td class="c num">4</td><td class="c">jal / <span class="red">ProcA</span></td></tr>
+                          </tbody>
+          </table>
+
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:22%">符号表</th><th style="width:34%">标号</th><th>地址</th></tr>
+            </thead>
+            <tbody>
+              <tr><td></td><td class="c"><span class="red">y</span></td><td class="c">-</td></tr>
+              <tr class="alt"><td></td><td class="c"><span class="red">procA</span></td><td class="c">-</td></tr>
+              
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">13 / 33</div>
+</section>
+
+<!-- ======================================================== 14 内存布局 -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">（例）链接器的工作：实际的内存布局</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:22px">
+    <div class="mem">
+      <div class="mem__addr">
+        <div class="mem__pt" style="top:36px">
+          <span class="mem__pt-label">$sp</span>
+          <span class="mem__pt-arrow"></span>
+          <span class="mem__pt-val">7fff fffc<sub>16</sub></span>
+        </div>
+        <div class="mem__pt" style="top:214px">
+          <span class="mem__pt-label">$gp</span>
+          <span class="mem__pt-arrow"></span>
+          <span class="mem__pt-val">1000 8000<sub>16</sub></span>
+        </div>
+        <div class="mem__pt" style="top:288px">
+          <span class="mem__pt-val">1000 0000<sub>16</sub></span>
+        </div>
+        <div class="mem__pt" style="top:362px">
+          <span class="mem__pt-val">0040 0000<sub>16</sub></span>
+        </div>
+        <div class="mem__pt" style="top:436px">
+          <span class="mem__pt-val">0</span>
+        </div>
+      </div>
+
+      <div class="mem__stack" style="width:360px; margin-top:22px">
+        <div class="mem__seg">
+          <div class="mem__seg-name">栈</div>
+          <div class="mem__seg-en">Stack</div>
+        </div>
+        <div class="mem__seg mem__seg--arrow" style="height:74px">
+          <div style="font-size:26px;color:#41505f">↓</div>
+        </div>
+        <div class="mem__seg mem__seg--arrow" style="height:74px">
+          <div style="font-size:26px;color:#41505f">↑</div>
+        </div>
+        <div class="mem__seg">
+          <div class="mem__seg-name">动态数据</div>
+          <div class="mem__seg-en">Dynamic data</div>
+        </div>
+        <div class="mem__seg">
+          <div class="mem__seg-name">静态数据</div>
+          <div class="mem__seg-en">Static data</div>
+        </div>
+        <div class="mem__seg">
+          <div class="mem__seg-name">正文段</div>
+          <div class="mem__seg-en">Text</div>
+        </div>
+        <div class="mem__seg">
+          <div class="mem__seg-name">保留区</div>
+          <div class="mem__seg-en">Reserved</div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="callout callout--blue">
+          <span class="callout__tag">假设的布局</span>
+          <span>本页给出的是链接后程序在内存中的布局（假设值），地址自下而上递增。</span>
+        </div>
+        <ul class="bullets bullets--sub mt16">
+          <li><span class="mono">$sp</span> 指向<span class="kw-blue">栈</span>的顶部（高地址侧），栈向下增长。</li>
+          <li><span class="mono">$gp</span> 指向<span class="kw-blue">静态数据段</span>的中部，作为全局指针的基址。</li>
+          <li>正文段（代码）从 <span class="mono">0040 0000<sub>16</sub></span> 开始。</li>
+          <li>地址 <span class="mono">0</span> 附近为保留区。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">14 / 33</div>
+</section>
+
+<!-- ======================================================== 15 链接后的目标文件 -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">（例）链接器的工作：链接后的目标文件</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="row row--top" style="gap:20px">
+      <div class="col" style="flex:0 0 400px">
+        <div class="code-label">Linked.o</div>
+        <table class="tbl tbl--sm">
+          <tbody>
+            <tr><th style="width:120px" rowspan="2">头部</th><th>正文大小</th><td class="c num">300<sub>16</sub></td></tr>
+            <tr><th>数据大小</th><td class="c num">50<sub>16</sub></td></tr>
+          </tbody>
+        </table>
+
+        <table class="tbl tbl--sm mt12">
+          <thead>
+            <tr><th style="width:150px">静态数据段</th><th>地址</th><th>数据</th></tr>
+          </thead>
+          <tbody>
+            <tr><td></td><td class="c num">1000 0000<sub>16</sub></td><td class="c">(x)</td></tr>
+                        <tr><td></td><td class="c num">1000 0020<sub>16</sub></td><td class="c">(y)</td></tr>
+                      </tbody>
+        </table>
+
+        <div class="callout mt16" style="font-size:17px">
+          <span class="callout__tag">观察</span>
+          <span>ProcA 的静态数据被放在 <span class="mono">1000 0000<sub>16</sub></span>，ProcB 的静态数据紧随其后，从 <span class="mono">1000 0020<sub>16</sub></span> 开始。</span>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <table class="tbl tbl--sm">
+          <caption>正文段（text segment）</caption>
+          <thead>
+            <tr><th style="width:190px">地址</th><th>指令</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c num">0040 0000<sub>16</sub></td><td class="c">lw $a0, 8000($gp)<sub>16</sub></td></tr>
+            <tr class="alt"><td class="c num">0040 0004<sub>16</sub></td><td class="c">jal 40 0100<sub>16</sub></td></tr>
+            <tr><td class="c num">…</td><td class="c">…</td></tr>
+            <tr class="alt"><td class="c num">0040 0100<sub>16</sub></td><td class="c">sw $a1, 8020($gp)<sub>16</sub></td></tr>
+            <tr><td class="c num">0040 0104<sub>16</sub></td><td class="c">jal 40 0000<sub>16</sub></td></tr>
+            <tr class="alt"><td class="c num">…</td><td class="c"></td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout--blue mt16">
+          <span class="callout__tag">要点</span>
+          <span>链接器把 ProcA、ProcB 的正文段首尾相接：ProcA 从 <span class="mono">0040 0000<sub>16</sub></span> 开始，ProcB 从 <span class="mono">0040 0100<sub>16</sub></span> 开始；两条 <span class="mono">jal</span> 的目标地址也被改写为对方的入口地址。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">15 / 33</div>
+</section>
+
+<!-- ======================================================== 16 重定位计算 -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">（例）链接器的工作：重定位的具体计算</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:20px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">① 静态数据：x 的地址重定位</div>
+<pre class="code code--sm">1000 8000<span class="cmt">₁₆</span>  +  8000<span class="cmt">₁₆</span>  =  1000 0000<span class="cmt">₁₆</span>
+
+  0001 0000 0000 0000 1000 0000 0000 0000   <span class="cmt"># 1000 8000₁₆</span>
++ 1111 1111 1111 1111 1000 0000 0000 0000   <span class="cmt"># 8000₁₆（重定位量）</span>
+= 0001 0000 0000 0000 0000 0000 0000 0000   <span class="cmt"># 1000 0000₁₆</span></pre>
+        </div>
+
+        <div class="panel panel--tight mt16">
+          <div class="panel__title panel__title--red">② 静态数据：y 的地址重定位</div>
+<pre class="code code--sm">1000 8000<span class="cmt">₁₆</span>  +  8020<span class="cmt">₁₆</span>  =  1000 0020<span class="cmt">₁₆</span>
+
+  0001 0000 0000 0000 1000 0000 0000 0000   <span class="cmt"># 1000 8000₁₆</span>
++ 1111 1111 1111 1111 1000 0000 0010 0000   <span class="cmt"># 8020₁₆（重定位量）</span>
+= 0001 0000 0000 0000 0000 0000 0010 0000   <span class="cmt"># 1000 0020₁₆</span></pre>
+        </div>
+      </div>
+
+      <div class="col" style="flex:0 0 420px">
+        <table class="tbl tbl--sm">
+          <caption>链接后的静态数据段</caption>
+          <thead>
+            <tr><th style="width:170px">地址</th><th>数据</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c num">1000 0000<sub>16</sub></td><td class="c">(x)</td></tr>
+            <tr class="alt"><td class="c num">…</td><td class="c">…</td></tr>
+            <tr><td class="c num">1000 0020<sub>16</sub></td><td class="c">(y)</td></tr>
+            <tr class="alt"><td class="c num">…</td><td class="c">…</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout mt16" style="font-size:17px">
+          <span class="callout__tag">为什么用 $gp 基址</span>
+          <span>数据访问写成 <span class="mono">lw $a0, 8000($gp)</span> 这类<span class="kw">基址相对</span>形式，其偏移量在链接后只需按 <span class="mono">$gp</span> 的新位置改写为绝对值 <span class="mono">8000<sub>16</sub></span> 与 <span class="mono">8020<sub>16</sub></span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">16 / 33</div>
+</section>
+
+<!-- ======================================================== 17 讲义内容 -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">编译器</div>
+          <div class="toc__item">汇编器</div>
+          <div class="toc__item">链接器</div>
+          <div class="toc__item toc__item--active">加载器</div>
+        </div>
+      </div>
+      <div class="toc__group">
+        <div class="toc__lead">从 C 程序到汇编代码的转换</div>
+        <div class="toc__items">
+          <div class="toc__item">以 swap、sort 为例</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">17 / 33</div>
+</section>
+
+<!-- ======================================================== 18 加载器 -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">加载器</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets">
+      <li>把链接后的目标文件<span class="kw">读入内存</span>。</li>
+      <li>准备<span class="kw-blue">执行 main 函数</span>所需的环境。</li>
+      <li>调用<span class="kw">最初的一条指令</span>。</li>
+    </ul>
+
+    <div class="panel mt24">
+      <div class="panel__title panel__title--teal">动态链接库</div>
+      <ul class="bullets bullets--sub">
+        <li>动态链接库（<span class="mono">DLL: dynamically linked library</span>）。</li>
+        <li>开始时只准备一个用于调用的<span class="kw-blue">哑例程（dummy routine）</span>；</li>
+        <li>在真正需要的时候，才把所需的指令<span class="kw">装入正文段区域</span>。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-no">18 / 33</div>
+</section>
+
+<!-- ======================================================== 19 练习 -->
+<section class="slide" id="s19">
+  <div class="slide__head">
+    <h2 class="slide__title">练习</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="panel panel--tight">
+      <div class="panel__title panel__title--red" style="font-size:17px">
+        问题 1　下列各句分别描述的是哪一种软件？请写出名称。
+      </div>
+      <div class="quiz" style="margin-top:6px">
+        <div class="quiz__col">
+          <div class="quiz__item">
+            <span class="quiz__key">①</span>
+            <span>把<span class="kw">源代码</span>转换为<span class="kw">汇编代码</span>的软件</span>
+          </div>
+          <div class="quiz__item">
+            <span class="quiz__key">②</span>
+            <span>把<span class="kw">汇编代码</span>转换为<span class="kw">机器语言</span>的软件</span>
+          </div>
+        </div>
+        <div class="quiz__col">
+          <div class="quiz__item">
+            <span class="quiz__key">③</span>
+            <span>把多个<span class="kw">机器语言</span>代码拼接起来，生成<span class="kw">一个目标文件</span>的软件</span>
+          </div>
+          <div class="quiz__item" style="background:#f7fafd">
+            <span class="quiz__key" style="color:var(--teal)">提示</span>
+            <span>对应本讲的编译器、汇编器、链接器。</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel--tight mt16">
+      <div class="panel__title panel__title--red" style="font-size:17px">
+        问题 2　下列各项分别保存在目标文件 6 个段中的哪一个段里？
+      </div>
+      <div class="quiz" style="margin-top:6px">
+        <div class="quiz__col">
+          <div class="quiz__item"><span class="quiz__key">①</span><span>正文段、静态数据段的<span class="kw">大小</span></span></div>
+          <div class="quiz__item"><span class="quiz__key">②</span><span><span class="kw">机器语言</span>的程序代码</span></div>
+          <div class="quiz__item"><span class="quiz__key">③</span><span>程序运行期间所<span class="kw">分配的数据</span></span></div>
+          <div class="quiz__item"><span class="quiz__key">④</span><span>把程序装入内存时与<span class="kw">绝对地址</span>相关的指令字、数据字</span></div>
+          <div class="quiz__item"><span class="quiz__key">⑤</span><span><span class="kw">未定义的标号</span></span></div>
+          <div class="quiz__item"><span class="quiz__key">⑥</span><span>调试器等使用的、与编译有关的信息</span></div>
+        </div>
+        <div class="quiz__col" style="flex:0 0 340px">
+          <div class="quiz__item"><span class="quiz__opt">(a)</span><span>静态数据段</span></div>
+          <div class="quiz__item"><span class="quiz__opt">(b)</span><span>重定位信息</span></div>
+          <div class="quiz__item"><span class="quiz__opt">(c)</span><span>目标文件头</span></div>
+          <div class="quiz__item"><span class="quiz__opt">(d)</span><span>符号表</span></div>
+          <div class="quiz__item"><span class="quiz__opt">(e)</span><span>调试信息</span></div>
+          <div class="quiz__item"><span class="quiz__opt">(f)</span><span>正文段</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">19 / 33</div>
+</section>
+
+<!-- ======================================================== 20 讲义内容 -->
+<section class="slide" id="s20">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">编译器</div>
+          <div class="toc__item">汇编器</div>
+          <div class="toc__item">链接器</div>
+          <div class="toc__item">加载器</div>
+        </div>
+      </div>
+      <div class="toc__group">
+        <div class="toc__lead">从 C 程序到汇编代码的转换</div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">以 swap、sort 为例</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">20 / 33</div>
+</section>
+
+<!-- ======================================================== 21 swap（填空） -->
+<section class="slide" id="s21">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue" style="font-size:18px">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+    <div class="row row--top mt16" style="gap:20px">
+      <div class="col" style="flex:0 0 330px">
+        <div class="code-label">C 源代码</div>
+<pre class="code code--sm">void swap(int v[], int k){
+    int t;
+    t = v[k];
+    v[k] = v[k+1];
+    v[k+1] = t;
+}</pre>
+        <div class="regmap mt12">
+          <div class="regmap__title">寄存器分配</div>
+          <div class="regmap__grid">
+            <div class="regmap__cell">$a0 : v</div>
+            <div class="regmap__cell">$a1 : k</div>
+            <div class="regmap__cell">$t0 : t</div>
+            <div class="regmap__cell" style="border-style:dashed;color:#93a3b3">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="code-label">请填入空白处（(1) ～ (7)）</div>
+<pre class="code">swap:
+    sll  $t1, $a1,  <span class="blank">(1)</span>        <span class="cmt"># $t1 = k*4</span>
+    add  $t1, <span class="blank">(2)</span>,  <span class="blank">(3)</span>      <span class="cmt"># $t1 = &amp;(v[k])</span>
+    lw   $t0, <span class="blank">( 4 )</span>       <span class="cmt"># t = v[k]</span>
+    lw   $t2, <span class="blank">( 5 )</span>       <span class="cmt"># $t2 = v[k+1]</span>
+    sw   $t2, <span class="blank">( 6 )</span>       <span class="cmt"># v[k] = $t2</span>
+    sw   $t0, <span class="blank">( 7 )</span>       <span class="cmt"># v[k+1] = t</span>
+    jr   $ra             <span class="cmt"># 返回</span></pre>
+        <div class="note mt12">
+          提示：<span class="mono">sll</span> 完成「下标 → 字节偏移」的换算；<span class="mono">add</span> 求出 <span class="mono">v[k]</span> 的地址；随后用 <span class="mono">lw / sw</span> 完成存取。
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">21 / 33</div>
+</section>
+
+<!-- ======================================================== 22 swap（解答） -->
+<section class="slide" id="s22">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:swap 的解答</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue" style="font-size:18px">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+    <div class="row row--top mt16" style="gap:20px">
+      <div class="col" style="flex:0 0 330px">
+        <div class="code-label">C 源代码</div>
+<pre class="code code--sm">void swap(int v[], int k){
+    int t;
+    t = v[k];
+    v[k] = v[k+1];
+    v[k+1] = t;
+}</pre>
+        <div class="regmap mt12">
+          <div class="regmap__title">寄存器分配</div>
+          <div class="regmap__grid">
+            <div class="regmap__cell">$a0 : v</div>
+            <div class="regmap__cell">$a1 : k</div>
+            <div class="regmap__cell">$t0 : t</div>
+            <div class="regmap__cell">$t1 : 地址</div>
+            <div class="regmap__cell">$t2 : 临时值</div>
+            <div class="regmap__cell">$ra : 返回地址</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="code-label">汇编代码（解答）</div>
+<pre class="code">swap:
+    sll  $t1, $a1,  <span class="hi">2</span>        <span class="cmt"># $t1 = k*4</span>
+    add  $t1, <span class="hi">$a0</span>,  <span class="hi">$t1</span>      <span class="cmt"># $t1 = &amp;(v[k])</span>
+    lw   $t0, <span class="hi">0($t1)</span>       <span class="cmt"># t = v[k]</span>
+    lw   $t2, <span class="hi">4($t1)</span>       <span class="cmt"># $t2 = v[k+1]</span>
+    sw   $t2, <span class="hi">0($t1)</span>       <span class="cmt"># v[k] = $t2</span>
+    sw   $t0, <span class="hi">4($t1)</span>       <span class="cmt"># v[k+1] = t</span>
+    jr   $ra             <span class="cmt"># 返回</span></pre>
+
+        <table class="tbl tbl--sm mt16">
+          <thead>
+            <tr><th style="width:74px">编号</th><th style="width:190px">答案</th><th>含义</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">(1)</td><td class="c red">2</td><td>每个 <span class="mono">int</span> 占 4 字节，左移 2 位即乘以 4</td></tr>
+            <tr class="alt"><td class="c">(2)</td><td class="c red">$a0</td><td>数组首地址 v</td></tr>
+            <tr><td class="c">(3)</td><td class="c red">$t1</td><td>字节偏移量 <span class="mono">k*4</span></td></tr>
+            <tr class="alt"><td class="c">(4)</td><td class="c red">0($t1)</td><td>取 <span class="mono">v[k]</span></td></tr>
+            <tr><td class="c">(5)</td><td class="c red">4($t1)</td><td>取 <span class="mono">v[k+1]</span>，偏移 4 字节</td></tr>
+            <tr class="alt"><td class="c">(6)</td><td class="c red">0($t1)</td><td>写回 <span class="mono">v[k]</span></td></tr>
+            <tr><td class="c">(7)</td><td class="c red">4($t1)</td><td>写回 <span class="mono">v[k+1]</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">22 / 33</div>
+</section>
+
+<!-- ======================================================== 23 sort 的 C 代码与步骤 -->
+<section class="slide" id="s23">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:sort 的八个步骤</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue" style="font-size:18px">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+    <div class="row row--top mt16" style="gap:20px">
+      <div class="col" style="flex:0 0 430px">
+        <div class="code-label">C 源代码</div>
+<pre class="code code--sm">void sort(int v[], int n){
+    int i, j;
+    for(i=0; i&lt;n; i++){
+        for(j=i-1; j&gt;=0 &amp;&amp; v[j]&gt;v[j+1]; j--){
+            swap(v,j);
+        }
+    }
+}</pre>
+        <div class="regmap mt12">
+          <div class="regmap__title">寄存器分配</div>
+          <div class="regmap__grid">
+            <div class="regmap__cell">$a0 : v</div>
+            <div class="regmap__cell">$a1 : n</div>
+            <div class="regmap__cell">$s0 : i</div>
+            <div class="regmap__cell">$s1 : j</div>
+          </div>
+        </div>
+        <div class="note mt12">
+          变量 <span class="mono">i、j</span> 是<span class="kw">跨过程调用仍需保持</span>的值，因此使用被调用者保存寄存器
+          <span class="mono">$s0、$s1</span>；由于 <span class="mono">swap</span> 调用会占用
+          <span class="mono">$a0、$a1</span>，还需把参数复制到 <span class="mono">$s2、$s3</span>。
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">手顺（八个步骤）</div>
+          <div class="steps">
+            <div class="steps__item"><span class="steps__no">①</span> 保存寄存器</div>
+            <div class="steps__item"><span class="steps__no">②</span> 保存参数</div>
+            <div class="steps__item"><span class="steps__no">③</span> 外层循环</div>
+            <div class="steps__item"><span class="steps__no">④</span> 内层循环</div>
+            <div class="steps__item"><span class="steps__no">⑤</span> 调用 swap</div>
+            <div class="steps__item"><span class="steps__no">⑥</span> 内层循环</div>
+            <div class="steps__item"><span class="steps__no">⑦</span> 外层循环</div>
+            <div class="steps__item"><span class="steps__no">⑧</span> 恢复寄存器～返回</div>
+          </div>
+        </div>
+
+        <div class="callout mt16" style="font-size:17px">
+          <span class="callout__tag">阅读方法</span>
+          <span>后面 8 页依次实现这八个步骤：每页左侧给出 C 代码，右侧给出汇编代码，并以<span class="kw">红色高亮</span>标出该步骤新增的指令。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">23 / 33</div>
+</section>
+
+<!-- ======================================================== 24 sort 步骤① -->
+<section class="slide" id="s24">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:① 保存寄存器</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+<pre class="code code--tight mt8">void sort(int v[], int n){
+    int i, j;
+    for(i=0; i&lt;n; i++)
+        for(j=i-1; j&gt;=0 &amp;&amp; v[j]&gt;v[j+1]; j--)
+            swap(v,j);
+}</pre>
+
+    <div class="row row--top mt10" style="gap:14px">
+      <div class="col shrink0" style="width:200px">
+        <div class="steps steps--tight">
+          <div class="steps__item steps__item--on"><span class="steps__no">①</span> 保存寄存器</div>
+          <div class="steps__item"><span class="steps__no">②</span> 保存参数</div>
+          <div class="steps__item"><span class="steps__no">③</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">④</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑤</span> 调用 swap</div>
+          <div class="steps__item"><span class="steps__no">⑥</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑦</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">⑧</span> 恢复寄存器～</div>
+        </div>
+        <div class="regmap mt12" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:14px">寄存器分配</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">$a0 : v</div>
+            <div class="regmap__cell">$a1 : n</div>
+            <div class="regmap__cell">$s0 : i</div>
+            <div class="regmap__cell">$s1 : j</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+<pre class="code code--vh"><span class="ln ln--new">sort:</span>
+<span class="ln ln--on">    addi $sp, $sp, -20   <span class="cmt"># 把 $sp 推进 20 字节</span></span>
+<span class="ln ln--on">    sw   $ra, 16($sp)    <span class="cmt"># 保存返回地址</span></span>
+<span class="ln ln--on">    sw   $s3, 12($sp)</span>
+<span class="ln ln--on">    sw   $s2, 8($sp)</span>
+<span class="ln ln--on">    sw   $s1, 4($sp)</span>
+<span class="ln ln--on">    sw   $s0, 0($sp)     <span class="cmt"># 保存 s0～s3、ra</span></span>
+<span class="ln ln--ell">        ⋮</span></pre>
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>把 <span class="mono">$sp</span> 推进所需的字节数，然后在栈帧中<span class="kw">保存本过程内要使用的寄存器的值</span>：
+            <span class="mono">$s0～$s3</span> 与返回地址 <span class="mono">$ra</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">24 / 33</div>
+</section>
+
+<!-- ======================================================== 25 sort 步骤② -->
+<section class="slide" id="s25">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:② 保存参数</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+<pre class="code code--tight mt8">void sort(int v[], int n){
+    int i, j;
+    for(i=0; i&lt;n; i++)
+        for(j=i-1; j&gt;=0 &amp;&amp; v[j]&gt;v[j+1]; j--)
+            swap(v,j);
+}</pre>
+
+    <div class="row row--top mt10" style="gap:14px">
+      <div class="col shrink0" style="width:200px">
+        <div class="steps steps--tight">
+          <div class="steps__item"><span class="steps__no">①</span> 保存寄存器</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">②</span> 保存参数</div>
+          <div class="steps__item"><span class="steps__no">③</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">④</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑤</span> 调用 swap</div>
+          <div class="steps__item"><span class="steps__no">⑥</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑦</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">⑧</span> 恢复寄存器～</div>
+        </div>
+        <div class="regmap mt12" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:14px">寄存器分配</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">$s0 : i</div>
+            <div class="regmap__cell">$s1 : j</div>
+            <div class="regmap__cell">$s2 : v</div>
+            <div class="regmap__cell">$s3 : n</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+<pre class="code code--vh"><span class="ln">sort:</span>
+<span class="ln">    addi $sp, $sp, -20</span>
+<span class="ln">    sw   $ra, 16($sp)</span>
+<span class="ln">    sw   $s3, 12($sp)</span>
+<span class="ln">    sw   $s2, 8($sp)</span>
+<span class="ln">    sw   $s1, 4($sp)</span>
+<span class="ln">    sw   $s0, 0($sp)</span>
+<span class="ln ln--ell">        ⋮</span>
+<span class="ln ln--on">    move $s2, $a0        <span class="cmt"># v 的副本</span></span>
+<span class="ln ln--on">    move $s3, $a1        <span class="cmt"># n 的副本</span></span>
+<span class="ln ln--ell">        ⋮</span></pre>
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>第 5 行的 <span class="mono">swap(v, j)</span> 在设置实参时会用到
+            <span class="mono">$a0、$a1</span>，因此必须事先把形参的值<span class="kw">复制</span>到
+            <span class="mono">$s2、$s3</span> 中保存。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">25 / 33</div>
+</section>
+
+<!-- ======================================================== 26 sort 步骤③ -->
+<section class="slide" id="s26">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:③ 外层循环</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+<pre class="code code--tight mt8">void sort(int v[], int n){
+    int i, j;
+    for(i=0; i&lt;n; i++)
+        for(j=i-1; j&gt;=0 &amp;&amp; v[j]&gt;v[j+1]; j--)
+            swap(v,j);
+}</pre>
+
+    <div class="row row--top mt10" style="gap:14px">
+      <div class="col shrink0" style="width:200px">
+        <div class="steps steps--tight">
+          <div class="steps__item"><span class="steps__no">①</span> 保存寄存器</div>
+          <div class="steps__item"><span class="steps__no">②</span> 保存参数</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">③</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">④</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑤</span> 调用 swap</div>
+          <div class="steps__item"><span class="steps__no">⑥</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑦</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">⑧</span> 恢复寄存器～</div>
+        </div>
+        <div class="regmap mt12" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:14px">寄存器分配</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">$s0 : i</div>
+            <div class="regmap__cell">$s1 : j</div>
+            <div class="regmap__cell">$s2 : v</div>
+            <div class="regmap__cell">$s3 : n</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+<pre class="code code--vh"><span class="ln">sort:</span>
+<span class="ln ln--ell">        ⋮</span>
+<span class="ln">    move $s3, $a1</span>
+<span class="ln ln--on">    move $s0, $zero      <span class="cmt"># i = 0</span></span>
+<span class="ln ln--new">for1tst:</span>
+<span class="ln ln--on">    slt  $t0, $s0, $s3   <span class="cmt"># $t0 = (i &lt; n)</span></span>
+<span class="ln ln--on">    beq  $t0, $zero, exit1  <span class="cmt"># 不满足则跳到 exit1</span></span>
+<span class="ln ln--ell">        ⋮</span></pre>
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>以 <span class="mono">i = 0</span> 开始：用 <span class="mono">slt</span> 判断
+            <span class="mono">i &lt; n</span> 是否成立；若<span class="kw">不成立</span>，则跳转到标号
+            <span class="mono">exit1</span>，结束外层循环。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">26 / 33</div>
+</section>
+
+<!-- ======================================================== 27 sort 步骤④ -->
+<section class="slide" id="s27">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:④ 内层循环</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+<pre class="code code--tight mt8">void sort(int v[], int n){
+    int i, j;
+    for(i=0; i&lt;n; i++)
+        for(j=i-1; j&gt;=0 &amp;&amp; v[j]&gt;v[j+1]; j--)
+            swap(v,j);
+}</pre>
+
+    <div class="row row--top mt10" style="gap:14px">
+      <div class="col shrink0" style="width:200px">
+        <div class="steps steps--tight">
+          <div class="steps__item"><span class="steps__no">①</span> 保存寄存器</div>
+          <div class="steps__item"><span class="steps__no">②</span> 保存参数</div>
+          <div class="steps__item"><span class="steps__no">③</span> 外层循环</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">④</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑤</span> 调用 swap</div>
+          <div class="steps__item"><span class="steps__no">⑥</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑦</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">⑧</span> 恢复寄存器～</div>
+        </div>
+        <div class="regmap mt12" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:14px">寄存器分配</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">$t1 : j*4</div>
+            <div class="regmap__cell">$t2 : &amp;(v[j])</div>
+            <div class="regmap__cell">$t3 : v[j]</div>
+            <div class="regmap__cell">$t4 : v[j+1]</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+<pre class="code code--vh"><span class="ln ln--ell">        ⋮</span>
+<span class="ln ln--on">    addi $s1, $s0, -1    <span class="cmt"># j = i - 1</span></span>
+<span class="ln ln--new">for2tst:</span>
+<span class="ln ln--on">    slti $t0, $s1, 0     <span class="cmt"># $t0 = (j &lt; 0)</span></span>
+<span class="ln ln--on">    bne  $t0, $zero, exit2  <span class="cmt"># j &lt; 0 则跳到 exit2</span></span>
+<span class="ln ln--on">    sll  $t1, $s1, 2     <span class="cmt"># $t1 = j*4</span></span>
+<span class="ln ln--on">    add  $t2, $s2, $t1   <span class="cmt"># $t2 = &amp;(v[j])</span></span>
+<span class="ln ln--on">    lw   $t3, 0($t2)     <span class="cmt"># $t3 = v[j]</span></span>
+<span class="ln ln--on">    lw   $t4, 4($t2)     <span class="cmt"># $t4 = v[j+1]</span></span>
+<span class="ln ln--on">    slt  $t0, $t4, $t3</span>
+<span class="ln ln--on">    beq  $t0, $zero, exit2</span></pre>
+        <div class="callout mt8" style="font-size:15px;padding:7px 11px">
+          <span class="callout__tag">说明</span>
+          <span>先判断 <span class="mono">j &lt; 0</span>，再比较 <span class="mono">v[j+1]</span> 与 <span class="mono">v[j]</span>（<span class="mono">slt $t0,$t4,$t3</span>），任一条件不满足即离开内层循环。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">27 / 33</div>
+</section>
+
+<!-- ======================================================== 28 sort 步骤⑤ -->
+<section class="slide" id="s28">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:⑤ 调用 swap</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+<pre class="code code--tight mt8">void sort(int v[], int n){
+    int i, j;
+    for(i=0; i&lt;n; i++)
+        for(j=i-1; j&gt;=0 &amp;&amp; v[j]&gt;v[j+1]; j--)
+            swap(v,j);
+}</pre>
+
+    <div class="row row--top mt10" style="gap:14px">
+      <div class="col shrink0" style="width:200px">
+        <div class="steps steps--tight">
+          <div class="steps__item"><span class="steps__no">①</span> 保存寄存器</div>
+          <div class="steps__item"><span class="steps__no">②</span> 保存参数</div>
+          <div class="steps__item"><span class="steps__no">③</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">④</span> 内层循环</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">⑤</span> 调用 swap</div>
+          <div class="steps__item"><span class="steps__no">⑥</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑦</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">⑧</span> 恢复寄存器～</div>
+        </div>
+        <div class="regmap mt12" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:14px">寄存器分配</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">$a0 : v</div>
+            <div class="regmap__cell">$a1 : j</div>
+            <div class="regmap__cell">$s2 : v</div>
+            <div class="regmap__cell">$s1 : j</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+<pre class="code code--vh"><span class="ln ln--ell">        ⋮</span>
+<span class="ln">    slt  $t0, $t4, $t3</span>
+<span class="ln">    beq  $t0, $zero, exit2</span>
+<span class="ln ln--ell">        ⋮</span>
+<span class="ln ln--on">    move $a0, $s2        <span class="cmt"># 设置实参 v</span></span>
+<span class="ln ln--on">    move $a1, $s1        <span class="cmt"># 设置实参 j</span></span>
+<span class="ln ln--on">    jal  swap            <span class="cmt"># 调用 swap</span></span>
+<span class="ln ln--ell">        ⋮</span></pre>
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>按照 <span class="mono">swap(v, j)</span> 的调用约定，把 <span class="mono">$s2</span>（即 v）与
+            <span class="mono">$s1</span>（即 j）分别送入参数寄存器 <span class="mono">$a0、$a1</span>，
+            再用 <span class="mono">jal</span> 指令调用 <span class="mono">swap</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">28 / 33</div>
+</section>
+
+<!-- ======================================================== 29 sort 步骤⑥ -->
+<section class="slide" id="s29">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:⑥ 内层循环</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+<pre class="code code--tight mt8">void sort(int v[], int n){
+    int i, j;
+    for(i=0; i&lt;n; i++)
+        for(j=i-1; j&gt;=0 &amp;&amp; v[j]&gt;v[j+1]; j--)
+            swap(v,j);
+}</pre>
+
+    <div class="row row--top mt10" style="gap:14px">
+      <div class="col shrink0" style="width:200px">
+        <div class="steps steps--tight">
+          <div class="steps__item"><span class="steps__no">①</span> 保存寄存器</div>
+          <div class="steps__item"><span class="steps__no">②</span> 保存参数</div>
+          <div class="steps__item"><span class="steps__no">③</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">④</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑤</span> 调用 swap</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">⑥</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑦</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">⑧</span> 恢复寄存器～</div>
+        </div>
+        <div class="regmap mt12" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:14px">循环变量的更新</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">$s1 : j</div>
+            <div class="regmap__cell">$s0 : i</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+<pre class="code code--vh"><span class="ln ln--ell">        ⋮</span>
+<span class="ln">    jal  swap</span>
+<span class="ln ln--on">    addi $s1, $s1, -1    <span class="cmt"># j--</span></span>
+<span class="ln ln--on">    j    for2tst         <span class="cmt"># 回到内层循环的条件判断</span></span>
+<span class="ln ln--new">exit2:</span>
+<span class="ln ln--ell">        ⋮</span></pre>
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>先做 <span class="mono">j--</span>，再用 <span class="mono">j for2tst</span>
+            无条件跳回内层循环的<span class="kw">条件判断</span>处，形成 <span class="mono">for</span> 循环的迭代。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">29 / 33</div>
+</section>
+
+<!-- ======================================================== 30 sort 步骤⑦ -->
+<section class="slide" id="s30">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:⑦ 外层循环</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+<pre class="code code--tight mt8">void sort(int v[], int n){
+    int i, j;
+    for(i=0; i&lt;n; i++)
+        for(j=i-1; j&gt;=0 &amp;&amp; v[j]&gt;v[j+1]; j--)
+            swap(v,j);
+}</pre>
+
+    <div class="row row--top mt10" style="gap:14px">
+      <div class="col shrink0" style="width:200px">
+        <div class="steps steps--tight">
+          <div class="steps__item"><span class="steps__no">①</span> 保存寄存器</div>
+          <div class="steps__item"><span class="steps__no">②</span> 保存参数</div>
+          <div class="steps__item"><span class="steps__no">③</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">④</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑤</span> 调用 swap</div>
+          <div class="steps__item"><span class="steps__no">⑥</span> 内层循环</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">⑦</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">⑧</span> 恢复寄存器～</div>
+        </div>
+        <div class="regmap mt12" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:14px">循环变量的更新</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">$s0 : i</div>
+            <div class="regmap__cell">$s3 : n</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+<pre class="code code--vh"><span class="ln">exit2:</span>
+<span class="ln ln--on">    addi $s0, $s0, 1     <span class="cmt"># i++</span></span>
+<span class="ln ln--on">    j    for1tst         <span class="cmt"># 回到外层循环的条件判断</span></span>
+<span class="ln ln--new">exit1:</span>
+<span class="ln ln--ell">        ⋮</span></pre>
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>内层循环结束后执行 <span class="mono">i++</span>，再无条件跳回外层循环的条件判断
+            <span class="mono">for1tst</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">30 / 33</div>
+</section>
+
+<!-- ======================================================== 31 sort 步骤⑧ -->
+<section class="slide" id="s31">
+  <div class="slide__head">
+    <h2 class="slide__title">从 C 程序到汇编代码的转换:⑧ 恢复寄存器～返回</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>请把下面的 C 语言源代码改写为汇编代码。</span>
+    </div>
+
+<pre class="code code--tight mt8">void sort(int v[], int n){
+    int i, j;
+    for(i=0; i&lt;n; i++)
+        for(j=i-1; j&gt;=0 &amp;&amp; v[j]&gt;v[j+1]; j--)
+            swap(v,j);
+}</pre>
+
+    <div class="row row--top mt10" style="gap:14px">
+      <div class="col shrink0" style="width:200px">
+        <div class="steps steps--tight">
+          <div class="steps__item"><span class="steps__no">①</span> 保存寄存器</div>
+          <div class="steps__item"><span class="steps__no">②</span> 保存参数</div>
+          <div class="steps__item"><span class="steps__no">③</span> 外层循环</div>
+          <div class="steps__item"><span class="steps__no">④</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑤</span> 调用 swap</div>
+          <div class="steps__item"><span class="steps__no">⑥</span> 内层循环</div>
+          <div class="steps__item"><span class="steps__no">⑦</span> 外层循环</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">⑧</span> 恢复寄存器～</div>
+        </div>
+        <div class="regmap mt12" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:14px">栈帧偏移</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">0 : $s0</div>
+            <div class="regmap__cell">4 : $s1</div>
+            <div class="regmap__cell">8 : $s2</div>
+            <div class="regmap__cell">12 : $s3</div>
+            <div class="regmap__cell">16 : $ra</div>
+            <div class="regmap__cell">20 : 栈指针回退</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+<pre class="code code--vh"><span class="ln">exit1:</span>
+<span class="ln ln--on">    lw   $s0, 0($sp)     <span class="cmt"># 恢复寄存器</span></span>
+<span class="ln ln--on">    lw   $s1, 4($sp)</span>
+<span class="ln ln--on">    lw   $s2, 8($sp)</span>
+<span class="ln ln--on">    lw   $s3, 12($sp)</span>
+<span class="ln ln--on">    lw   $ra, 16($sp)</span>
+<span class="ln ln--on">    addi $sp, $sp, 20    <span class="cmt"># 释放栈帧</span></span>
+<span class="ln ln--on">    jr   $ra             <span class="cmt"># 返回到调用者</span></span></pre>
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>从栈帧中<span class="kw">恢复</span> <span class="mono">$s0～$s3</span> 与
+            <span class="mono">$ra</span> 的原有值，把 <span class="mono">$sp</span> 退回，
+            最后用 <span class="mono">jr $ra</span> 返回<span class="kw">调用者</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">31 / 33</div>
+</section>
+
+<!-- ======================================================== 32 sort 完整程序 -->
+<section class="slide" id="s32">
+  <div class="slide__head" style="padding-top:22px">
+    <h2 class="slide__title">sort 子程序的完整汇编程序</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top" style="gap:20px">
+      <div class="col grow">
+        <div class="code-label">sort:（前半:①～④ 条件判断）</div>
+<pre class="code code--vh">sort:
+    addi $sp, $sp, -20
+    sw   $ra, 16($sp)
+    sw   $s3, 12($sp)
+    sw   $s2, 8($sp)
+    sw   $s1, 4($sp)
+    sw   $s0, 0($sp)
+    move $s2, $a0
+    move $s3, $a1
+    move $s0, $zero
+for1tst:
+    slt  $t0, $s0, $s3
+    beq  $t0, $zero, exit1
+    addi $s1, $s0, -1
+for2tst:
+    slti $t0, $s1, 0
+    bne  $t0, $zero, exit2
+    sll  $t1, $s1, 2
+    add  $t2, $s2, $t1</pre>
+      </div>
+
+      <div class="col grow">
+        <div class="code-label">sort:（后半:④～⑧ 循环体与返回）</div>
+<pre class="code code--vh">    lw   $t3, 0($t2)
+    lw   $t4, 4($t2)
+    slt  $t0, $t4, $t3
+    beq  $t0, $zero, exit2
+    move $a0, $s2
+    move $a1, $s1
+    jal  swap
+    addi $s1, $s1, -1
+    j    for2tst
+exit2:
+    addi $s0, $s0, 1
+    j    for1tst
+exit1:
+    lw   $s0, 0($sp)
+    lw   $s1, 4($sp)
+    lw   $s2, 8($sp)
+    lw   $s3, 12($sp)
+    lw   $ra, 16($sp)
+    addi $sp, $sp, 20
+    jr   $ra</pre>
+      </div>
+    </div>
+
+    <div class="row row--top mt10" style="gap:20px">
+      <div class="col grow">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th style="width:40px">步骤</th><th style="width:196px">汇编片段</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">①</td><td class="c">addi / sw ×5</td><td>把 $s0～$s3、$ra 保存到栈帧</td></tr>
+            <tr class="alt"><td class="c">②</td><td class="c">move $s2,$a0／$s3,$a1</td><td>保存实参 v、n</td></tr>
+            <tr><td class="c">③</td><td class="c">for1tst: slt / beq</td><td>外层循环条件 i &lt; n</td></tr>
+            <tr class="alt"><td class="c">④</td><td class="c">for2tst: slti / sll / add / lw / slt</td><td>内层循环条件与取数</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col grow">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th style="width:40px">步骤</th><th style="width:196px">汇编片段</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">⑤</td><td class="c">move $a0 / move $a1 / jal swap</td><td>调用 swap(v, j)</td></tr>
+            <tr class="alt"><td class="c">⑥</td><td class="c">addi $s1,-1 / j for2tst</td><td>j-- 并回到内层判断</td></tr>
+            <tr><td class="c">⑦</td><td class="c">addi $s0,1 / j for1tst</td><td>i++ 并回到外层判断</td></tr>
+            <tr class="alt"><td class="c">⑧</td><td class="c">lw ×5 / addi / jr $ra</td><td>恢复寄存器并返回</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">32 / 33</div>
+</section>
+
+<!-- ======================================================== 33 参考文献 -->
+<section class="slide" id="s33">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:26px">
+    <div class="refs">
+      <div class="refs__item">
+        《计算机组成与设计:硬件 / 软件接口》第 5 版（上）
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span>
+      </div>
+      <div class="refs__item">
+        David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社
+      </div>
+      <div class="refs__item">
+        山下茂《计算机组成原理 1》课程讲义
+        <span class="refs__en">山下茂「計算機構成論１」講義資料</span>
+      </div>
+    </div>
+
+    <div class="callout mt24" style="font-size:18px">
+      <span class="callout__tag">本讲小结</span>
+      <span>源代码经<span class="kw">编译器</span>生成汇编代码，经<span class="kw">汇编器</span>生成目标文件，
+        再由<span class="kw">链接器</span>合并为可执行文件，最后由<span class="kw">加载器</span>装入内存并启动执行。</span>
+    </div>
+  </div>
+  <div class="page-no">33 / 33</div>
+</section>
+
+</div>
+</body>
+</html>

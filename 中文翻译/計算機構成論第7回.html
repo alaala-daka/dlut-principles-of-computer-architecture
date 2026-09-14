@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第7讲 指令的执行（1）· 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="7">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 7 讲</div>
+    <h1 class="cover__title">指令的<em>执行</em>（1）</h1>
+    <p class="cover__sub">过程的执行与栈</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    薛昕惟
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第7回 ―命令の実行(1)―」<br>
+    中文翻译版
+  </div>
+  <div class="page-no" style="color:#8fb0cc">1 / 26</div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令的执行</div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">过程的执行与栈<span class="toc__item--jp">手続きの実行とスタック — 过程的执行与栈</span></div>
+        </div>
+      </div>
+      <div class="toc__group">
+        <div class="toc__lead">本讲的要点</div>
+        <div class="toc__items">
+          <div class="toc__item">过程的调用与返回（jal / jr）<span class="toc__item--jp">手続きの実行 — 过程的执行</span></div>
+          <div class="toc__item">用于过程执行的寄存器<span class="toc__item--jp">手続き実行のためのレジスタ</span></div>
+          <div class="toc__item">栈与栈指针 <span class="mono">$sp</span><span class="toc__item--jp">スタックとスタックポインタ</span></div>
+          <div class="toc__item">过程帧与帧指针 <span class="mono">$fp</span><span class="toc__item--jp">手続きフレームとフレームポインタ</span></div>
+          <div class="toc__item">变量与内存的构成<span class="toc__item--jp">変数とスタック</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">内容</span>
+      <span>本讲讨论「指令的执行」中的第一部分：<span class="kw">过程（procedure）</span>是如何被调用和返回的。
+        为了保存返回地址、被覆盖的寄存器以及放不下的参数和返回值，需要<span class="kw">内存中的栈</span>；
+        由此引出<span class="kw-blue">栈指针 $sp</span>、<span class="kw-blue">过程帧</span>与<span class="kw-blue">帧指针 $fp</span>，
+        最后归纳 C 语言各类变量的存放位置与内存的释放。</span>
+    </div>
+  </div>
+  <div class="page-no">2 / 26</div>
+</section>
+
+<!-- ======================================================== 3 过程的执行方法（过程与函数） -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">过程的执行方法：过程与函数</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:310px">
+        <div class="code-label">函数调用</div>
+<pre class="code code--tight">int main(){
+    int result = function(100, 200);
+    ...
+}</pre>
+        <div class="note mt8">实参：<span class="mono">100</span>、<span class="mono">200</span>；返回值赋给 <span class="mono">result</span></div>
+      </div>
+      <div class="col shrink0" style="width:310px">
+        <div class="code-label">函数的定义</div>
+<pre class="code code--tight">int function(int a, int b){
+    return a + b;
+}</pre>
+        <div class="note mt8">返回值（的类型）・函数名・形参</div>
+      </div>
+      <div class="col grow">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th style="width:130px">中文术语</th><th style="width:130px">日语原文</th><th>在本例中的位置</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>返回值（的类型）</td><td class="c">戻り値(の型)</td><td>最前面的 <span class="mono">int</span></td></tr>
+            <tr class="alt"><td>函数名</td><td class="c">関数名</td><td><span class="mono">function</span></td></tr>
+            <tr><td>形参（仮引数）</td><td class="c">仮引数</td><td><span class="mono">int a, int b</span></td></tr>
+            <tr class="alt"><td>函数调用</td><td class="c">関数呼び出し</td><td><span class="mono">function(100, 200)</span></td></tr>
+            <tr><td>实参（実引数）</td><td class="c">実引数</td><td>调用时传入的 <span class="mono">100, 200</span></td></tr>
+            <tr class="alt"><td>函数的定义</td><td class="c">関数の定義</td><td>被调用的过程本体</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ul class="bullets bullets--compact mt16">
+      <li><span class="kw">过程（procedure）</span>：构成程序一部分的一连串处理。</li>
+      <li>在 <span class="mono">C</span> 语言的场合，就称为<span class="kw-blue">「函数」</span>。</li>
+      <li>注：<span class="kw">返回值</span>（日文写作「戻り値」）有时也称为「返り値」。</li>
+    </ul>
+  </div>
+  <div class="page-no">3 / 26</div>
+</section>
+
+<!-- ======================================================== 4 执行过程所必需的事项 -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">过程的执行方法：执行过程所必需的事项</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">要点</span>
+      <span>要执行一个过程，调用方与被调用方之间必须完成下面这 6 件事。</span>
+    </div>
+
+    <div class="steps mt16" style="font-size:22px">
+      <div class="steps__item"><span class="steps__no">①</span> 把参数的值放在过程可以访问的位置</div>
+      <div class="steps__item"><span class="steps__no">②</span> 把控制转移到过程</div>
+      <div class="steps__item"><span class="steps__no">③</span> 确保过程内部处理所需的内存资源</div>
+      <div class="steps__item"><span class="steps__no">④</span> 执行过程内部的处理</div>
+      <div class="steps__item"><span class="steps__no">⑤</span> 把结果（返回值）放在调用者可以访问的位置</div>
+      <div class="steps__item"><span class="steps__no">⑥</span> 把控制返回原来的位置</div>
+    </div>
+
+    <div class="panel panel--tight mt20">
+      <div class="panel__title panel__title--red">说明</div>
+      <ul class="bullets bullets--compact" style="font-size:19px">
+        <li>① 与 ⑤ 处理的是<span class="kw">参数的传递</span>与<span class="kw">返回值的回送</span>。</li>
+        <li>② 与 ⑥ 处理的是<span class="kw">控制流</span>的转移与返回。</li>
+        <li>③ 与 ④ 是过程本体在运行中所需要的<span class="kw-blue">内存资源</span>与处理本身。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-no">4 / 26</div>
+</section>
+
+<!-- ======================================================== 5 各项事务在 MIPS 中的实现 -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">过程的执行方法：各项事务在 MIPS 中的实现</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:70px">序号</th>
+          <th style="width:480px">执行过程所必需的事项</th>
+          <th>在 MIPS 中的实现</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c red">①</td>
+          <td>把参数的值放在过程可以访问的位置</td>
+          <td class="c"><span class="kw">$a0 - $a3</span>（参数寄存器）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c red">②</td>
+          <td>把控制转移到过程</td>
+          <td class="c">用 <span class="kw">jal</span> 指令操作 PC、<span class="kw">$ra</span></td>
+        </tr>
+        <tr>
+          <td class="c red">③</td>
+          <td>确保过程内部处理所需的内存资源</td>
+          <td class="c">内存内（<span class="kw">栈</span>）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c red">④</td>
+          <td>执行过程内部的处理</td>
+          <td class="c">过程内部的指令序列</td>
+        </tr>
+        <tr>
+          <td class="c red">⑤</td>
+          <td>把结果（返回值）放在调用者可以访问的位置</td>
+          <td class="c"><span class="kw">$v0 - $v1</span>（返回值寄存器）</td>
+        </tr>
+        <tr class="alt">
+          <td class="c red">⑥</td>
+          <td>把控制返回原来的位置</td>
+          <td class="c"><span class="kw">jr $ra</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt20">
+      <span class="callout__tag">说明</span>
+      <span>① 与 ⑤ 之所以能用寄存器完成，是因为 MIPS 事先约定了<span class="kw">参数寄存器 $a0-$a3</span> 与
+        <span class="kw">返回值寄存器 $v0-$v1</span>；而 ② 与 ⑥ 则靠 <span class="mono">jal</span> / <span class="mono">jr</span>
+        这一对指令把<span class="kw-blue">返回地址</span>写入并取回 <span class="mono">$ra</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">5 / 26</div>
+</section>
+
+<!-- ======================================================== 6 用于过程执行的寄存器 -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">用于过程执行的寄存器</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <table class="tbl tbl--sm">
+      <thead>
+        <tr>
+          <th style="width:150px">寄存器</th>
+          <th style="width:170px">编号</th>
+          <th>用途</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="c red">$zero</td><td class="c">0</td><td>始终为零</td></tr>
+        <tr class="alt"><td class="c red">$at</td><td class="c">1</td><td>汇编器临时使用</td></tr>
+        <tr><td class="c red">$v0 - $v1</td><td class="c">2 - 3</td><td>用于返回值</td></tr>
+        <tr class="alt"><td class="c red">$a0 - $a3</td><td class="c">4 - 7</td><td>用于参数</td></tr>
+        <tr><td class="c red">$t0 - $t9</td><td class="c">8 - 15, 24 - 25</td><td><span class="kw">临时寄存器</span>（用于临时变量）</td></tr>
+        <tr class="alt"><td class="c red">$s0 - $s7</td><td class="c">16 - 23</td><td><span class="kw">被调用者保存寄存器</span>（日语：退避レジスタ，用于变量）</td></tr>
+        <tr><td class="c red">$k0 - $k1</td><td class="c">26 - 27</td><td>为 OS 内核保留</td></tr>
+        <tr class="alt"><td class="c red">$gp</td><td class="c">28</td><td>全局指针</td></tr>
+        <tr><td class="c red">$sp</td><td class="c">29</td><td>栈指针</td></tr>
+        <tr class="alt"><td class="c red">$fp</td><td class="c">30</td><td>帧指针</td></tr>
+        <tr><td class="c red">$ra</td><td class="c">31</td><td>返回地址</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout--blue callout--slim mt12">
+      <span class="callout__tag">说明</span>
+      <span>「编号」一栏是该寄存器在 MIPS 中的<span class="kw">寄存器号</span>。其中 <span class="mono">$s0 - $s7</span>
+        是<span class="kw-blue">被调用者保存寄存器</span>（日语「退避レジスタ」），
+        <span class="mono">$t0 - $t9</span> 是<span class="kw-blue">临时寄存器</span>，两者的保存责任不同（见第 17 页）。</span>
+    </div>
+  </div>
+  <div class="page-no">6 / 26</div>
+</section>
+
+<!-- ======================================================== 7 过程的执行：jal 与 jr -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">过程的执行：jal 与 jr</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col grow">
+        <div class="code-label">jal Label</div>
+<pre class="code code--tight">jal Procedure        <span class="cmt"># jump and link（跳转并链接）</span></pre>
+        <ul class="bullets bullets--compact mt10" style="font-size:19px">
+          <li>…jump and link</li>
+          <li>跳转到指定的地址，<span class="kw">同时</span>把<span class="kw">下一条指令的地址</span>保存到寄存器 <span class="mono">$ra</span> 中（<span class="kw-blue">J 形式</span>）。</li>
+        </ul>
+
+        <div class="code-label mt16">jr $ra</div>
+<pre class="code code--tight">jr $ra               <span class="cmt"># jump register（跳转到寄存器中的地址）</span></pre>
+        <ul class="bullets bullets--compact mt10" style="font-size:19px">
+          <li>…jump register</li>
+          <li>跳转到指定寄存器中所保存的<span class="kw">内存地址</span>（<span class="kw-blue">R 形式</span>）。</li>
+        </ul>
+      </div>
+
+      <div class="col shrink0" style="width:470px">
+        <div class="frame" style="width:470px">
+          <div class="frame__head">内存</div>
+          <div class="frame__row"><span class="frame__slot">1024： <span class="frame__reg">jal Procedure</span></span><span class="frame__off">← 过程调用方（呼出元）</span></div>
+          <div class="frame__row"><span class="frame__slot">1028： 下一条指令</span><span class="frame__off">← $ra 中保存的地址</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">Procedure： 过程内部的处理 …</span><span class="frame__off">← 被调用方（呼出先）</span></div>
+          <div class="frame__row"><span class="frame__slot">过程末尾： <span class="frame__reg">jr $ra</span></span><span class="frame__off">← 返回调用者</span></div>
+        </div>
+        <div class="callout callout--blue mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">例</span>
+          <span>在右边的例子中，<span class="mono">1024</span> 号地址的 <span class="mono">jal</span> 指令执行之后，
+            <span class="mono">$ra</span> 变为 <span class="hi">1028</span>。</span>
+        </div>
+        <div class="callout mt10" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">PC</span>
+          <span>PC 在 <span class="mono">1024</span> 的下一条是 <span class="mono">Procedure</span>；
+            过程内的 <span class="mono">jr</span> 指令执行之后，PC 变为 <span class="hi">1028</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">7 / 26</div>
+</section>
+
+<!-- ======================================================== 8 参数/返回值/多次调用 -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">过程的执行方法：寄存器不够用时怎么办？</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:548px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th style="width:56px">序号</th><th style="width:300px">执行过程所必需的事项</th><th>在 MIPS 中的实现</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c red">①</td><td>把参数的值放在过程可以访问的位置</td><td class="c">$a0 - $a3</td></tr>
+            <tr class="alt"><td class="c red">②</td><td>把控制转移到过程</td><td class="c">jal 指令操作 PC、$ra</td></tr>
+            <tr><td class="c red">③</td><td>确保过程内部处理所需的内存资源</td><td class="c">内存内</td></tr>
+            <tr class="alt"><td class="c red">④</td><td>执行过程内部的处理</td><td class="c">过程内部的指令序列</td></tr>
+            <tr><td class="c red">⑤</td><td>把结果（返回值）放在调用者可以访问的位置</td><td class="c">$v0 - $v1</td></tr>
+            <tr class="alt"><td class="c red">⑥</td><td>把控制返回原来的位置</td><td class="c">jr $ra</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col grow">
+        <div class="callout callout--red" style="font-size:18px;padding:10px 13px">
+          <span class="callout__tag">Q1</span>
+          <span>参数在 <span class="kw">4 个以上</span>的场合怎么办？</span>
+        </div>
+        <div class="callout callout--red mt10" style="font-size:18px;padding:10px 13px">
+          <span class="callout__tag">Q2</span>
+          <span>返回值在 <span class="kw">2 个以上</span>的场合怎么办？</span>
+        </div>
+        <div class="callout callout--red mt10" style="font-size:18px;padding:10px 13px">
+          <span class="callout__tag">Q3</span>
+          <span><span class="kw">多次调用</span>同一个过程的场合怎么办？</span>
+        </div>
+        <div class="callout callout--blue mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">提示</span>
+          <span>这几种情况都要借助<span class="kw">内存中的栈</span>：寄存器里放不下的参数和返回值只能放到栈上，
+            多次调用还必须把<span class="kw-blue">返回地址</span>保存起来——这正是下一页要讨论的「栈」。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">8 / 26</div>
+</section>
+
+<!-- ======================================================== 9 栈（stack） -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">栈（stack）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li><span class="kw">后放入的数据先被取出</span>的数据结构：<span class="mono">LIFO (last in, first out)</span>。</li>
+      <li>只能访问位于<span class="kw">栈顶</span>（top）的数据（＝最后放入的数据）。</li>
+    </ul>
+
+    <div class="row row--top mt16">
+      <div class="col shrink0" style="width:210px">
+        <div class="frame" style="width:210px">
+          <div class="frame__head"><span class="kw">压栈</span>（push）</div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">F</span><span class="frame__off">栈顶</span></div>
+          <div class="frame__row"><span class="frame__slot">E</span></div>
+          <div class="frame__row"><span class="frame__slot">D</span></div>
+          <div class="frame__row"><span class="frame__slot">C</span></div>
+          <div class="frame__row"><span class="frame__slot">B</span></div>
+          <div class="frame__row"><span class="frame__slot">A</span><span class="frame__off">栈底</span></div>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:210px">
+        <div class="frame" style="width:210px">
+          <div class="frame__head"><span class="kw">出栈</span>（pop）</div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">F</span><span class="frame__off">被取出</span></div>
+          <div class="frame__row"><span class="frame__slot">E</span></div>
+          <div class="frame__row"><span class="frame__slot">D</span></div>
+          <div class="frame__row"><span class="frame__slot">C</span></div>
+          <div class="frame__row"><span class="frame__slot">B</span></div>
+          <div class="frame__row"><span class="frame__slot">A</span><span class="frame__off">栈底</span></div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">术语对照</div>
+          <table class="tbl tbl--xs">
+            <tbody>
+              <tr><td style="width:150px">压栈</td><td class="c">プッシュ (push)</td><td>保存值；也说「把 F <span class="kw">压入</span>栈」</td></tr>
+              <tr class="alt"><td>出栈</td><td class="c">ポップ (pop)</td><td>取出值；也说「把 F 从栈中<span class="kw">取下</span>」</td></tr>
+              <tr><td>栈顶</td><td class="c">スタックの先頭（トップ）</td><td>＝最后放入的数据，只有它能被访问</td></tr>
+              <tr class="alt"><td>栈底</td><td class="c">スタックの底</td><td>最先放入的数据（本例为 A）</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note mt8">日语原文：「スタックに F を積む」ともいう／「スタックから F を下ろす」ともいう。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">9 / 26</div>
+</section>
+
+<!-- ======================================================== 10 栈的操作（练习） -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">栈的操作（练习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="callout callout--blue">
+      <span class="callout__tag">题目</span>
+      <span>考虑一个<span class="kw">空栈</span>。对这个栈依次进行下列操作时，请写出栈的变化。</span>
+    </div>
+
+    <div class="row row--top mt16">
+      <div class="col grow">
+        <div class="steps" style="font-size:21px">
+          <div class="steps__item"><span class="steps__no">(1)</span> 把数据 <span class="mono">A</span> 压栈</div>
+          <div class="steps__item"><span class="steps__no">(2)</span> 把数据 <span class="mono">B</span> 压栈</div>
+          <div class="steps__item"><span class="steps__no">(3)</span> 出栈</div>
+          <div class="steps__item"><span class="steps__no">(4)</span> 把数据 <span class="mono">C</span> 压栈</div>
+          <div class="steps__item"><span class="steps__no">(5)</span> 出栈</div>
+          <div class="steps__item"><span class="steps__no">(6)</span> 出栈</div>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:240px">
+        <div class="frame" style="width:240px">
+          <div class="frame__head">空栈（初始状态）</div>
+          <div class="frame__row frame__off"><span class="frame__slot">（没有数据）</span></div>
+          <div class="frame__row frame__off"><span class="frame__slot">栈底 ＝ 栈顶</span><span class="frame__off">← 指向同一位置</span></div>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:340px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--amber">说明</div>
+          <ul class="bullets bullets--compact" style="font-size:18px">
+            <li>压栈（push）只把数据放到<span class="kw">栈顶</span>。</li>
+            <li>出栈（pop）只从<span class="kw">栈顶</span>取出数据。</li>
+            <li>空栈上出栈是非法操作——本题第 (6) 步取出最后一个数据。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">10 / 26</div>
+</section>
+
+<!-- ======================================================== 11 栈的操作（答案） -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">栈的操作（答案）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:400px">
+        <div class="steps steps--tight" style="font-size:18px">
+          <div class="steps__item"><span class="steps__no">(1)</span> 压入 <span class="mono">A</span> → 栈：A</div>
+          <div class="steps__item"><span class="steps__no">(2)</span> 压入 <span class="mono">B</span> → 栈：A、B（栈顶 B）</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">(3)</span> 出栈 → 取出 <span class="mono">B</span>，栈：A</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">(4)</span> 压入 <span class="mono">C</span> → 栈：A、C（栈顶 C）</div>
+          <div class="steps__item"><span class="steps__no">(5)</span> 出栈 → 取出 <span class="mono">C</span>，栈：A</div>
+          <div class="steps__item"><span class="steps__no">(6)</span> 出栈 → 取出 <span class="mono">A</span>，栈：空</div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="row row--top" style="gap:16px">
+          <div class="col shrink0">
+            <div class="frame" style="width:150px">
+              <div class="frame__head">(2) 之后</div>
+              <div class="frame__row"><span class="frame__slot">A</span><span class="frame__off">栈底</span></div>
+              <div class="frame__row frame__row--on"><span class="frame__slot">B</span><span class="frame__off">栈顶</span></div>
+            </div>
+          </div>
+          <div class="col shrink0">
+            <div class="frame" style="width:150px">
+              <div class="frame__head">(3) 之后</div>
+              <div class="frame__row frame__row--on"><span class="frame__slot">A</span><span class="frame__off">栈顶＝栈底</span></div>
+            </div>
+          </div>
+          <div class="col shrink0">
+            <div class="frame" style="width:150px">
+              <div class="frame__head">(4) 之后</div>
+              <div class="frame__row"><span class="frame__slot">A</span><span class="frame__off">栈底</span></div>
+              <div class="frame__row frame__row--on"><span class="frame__slot">C</span><span class="frame__off">栈顶</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout--blue mt16">
+          <span class="callout__tag">说明</span>
+          <span>图中给出三个有代表性的状态：(2) 之后为 A、B，(3) 之后 B 被取出只剩 A，
+            (4) 之后 C 被压入成为新的栈顶。第 (5)(6) 步再把 C、A 依次取出，栈回到<span class="kw">空</span>的状态。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">11 / 26</div>
+</section>
+
+<!-- ======================================================== 12 过程调用与栈的关系 -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">过程调用与栈的关系</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>如果把<span class="kw">当前正在执行的过程的名字</span>依次压入栈，会是什么样子？</span>
+    </div>
+
+    <div class="row row--top mt12">
+      <div class="col shrink0" style="width:300px">
+        <div class="code-label">源代码</div>
+<pre class="code code--tight">int main(){
+    a();
+}
+void a(){
+    b();
+    c();
+}</pre>
+      </div>
+
+      <div class="col shrink0" style="width:420px">
+        <div class="steps steps--tight" style="font-size:17.5px">
+          <div class="steps__item"><span class="steps__no">(1)</span> 压入 a</div>
+          <div class="steps__item"><span class="steps__no">(2)</span> 压入 b</div>
+          <div class="steps__item steps__item--on"><span class="steps__no">(3)</span> 出栈</div>
+          <div class="steps__item"><span class="steps__no">(4)</span> 压入 c</div>
+          <div class="steps__item"><span class="steps__no">(5)</span> 出栈</div>
+          <div class="steps__item"><span class="steps__no">(6)</span> 出栈</div>
+        </div>
+        <div class="note mt8">※ 省略 main</div>
+      </div>
+
+      <div class="col grow">
+        <div class="row row--top" style="gap:14px">
+          <div class="col shrink0">
+            <div class="frame" style="width:120px">
+              <div class="frame__head">(1) 之后</div>
+              <div class="frame__row frame__row--on"><span class="frame__slot">a</span></div>
+            </div>
+          </div>
+          <div class="col shrink0">
+            <div class="frame" style="width:120px">
+              <div class="frame__head">(2) 之后</div>
+              <div class="frame__row"><span class="frame__slot">a</span></div>
+              <div class="frame__row frame__row--on"><span class="frame__slot">b</span></div>
+            </div>
+          </div>
+          <div class="col shrink0">
+            <div class="frame" style="width:120px">
+              <div class="frame__head">(4) 之后</div>
+              <div class="frame__row"><span class="frame__slot">a</span></div>
+              <div class="frame__row frame__row--on"><span class="frame__slot">c</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout mt16">
+      <span class="callout__tag">溢出</span>
+      <span>寄存器里<span class="kw">放不下的参数和返回值</span>会被压入内存中的栈——这称为<span class="kw-blue">溢出</span>（日语：スピルアウト，spill out）。</span>
+    </div>
+  </div>
+  <div class="page-no">12 / 26</div>
+</section>
+
+<!-- ======================================================== 13 叶子过程 -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">过程调用与栈的关系：叶子过程</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:300px">
+        <div class="code-label">源代码</div>
+<pre class="code code--tight">int main(){
+    a();
+}
+void a(){
+    b();
+    c();
+}</pre>
+        <div class="note mt8">※ 省略 main</div>
+      </div>
+
+      <div class="col shrink0" style="width:400px">
+        <div class="steps steps--tight" style="font-size:17.5px">
+          <div class="steps__item"><span class="steps__no">(1)</span> 压入 a</div>
+          <div class="steps__item"><span class="steps__no">(2)</span> 压入 b</div>
+          <div class="steps__item"><span class="steps__no">(3)</span> 出栈</div>
+          <div class="steps__item"><span class="steps__no">(4)</span> 压入 c</div>
+          <div class="steps__item"><span class="steps__no">(5)</span> 出栈</div>
+          <div class="steps__item"><span class="steps__no">(6)</span> 出栈</div>
+        </div>
+        <div class="row row--top mt10" style="gap:12px">
+          <div class="col shrink0">
+            <div class="frame" style="width:106px">
+              <div class="frame__head">(1) 之后</div>
+              <div class="frame__row frame__row--on"><span class="frame__slot">a</span></div>
+            </div>
+          </div>
+          <div class="col shrink0">
+            <div class="frame" style="width:106px">
+              <div class="frame__head">(2) 之后</div>
+              <div class="frame__row"><span class="frame__slot">a</span></div>
+              <div class="frame__row frame__row--on"><span class="frame__slot">b</span></div>
+            </div>
+          </div>
+          <div class="col shrink0">
+            <div class="frame" style="width:106px">
+              <div class="frame__head">(4) 之后</div>
+              <div class="frame__row"><span class="frame__slot">a</span></div>
+              <div class="frame__row frame__row--on"><span class="frame__slot">c</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">叶子（leaf）过程</div>
+          <ul class="bullets bullets--compact" style="font-size:19px">
+            <li><span class="kw">不调用其他过程</span>的过程称为<span class="kw-blue">叶子过程</span>（日语：リーフ手続き）。
+              在本例中就是 <span class="mono">b()</span> 和 <span class="mono">c()</span>。</li>
+            <li>如果过程<span class="kw">全部都是叶子过程</span>，栈的管理就<span class="kw-blue">不是必需的</span>。</li>
+          </ul>
+        </div>
+
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">溢出</span>
+          <span>寄存器里放不下的参数和返回值会被压入<span class="kw">内存中的栈</span>（日语：スピルアウト，spill out）。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">13 / 26</div>
+</section>
+
+<!-- ======================================================== 14 栈的实现 -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">栈的实现</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top">
+      <div class="col grow">
+        <ul class="bullets bullets--compact" style="font-size:20px">
+          <li>把栈的<span class="kw">栈顶地址</span>用寄存器 <span class="mono">$sp</span> 记忆。</li>
+          <li><span class="kw-blue">内存地址大的方向</span>是栈底，＝<span class="kw-blue">内存地址小的方向</span>是栈顶（栈的最上面）。</li>
+        </ul>
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">栈指针</span>
+          <span><span class="kw">栈指针</span>（stack pointer，<span class="mono">$sp</span>）中保存的是「<span class="kw-blue">最后压入的数据的地址</span>」。</span>
+        </div>
+        <div class="note mt10">图中的 <span class="mono">high address</span> 表示高地址端，底部 <span class="mono">0</span> 表示地址 0。</div>
+      </div>
+
+      <div class="col shrink0">
+        <div class="mem">
+          <div class="mem__addr" style="height:400px">
+            <div class="mem__pt-val" style="position:absolute;top:0;left:0">高地址　high address</div>
+            <div class="mem__pt" style="top:74px"><span class="mem__pt-label">栈顶（$sp）</span><span class="mem__pt-arrow"></span></div>
+            <div class="mem__pt-val" style="position:absolute;top:330px;left:0">低地址　low address</div>
+            <div class="mem__pt-val" style="position:absolute;top:372px;left:0">0</div>
+          </div>
+          <div class="mem__stack" style="width:360px">
+            <div class="mem__seg mem__seg--hi">
+              <div class="mem__seg-name">栈　Stack</div>
+              <div class="mem__seg-en">↓ 向低地址方向增长（栈顶在下方）</div>
+            </div>
+            <div class="mem__seg mem__seg--arrow">
+              <div class="mem__seg-name">堆　Dynamic data</div>
+              <div class="mem__seg-en">↑ 向高地址方向增长</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">静态数据段　Static data</div>
+              <div class="mem__seg-en">存放静态变量</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">正文段　Text</div>
+              <div class="mem__seg-en">存放程序</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">保留区　Reserved</div>
+              <div class="mem__seg-en">不使用</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">14 / 26</div>
+</section>
+
+<!-- ======================================================== 15 过程调用时的栈操作 ①② -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">过程调用时的栈操作：① 调用之前与 ② 进入过程之后</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:300px">
+        <div class="code-label">源代码</div>
+<pre class="code code--tight">int main(){          <span class="cmt"># ①</span>
+    a();
+}
+void a(){
+    int x;
+    b(x);            <span class="cmt"># ②</span>
+    c();
+}</pre>
+        <div class="note mt8">① 在 main 中调用 a()；② 在 a() 中调用 b(x)。</div>
+      </div>
+
+      <div class="col shrink0" style="width:330px">
+        <div class="frame" style="width:330px">
+          <div class="frame__head">栈　① 调用 a() 之前（在 main 中）</div>
+          <div class="frame__row"><span class="frame__slot">高地址　high</span><span class="frame__off">↑</span></div>
+          <div class="frame__row"><span class="frame__slot">main 中使用的数据</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">← $sp</span><span class="frame__off">栈顶</span></div>
+          <div class="frame__row"><span class="frame__slot">低地址　low</span><span class="frame__off">↓</span></div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="frame" style="width:400px">
+          <div class="frame__head">栈　② 进入 a() 之后</div>
+          <div class="frame__row"><span class="frame__slot">高地址　high</span><span class="frame__off">↑</span></div>
+          <div class="frame__row"><span class="frame__slot">main() 对应的数据</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">← $sp（调用之前的位置）</span><span class="frame__off">调用 a() 之前</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">a() 中使用的数据</span><span class="frame__off">a() 对应</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">← $sp（现在的位置）</span><span class="frame__off">栈顶</span></div>
+          <div class="frame__row"><span class="frame__slot">低地址　low</span><span class="frame__off">↓</span></div>
+        </div>
+        <div class="callout callout--blue mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>调用 a() 时，为 a() 所使用的数据在栈上<span class="kw">新确保</span>一块区域，<span class="mono">$sp</span> 随之向<span class="kw-blue">低地址方向</span>移动。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">15 / 26</div>
+</section>
+
+<!-- ======================================================== 16 过程调用时的栈操作 ③④ -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">过程调用时的栈操作：③ 调用 b() 与 ④ 在 b() 内部</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:370px">
+        <div class="frame" style="width:370px">
+          <div class="frame__head">栈　③ 调用 b(x)（进入 b() 之前）</div>
+          <div class="frame__row"><span class="frame__slot">高地址　high</span><span class="frame__off">↑</span></div>
+          <div class="frame__row"><span class="frame__slot">main 中使用的数据</span></div>
+          <div class="frame__row"><span class="frame__slot">a() 中使用的数据</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">$ra 的内容（返回地址）等</span><span class="frame__off">需要保存</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">b() 中使用的数据</span><span class="frame__off">b() 对应</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">← $sp</span><span class="frame__off">栈顶</span></div>
+          <div class="frame__row"><span class="frame__slot">低地址　low</span><span class="frame__off">↓</span></div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="frame" style="width:380px">
+          <div class="frame__head">栈　④ b() 内部执行中</div>
+          <div class="frame__row"><span class="frame__slot">高地址　high</span><span class="frame__off">↑</span></div>
+          <div class="frame__row"><span class="frame__slot">main() 对应的数据</span></div>
+          <div class="frame__row"><span class="frame__slot">a() 对应的数据</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">b() 对应的数据</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">← $sp</span><span class="frame__off">栈顶</span></div>
+          <div class="frame__row"><span class="frame__slot">低地址　low</span><span class="frame__off">↓</span></div>
+        </div>
+        <div class="callout mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">补充</span>
+          <span>如有必要，<span class="kw">返回值</span>也会被压入栈中。</span>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:300px">
+        <div class="code-label">源代码</div>
+<pre class="code code--tight">int main(){
+    a();
+}
+void a(){
+    int x;
+    b(x);            <span class="cmt"># ③</span>
+    c();             <span class="cmt"># ④</span>
+}</pre>
+        <div class="note mt8">③ 在 a() 中调用 b(x)；④ 进入 b() 内部执行。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">16 / 26</div>
+</section>
+
+<!-- ======================================================== 17 寄存器的保存规则 -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">过程调用时的栈操作：寄存器值的保存规则</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact" style="font-size:20px">
+      <li>当过程 A 调用过程 B 时，必须把 A 中<span class="kw">正在使用的寄存器里的数据</span>退避（保存）到内存（栈）中。</li>
+      <li>哪些寄存器需要退避，是由<span class="kw-blue">寄存器本身</span>决定的，与具体程序无关。</li>
+    </ul>
+
+    <div class="row row--top mt16">
+      <div class="col grow">
+        <table class="tbl">
+          <thead>
+            <tr><th style="width:340px">寄存器</th><th>是否退避</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="c red">$s0 - $s7（退避レジスタ）</td>
+              <td>要退避。日语称<span class="kw">退避レジスタ</span>，即<span class="kw-blue">被调用者保存寄存器</span>。</td>
+            </tr>
+            <tr class="alt">
+              <td class="c red">$ra（リターンアドレス）</td>
+              <td>要退避。即<span class="kw-blue">返回地址</span>。</td>
+            </tr>
+            <tr>
+              <td class="c red">$t0 - $t9（一時レジスタ）</td>
+              <td><span class="kw">不退避</span>。即<span class="kw-blue">临时寄存器</span>；如果其值不会被覆盖，也可以不退避。</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout mt16">
+          <span class="callout__tag">做法</span>
+          <span>调用 B 时，把上述寄存器的值<span class="kw">压栈</span>；B 的执行结束后，再从栈中<span class="kw">出栈</span>，
+            把值恢复到原来的寄存器中。</span>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:340px">
+        <div class="code-label">源代码</div>
+<pre class="code code--tight">int main(){
+    a();
+}
+void a(){
+    b();
+    c();
+}</pre>
+        <div class="panel panel--tight mt12">
+          <div class="panel__title panel__title--teal">要点</div>
+          <ul class="bullets bullets--compact" style="font-size:18px">
+            <li>被调用者（B）负责保证 <span class="mono">$s0 - $s7</span> 与 <span class="mono">$ra</span> 的值不变。</li>
+            <li>调用者（A）自己负责 <span class="mono">$t0 - $t9</span>：若不使用，就不必退避。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">17 / 26</div>
+</section>
+
+<!-- ======================================================== 18 寄存器值的退避方法 -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">过程调用时的栈操作：寄存器值的退避方法</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col grow">
+        <div class="steps" style="font-size:20px">
+          <div class="steps__item"><span class="steps__no">①</span> 首先把 <span class="mono">$sp</span> 的值加上一个<span class="kw">负数</span>（$sp ← $sp − n）</div>
+          <div class="steps__item"><span class="steps__no">②</span> 用 <span class="mono">sw</span> 指令把要退避的寄存器的内容写入内存（栈）</div>
+        </div>
+
+        <div class="callout callout--blue mt16" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>先把 <span class="mono">$sp</span> 向低地址方向移动（加负数），在栈上腾出空间；
+            再用 <span class="mono">sw</span> 把寄存器的值存进这块空间。</span>
+        </div>
+
+        <div class="mem mt16">
+          <div class="mem__addr" style="height:250px">
+            <div class="mem__pt-val" style="position:absolute;top:0;left:0">高地址　high address</div>
+            <div class="mem__pt" style="top:74px"><span class="mem__pt-label">栈顶（$sp）</span><span class="mem__pt-arrow"></span></div>
+            <div class="mem__pt-val" style="position:absolute;top:222px;left:0">低地址　low address</div>
+          </div>
+          <div class="mem__stack" style="width:320px">
+            <div class="mem__seg mem__seg--hi">
+              <div class="mem__seg-name">栈　Stack</div>
+              <div class="mem__seg-en">退避数据被写入栈顶一侧</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">堆　Dynamic data</div>
+              <div class="mem__seg-en">（堆）</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">静态数据段　Static data</div>
+              <div class="mem__seg-en">静态变量</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col shrink0" style="width:430px">
+        <div class="frame" style="width:430px">
+          <div class="frame__head">栈（内存地址小的方向为栈顶）</div>
+          <div class="frame__row"><span class="frame__slot">…（调用者的数据）</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">保存的寄存器（$s0 - $s7 等）</span><span class="frame__reg">$s0 - $s7</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">返回地址</span><span class="frame__reg">$ra</span></div>
+          <div class="frame__row"><span class="frame__slot">← 栈顶</span><span class="frame__reg">$sp</span></div>
+        </div>
+        <div class="note mt8">执行 <span class="mono">addi $sp, $sp, -n</span> 后，<span class="mono">$sp</span> 指向新的栈顶；
+          刚被 <span class="mono">sw</span> 写入的<span class="kw">返回地址</span>与<span class="kw">保存的寄存器</span>就位于栈顶一侧。</div>
+        <div class="callout callout--red mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">注意</span>
+          <span>退避出来的空间在过程返回前必须用 <span class="mono">addi $sp, $sp, n</span>（加正数）收回，否则栈会不断向低地址方向增长。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">18 / 26</div>
+</section>
+
+<!-- ======================================================== 19 过程帧与帧指针 -->
+<section class="slide" id="s19">
+  <div class="slide__head">
+    <h2 class="slide__title">过程调用时的栈操作：过程帧与帧指针</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:400px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">过程帧</div>
+          <ul class="bullets bullets--compact" style="font-size:18.5px">
+            <li>调用该过程时<span class="kw">新确保</span>出来的栈上的区域。</li>
+            <li>也称为<span class="kw-blue">栈帧</span>（日语：スタックフレーム）。</li>
+          </ul>
+        </div>
+
+        <div class="panel panel--tight mt12">
+          <div class="panel__title panel__title--teal">帧指针　<span class="mono">$fp</span></div>
+          <ul class="bullets bullets--compact" style="font-size:18.5px">
+            <li>指向<span class="kw">帧的开始地址</span>。</li>
+            <li>即使栈在过程中继续增长，也能通过 <span class="mono">$fp</span> 稳定地访问帧内的数据。</li>
+          </ul>
+        </div>
+
+        <div class="code-label mt16">源代码</div>
+<pre class="code code--tight">int main(){        <span class="cmt"># ①</span>
+    a();
+}
+void a(){
+    int x;
+    b(x);          <span class="cmt"># ②</span>
+    c();
+}</pre>
+      </div>
+
+      <div class="col grow">
+        <div class="frame" style="width:460px">
+          <div class="frame__head">栈（图再掲）</div>
+          <div class="frame__row"><span class="frame__slot">高地址　high</span><span class="frame__off">↑</span></div>
+          <div class="frame__row"><span class="frame__slot">main() 对应的帧</span><span class="frame__off">①</span></div>
+          <div class="frame__row"><span class="frame__slot">main 中使用的数据</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">← $fp</span><span class="frame__off">帧的开始地址</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">← $sp（调用 a() 之前）</span></div>
+          <div class="frame__row"><span class="frame__slot">a() 对应的帧</span><span class="frame__off">②</span></div>
+          <div class="frame__row"><span class="frame__slot">a() 中使用的数据</span></div>
+          <div class="frame__row frame__row--on"><span class="frame__slot">← $sp（现在）</span><span class="frame__off">栈顶</span></div>
+          <div class="frame__row"><span class="frame__slot">低地址　low</span><span class="frame__off">↓</span></div>
+        </div>
+
+        <div class="callout callout--blue mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>① main() 对应的帧、② a() 对应的帧依次向<span class="kw">低地址方向</span>排列；
+            <span class="mono">$fp</span> 指向当前帧的开始地址，<span class="mono">$sp</span> 指向栈顶。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">19 / 26</div>
+</section>
+
+<!-- ======================================================== 20 确认问题 leaf_example -->
+<section class="slide" id="s20">
+  <div class="slide__head" style="padding-top:24px">
+    <h2 class="slide__title">确认问题：leaf_example 的汇编代码</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>把下面的 C 语言源代码编译之后，得到的 MIPS 汇编代码会是什么样子？（空栏 (1) - (10) 请自行填入）</span>
+    </div>
+
+    <div class="row row--top mt8">
+      <div class="col shrink0" style="width:300px">
+        <div class="code-label">源代码</div>
+<pre class="code code--tight">int leaf_example(int i, int j){
+    int f, g, h;
+    g = i+j;
+    h = i-j;
+    f = g+h;
+    return f;
+}</pre>
+      </div>
+
+      <div class="col shrink0" style="width:200px">
+        <div class="regmap">
+          <div class="regmap__title">寄存器的对应</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">f：$s0</div>
+            <div class="regmap__cell">g：$s1</div>
+            <div class="regmap__cell">h：$s2</div>
+            <div class="regmap__cell">i：$a0</div>
+            <div class="regmap__cell">j：$a1</div>
+          </div>
+        </div>
+        <div class="callout callout--red mt10" style="font-size:15px;padding:8px 10px">
+          <span class="callout__tag">注意</span>
+          <span>函数名是 <span class="mono">leaf_example</span>，是一个<span class="kw">叶子过程</span>。</span>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="code-label">MIPS 汇编（空栏为待填内容）</div>
+<pre class="code code--vh">leaf_example:
+    addi $sp, $sp, <span class="blank">(1)</span>       <span class="cmt"># 确保 3 个字</span>
+    sw   $s2, 8($sp)          <span class="cmt"># 退避</span>
+    sw   $s1, 4($sp)          <span class="cmt"># 退避</span>
+    sw   $s0, 0($sp)          <span class="cmt"># 退避</span>
+    add  $s1, <span class="blank">(2)</span>, <span class="blank">(3)</span>          <span class="cmt"># g=i+j</span>
+    sub  $s2, <span class="blank">(2)</span>, <span class="blank">(3)</span>          <span class="cmt"># h=i-j</span>
+    add  $s0, $s1, $s2        <span class="cmt"># f=g+h</span>
+    add  <span class="blank">(4)</span>, $s0, $zero      <span class="cmt"># 设置返回值</span>
+    <span class="blank">(5)</span>  $s0, 0($sp)          <span class="cmt"># 恢复寄存器</span>
+    <span class="blank">(6)</span>  $s1, 4($sp)          <span class="cmt"># 恢复寄存器</span>
+    <span class="blank">(7)</span>  $s2, 8($sp)          <span class="cmt"># 恢复寄存器</span>
+    <span class="blank">(8)</span>  $sp, $sp, <span class="blank">(9)</span>       <span class="cmt"># 去掉 3 个字</span>
+    jr   <span class="blank">(10)</span>                <span class="cmt"># 返回到调用者</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">20 / 26</div>
+</section>
+
+<!-- ======================================================== 21 变量与栈 -->
+<section class="slide" id="s21">
+  <div class="slide__head">
+    <h2 class="slide__title">变量与栈</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top">
+      <div class="col shrink0">
+        <div class="mem">
+          <div class="mem__addr" style="height:400px">
+            <div class="mem__pt-val" style="position:absolute;top:0;left:0">高地址　high address</div>
+            <div class="mem__pt" style="top:74px"><span class="mem__pt-label">$sp（栈顶）</span><span class="mem__pt-arrow"></span></div>
+            <div class="mem__pt-val" style="position:absolute;top:376px;left:0">0</div>
+          </div>
+          <div class="mem__stack" style="width:380px">
+            <div class="mem__seg mem__seg--hi">
+              <div class="mem__seg-name">栈　Stack　↓</div>
+              <div class="mem__seg-en">局部变量、参数等（向低地址增长）</div>
+            </div>
+            <div class="mem__seg mem__seg--arrow">
+              <div class="mem__seg-name">堆　ヒープ(heap)</div>
+              <div class="mem__seg-en">Dynamic data　↑　存放动态变量</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">静态数据段　Static data</div>
+              <div class="mem__seg-en">存放静态变量</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">正文段　Text</div>
+              <div class="mem__seg-en">存放程序</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">保留区　Reserved</div>
+              <div class="mem__seg-en">不使用</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">下面的各寄存器中保存着什么？</div>
+          <div class="steps steps--tight" style="font-size:17.5px">
+            <div class="steps__item"><span class="steps__no mono">$pc</span> 当前正在执行的指令的地址</div>
+            <div class="steps__item"><span class="steps__no mono">$gp</span> 访问静态数据时使用的基准地址</div>
+            <div class="steps__item"><span class="steps__no mono">$sp</span> 当前栈的最低位地址（栈顶）</div>
+            <div class="steps__item"><span class="steps__no mono">$fp</span> 当前过程帧的最高位地址（帧的开始地址）</div>
+          </div>
+        </div>
+
+        <div class="callout callout--blue mt12" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>栈用于存放<span class="kw">局部变量、参数等</span>；堆（日本語：ヒープ、heap）用于存放<span class="kw">动态变量</span>；
+            静态数据段存放<span class="kw">静态变量</span>；正文段存放<span class="kw">程序</span>本体。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">21 / 26</div>
+</section>
+
+<!-- ======================================================== 22 过程调用之间保持不变的内容 -->
+<section class="slide" id="s22">
+  <div class="slide__head">
+    <h2 class="slide__title">过程调用之间保持不变的内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col grow">
+        <div class="panel">
+          <div class="panel__title panel__title--teal">保持（调用前后值不变）</div>
+          <div class="regmap">
+            <div class="regmap__grid">
+              <div class="regmap__cell">$s0 - $s7　被调用者保存寄存器</div>
+              <div class="regmap__cell">$sp　栈指针</div>
+              <div class="regmap__cell">$fp　帧指针</div>
+              <div class="regmap__cell">$gp　全局指针</div>
+              <div class="regmap__cell">$ra　返回地址</div>
+            </div>
+          </div>
+          <div class="note mt10">被调用的过程必须保证这些寄存器在返回时与调用前<span class="kw">完全相同</span>。</div>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel">
+          <div class="panel__title panel__title--red">不保持（调用后可能被改写）</div>
+          <div class="regmap">
+            <div class="regmap__grid">
+              <div class="regmap__cell">$t0 - $t9　临时寄存器</div>
+              <div class="regmap__cell">$a0 - $a3　参数寄存器</div>
+              <div class="regmap__cell">$v0 - $v1　返回值寄存器</div>
+            </div>
+          </div>
+          <div class="note mt10">这些寄存器如果需要在调用后继续使用，必须由<span class="kw">调用者自己</span>提前退避。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">小结</span>
+      <span>过程调用时，「<span class="kw-blue">$s0 - $s7、$sp、$fp、$gp、$ra</span> 由被调用者负责保持不变」，
+        「<span class="kw">$t0 - $t9、$a0 - $a3、$v0 - $v1</span> 由调用者自行负责」——
+        这正是前面所说「寄存器值的退避规则」的具体内容。</span>
+    </div>
+  </div>
+  <div class="page-no">22 / 26</div>
+</section>
+
+<!-- ======================================================== 23 C 语言变量的存储类别 -->
+<section class="slide" id="s23">
+  <div class="slide__head">
+    <h2 class="slide__title">C 语言变量的存储类别</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col grow">
+        <table class="tbl tbl--sm">
+          <thead>
+            <tr>
+              <th style="width:250px">存储类别与存放位置</th>
+              <th style="width:200px">生存期</th>
+              <th>可访问的范围</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="red">自动变量（局部变量）</span><br><span class="note">存放位置：<span class="kw">栈</span>上</span></td>
+              <td>只在块内存活</td>
+              <td>在声明的范围内可访问</td>
+            </tr>
+            <tr class="alt">
+              <td><span class="red">外部变量</span><br><span class="note">存放位置：<span class="kw">静态数据段</span></span></td>
+              <td>程序运行期间一直存活</td>
+              <td>从任何地方都可访问</td>
+            </tr>
+            <tr>
+              <td><span class="red">静态变量</span><br><span class="note">存放位置：<span class="kw">静态数据段</span></span></td>
+              <td>程序运行期间一直存活</td>
+              <td>在声明的范围内可访问</td>
+            </tr>
+            <tr class="alt">
+              <td><span class="red">※ 寄存器变量</span></td>
+              <td colspan="2">被分配到<span class="kw-blue">寄存器</span>中的自动变量（由编译器决定）</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout mt16" style="font-size:17px;padding:10px 13px">
+          <span class="callout__tag">说明</span>
+          <span>外部变量与静态变量的区别在于<span class="kw">作用范围</span>（从任何地方 / 仅在声明的范围内），
+            而不是生存期与存放位置。想把一个局部变量放进寄存器以加快访问，就用寄存器变量。</span>
+        </div>
+      </div>
+
+      <div class="col shrink0">
+        <div class="mem">
+          <div class="mem__addr" style="height:400px;width:210px">
+            <div class="mem__pt" style="top:40px"><span class="mem__pt-label">局部变量、参数</span><span class="mem__pt-arrow"></span></div>
+            <div class="mem__pt" style="top:112px"><span class="mem__pt-label">malloc() 确保的区域等</span><span class="mem__pt-arrow"></span></div>
+            <div class="mem__pt" style="top:290px"><span class="mem__pt-label">外部变量、静态变量</span><span class="mem__pt-arrow"></span></div>
+            <div class="mem__pt-val" style="position:absolute;top:374px;left:0">0</div>
+          </div>
+          <div class="mem__stack" style="width:250px">
+            <div class="mem__seg mem__seg--hi">
+              <div class="mem__seg-name">栈　Stack　↓</div>
+              <div class="mem__seg-en">自动变量（局部变量）</div>
+            </div>
+            <div class="mem__seg mem__seg--arrow">
+              <div class="mem__seg-name">堆　Dynamic data　↑</div>
+              <div class="mem__seg-en">malloc() 确保的区域等</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">静态数据段　Static data</div>
+              <div class="mem__seg-en">外部变量、静态变量</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">正文段　Text</div>
+              <div class="mem__seg-en">程序</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">保留区　Reserved</div>
+              <div class="mem__seg-en">不使用</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">23 / 26</div>
+</section>
+
+<!-- ======================================================== 24 内存的释放 -->
+<section class="slide" id="s24">
+  <div class="slide__head">
+    <h2 class="slide__title">内存的释放</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col grow">
+        <ul class="bullets bullets--compact" style="font-size:20px">
+          <li><span class="kw">动态数据</span>的内存在 C 语言中用 <span class="mono">free()</span> 释放。</li>
+        </ul>
+
+        <div class="callout callout--red mt12" style="font-size:18px">
+          <span class="callout__tag">忘记释放</span>
+          <span>→ 造成<span class="kw">内存泄漏</span>（日语：メモリ・リーク，memory leak）。<br>
+            内存泄漏不断增多之后，就<span class="kw">无法再确保</span>新的区域。</span>
+        </div>
+
+        <div class="callout callout--red mt12" style="font-size:18px">
+          <span class="callout__tag">释放过早</span>
+          <span>→ 产生<span class="kw">悬空指针</span>（日语：宙ぶらりんなポインタ，dangling pointer）。</span>
+        </div>
+
+        <div class="callout callout--blue mt12" style="font-size:18px">
+          <span class="callout__tag">Java 等</span>
+          <span>在 Java 等语言中，由<span class="kw">垃圾回收</span>（garbage collection）机制<span class="kw-blue">适当且自动地</span>完成释放。</span>
+        </div>
+      </div>
+
+      <div class="col shrink0">
+        <div class="mem">
+          <div class="mem__addr" style="height:400px">
+            <div class="mem__pt" style="top:40px"><span class="mem__pt-label">free() 释放</span><span class="mem__pt-arrow"></span></div>
+            <div class="mem__pt" style="top:112px"><span class="mem__pt-label">malloc() 确保的区域等</span><span class="mem__pt-arrow"></span></div>
+            <div class="mem__pt-val" style="position:absolute;top:374px;left:0">0</div>
+          </div>
+          <div class="mem__stack" style="width:300px">
+            <div class="mem__seg mem__seg--hi">
+              <div class="mem__seg-name">栈　Stack　↓</div>
+              <div class="mem__seg-en">局部变量、参数</div>
+            </div>
+            <div class="mem__seg mem__seg--arrow">
+              <div class="mem__seg-name">堆　Dynamic data　↑</div>
+              <div class="mem__seg-en">malloc() 确保的区域等</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">静态数据段　Static data</div>
+              <div class="mem__seg-en">静态变量</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">正文段　Text</div>
+              <div class="mem__seg-en">程序</div>
+            </div>
+            <div class="mem__seg">
+              <div class="mem__seg-name">保留区　Reserved</div>
+              <div class="mem__seg-en">不使用</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">24 / 26</div>
+</section>
+
+<!-- ======================================================== 25 确认问题 fact -->
+<section class="slide" id="s25">
+  <div class="slide__head" style="padding-top:24px">
+    <h2 class="slide__title">确认问题：递归过程 fact 的汇编代码</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>把下面的 C 语言源代码编译之后，得到的 MIPS 汇编代码会是什么样子？（空栏 (1) - (10) 请自行填入）</span>
+    </div>
+
+    <div class="row row--top mt8">
+      <div class="col shrink0" style="width:300px">
+        <div class="code-label">源代码</div>
+<pre class="code code--tight">int fact (int n){
+    if(n&lt;1)
+        return 1;
+    else
+        return n * fact(n-1);
+}</pre>
+        <div class="regmap mt10" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:14px">寄存器的对应</div>
+          <div class="regmap__grid" style="font-size:14px">
+            <div class="regmap__cell">n：$a0</div>
+          </div>
+        </div>
+        <div class="callout callout--red mt10" style="font-size:15px;padding:8px 10px">
+          <span class="callout__tag">条件</span>
+          <span>调用 fact 时，需要把 <span class="mono">$a0</span>、<span class="mono">$ra</span> 的值<span class="kw">退避</span>。</span>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="code-label">MIPS 汇编（前半：递归的基准情形）</div>
+<pre class="code code--vh">fact:
+    addi $sp, <span class="blank">(1)</span>, <span class="blank">(2)</span>        <span class="cmt"># 确保 2 个字</span>
+    sw   $ra, 4($sp)           <span class="cmt"># 退避</span>
+    sw   $a0, 0($sp)           <span class="cmt"># 退避</span>
+    slti $t0, $a0, 1           <span class="cmt"># n&lt;1 吗？</span>
+    beq  $t0, $zero, <span class="blank">(3)</span>      <span class="cmt"># 分支</span>
+    addi $v0, $zero, 1         <span class="cmt"># 设置返回值</span>
+    addi $sp, <span class="blank">(4)</span>, <span class="blank">(5)</span>        <span class="cmt"># 去掉 2 个字</span>
+    jr   <span class="blank">(6)</span>                  <span class="cmt"># 返回</span></pre>
+      </div>
+
+      <div class="col grow">
+        <div class="code-label">MIPS 汇编（后半：递归调用与返回）</div>
+<pre class="code code--vh">L1:
+    addi $a0, $a0, -1          <span class="cmt"># 参数 n-1</span>
+    jal  <span class="blank">(7)</span>                  <span class="cmt"># 调用 fact</span>
+    lw   $a0, 0($sp)           <span class="cmt"># 恢复寄存器</span>
+    lw   $ra, 4($sp)           <span class="cmt"># 恢复寄存器</span>
+    addi $sp, <span class="blank">(8)</span>, <span class="blank">(9)</span>        <span class="cmt"># 去掉 2 个字</span>
+    mul  $v0, $a0, $v0         <span class="cmt"># n*fact(n-1)</span>
+    jr   <span class="blank">(10)</span>                 <span class="cmt"># 返回</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">25 / 26</div>
+</section>
+
+<!-- ======================================================== 26 参考文献 -->
+<section class="slide" id="s26">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:26px">
+    <div class="refs">
+      <div class="refs__item">
+        《计算机组成与设计：硬件 / 软件接口》第 5 版（上）
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span>
+      </div>
+      <div class="refs__item">
+        David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社
+      </div>
+      <div class="refs__item">
+        山下茂《计算机组成原理 1》课程讲义
+        <span class="refs__en">山下茂「計算機構成論１」講義資料</span>
+      </div>
+    </div>
+
+    <div class="callout mt24" style="font-size:18px">
+      <span class="callout__tag">本讲小结</span>
+      <span>过程的调用与返回由 <span class="mono">jal</span> / <span class="mono">jr $ra</span> 实现；
+        为了保存返回地址、被覆盖的寄存器以及放不下的参数和返回值，需要使用<span class="kw">栈</span>。
+        <span class="mono">$sp</span> 指向栈顶、<span class="mono">$fp</span> 指向过程帧的开始地址；
+        被调用者保存寄存器 <span class="mono">$s0 - $s7</span> 与 <span class="mono">$ra</span> 由被调用者退避，
+        临时寄存器 <span class="mono">$t0 - $t9</span> 由调用者自己负责。最后，动态数据要用 <span class="mono">free()</span>
+        正确释放，避免<span class="kw">内存泄漏</span>与<span class="kw">悬空指针</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">26 / 26</div>
+</section>
+
+</div>
+</body>
+</html>

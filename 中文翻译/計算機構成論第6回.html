@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第6讲 指令集体系结构（3）· 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="6">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 6 讲</div>
+    <h1 class="cover__title">指令集<em>体系结构</em>（3）</h1>
+    <p class="cover__sub">分支处理 · 无条件转移 · 大小比较 · 寻址模式</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    双見京介
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第6回 ―命令セットアーキテクチャ(3)―」<br>
+    中文翻译版
+  </div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令格式<span class="toc__item--jp">命令形式</span></div>
+        <div class="toc__items">
+          <div class="toc__item">R 格式、I 格式是什么<span class="toc__item--jp">R形式、I形式とは</span></div>
+          <div class="toc__item">指令与机器语言的对应<span class="toc__item--jp">命令と機械語の対応</span></div>
+          <div class="toc__item">与数组使用对应的汇编代码<span class="toc__item--jp">配列の使用に対応するアセンブリコード</span></div>
+          <div class="toc__item toc__item--active">与分支处理对应的汇编代码<span class="toc__item--jp">分岐処理に対応するアセンブリコード</span></div>
+          <div class="toc__item">无条件转移与 J 格式<span class="toc__item--jp">無条件分岐とJ形式</span></div>
+          <div class="toc__item">大小比较指令<span class="toc__item--jp">大小比較命令</span></div>
+          <div class="toc__item">寻址模式<span class="toc__item--jp">アドレシング・モード</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本讲要点</span>
+      <span>本讲从<span class="kw">分支处理</span>出发，学习条件转移（<span class="mono">beq</span>／<span class="mono">bne</span>）、无条件转移（<span class="mono">j</span>）与
+        大小比较（<span class="mono">slt</span>／<span class="mono">slti</span>）指令，并理解<span class="kw">程序计数器</span>如何变化；
+        最后归纳 <span class="kw">5 种寻址模式</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">2 / 32</div>
+</section>
+
+<!-- ======================================================== 3 分岐処理 -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">分支处理</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">用途</span>
+      <span>用于实现 C 语言的<span class="kw">条件判断</span>与<span class="kw">循环</span>（<span class="mono">if</span>、<span class="mono">while</span>、<span class="mono">for</span> 等）。</span>
+    </div>
+
+<pre class="code mt12">beq $s0, $s1, L1    <span class="cmt"># $s0 与 $s1 的值相等时，跳转到带标号 L1 的指令</span>
+                    <span class="cmt"># (branch on equal)</span>
+bne $s0, $s1, L1    <span class="cmt"># $s0 与 $s1 的值不相等时，跳转到带标号 L1 的指令</span>
+                    <span class="cmt"># (branch on not equal)</span></pre>
+
+    <div class="row row--top mt16" style="gap:24px">
+      <div class="col shrink0" style="width:640px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">I 格式</div>
+          <table class="tbl tbl--sm" style="table-layout:fixed">
+            <tbody>
+              <tr>
+                <td class="c" style="width:18.75%">op</td>
+                <td class="c" style="width:15.625%">rs</td>
+                <td class="c" style="width:15.625%">rt</td>
+                <td class="c" style="width:50%">imm.</td>
+              </tr>
+              <tr>
+                <td class="c num">6bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">16bit</td>
+              </tr>
+            </tbody>
+          </table>
+          <pre class="code code--sm mt10">beq (rs), (rt), (imm.)
+bne (rs), (rt), (imm.)</pre>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout">
+          <span class="callout__tag">要点</span>
+          <span>用<span class="kw-blue">带符号 16bit 整数</span>进行<span class="kw">相对地址指定</span>：立即数字段不是地址本身，
+            而是相对<span class="kw">程序计数器</span>的<span class="kw">偏移量</span>（以指令为单位的相对地址）。</span>
+        </div>
+        <div class="note mt12">标号 L1 只是书写上的记号，汇编器会把它换算成<span class="kw">偏移量</span>后填入 <span class="mono">imm.</span> 字段。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">3 / 32</div>
+</section>
+
+<!-- ======================================================== 4 分支处理（相对地址指定） -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">分支处理：相对地址指定</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">要点</span>
+      <span><span class="mono">beq</span> 指令、<span class="mono">bne</span> 指令采用<span class="kw">相对地址指定</span>。</span>
+    </div>
+
+    <div class="row row--top mt12" style="gap:24px">
+      <div class="col shrink0" style="width:520px">
+        <table class="tbl tbl--sm">
+          <thead>
+            <tr>
+              <th style="width:100px">地址</th>
+              <th style="width:250px">指令</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="c num">1000</td>
+              <td class="c">beq $s0, $s1, L1</td>
+              <td class="c red">+24</td>
+            </tr>
+            <tr class="alt">
+              <td class="c num"></td>
+              <td class="c">...</td>
+              <td class="c">（作为指令是第 6 条之后）</td>
+            </tr>
+            <tr>
+              <td class="c num"></td>
+              <td class="c">...</td>
+              <td></td>
+            </tr>
+            <tr class="alt">
+              <td class="c num">1024</td>
+              <td class="c">L1:</td>
+              <td>跳转目标</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note mt8">PC = 1000 时，若把 PC 前进 <span class="mono">20+4 = 24</span>，就到达 1024。</div>
+        <div class="note mt10">原文对照：<span class="mono">+24(命令としては6つ先)</span></div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">I 格式（本条 <span class="mono">beq</span> 的值）</div>
+          <table class="tbl tbl--sm" style="table-layout:fixed">
+            <tbody>
+              <tr>
+                <td class="c" style="width:18.75%">op</td>
+                <td class="c" style="width:15.625%">rs</td>
+                <td class="c" style="width:15.625%">rt</td>
+                <td class="c" style="width:50%">imm.</td>
+              </tr>
+              <tr>
+                <td class="c num">6bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">16bit</td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="tbl tbl--sm mt10">
+            <tbody>
+              <tr><th style="width:200px">op: 指令操作码</th><td class="c num red">4</td></tr>
+              <tr><th>rs: 第 1 源操作数</th><td class="c num red">16<sub>10</sub></td></tr>
+              <tr><th>rt: 第 2 源操作数</th><td class="c num red">17<sub>10</sub></td></tr>
+              <tr><th>immediate: 立即数操作数</th><td class="c num red">5</td></tr>
+            </tbody>
+          </table>
+          <div class="note mt8">把程序计数器前进 <span class="mono">20+4</span>：（PC+4）+ 5×4 = 1004 + 20 = <span class="mono">1024</span>。</div>
+        </div>
+
+        <div class="code-label mt12">机器语言（二进制）</div>
+<pre class="code code--sm">000100 10000 10001 0000000000000101</pre>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">4 / 32</div>
+</section>
+
+<!-- ======================================================== 5 分支处理（程序计数器） -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">分支处理：程序计数器（PC）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="row row--top" style="gap:26px">
+      <div class="col grow">
+        <ul class="bullets bullets--compact">
+          <li><span class="mono">PC</span>：<span class="mono">program counter</span>（程序计数器）。</li>
+          <li>保存着<span class="kw">当前正在执行的指令所在地址</span>的寄存器。</li>
+          <li>它<span class="kw-blue">不在 32 个通用寄存器之中</span>。</li>
+          <li><span class="mono">MIPS</span> 的指令是 <span class="mono">32</span> 位（<span class="mono">4</span> 字节），所以当前 <span class="mono">PC</span> 为 <span class="mono">2048</span> 时，下一条指令的地址是…</li>
+          <li>通常，每执行 1 条指令就进行 <span class="mono">PC = PC + 4</span> 这一动作。</li>
+          <li>但是，遇到 <span class="mono">J</span> 指令时，会把 <span class="mono">PC</span> 的<span class="kw-blue">低 28 位</span>替换为指定的值。</li>
+        </ul>
+      </div>
+
+      <div class="col shrink0" style="width:470px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">PC 与指令地址</div>
+          <table class="tbl tbl--sm">
+            <thead>
+              <tr><th style="width:180px">指令</th><th>地址</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="c">当前正在执行的指令</td><td class="c num">2048</td></tr>
+              <tr class="alt"><td class="c">下一条指令</td><td class="c num">2052</td></tr>
+              <tr><td class="c">再下一条指令</td><td class="c num">2056</td></tr>
+            </tbody>
+          </table>
+          <div class="note mt10">因为 1 条指令占 4 字节，所以每执行 1 条指令 <span class="mono">PC</span> 就 <span class="mono">+4</span>；
+            只要顺序执行，地址就依次递增。</div>
+        </div>
+        <div class="callout mt12">
+          <span class="callout__tag">J 指令的例外</span>
+          <span><span class="mono">j</span> 指令只替换 <span class="mono">PC</span> 的<span class="kw">低 28 位</span>，高 4 位保持不变（下一节详细说明）。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">5 / 32</div>
+</section>
+
+<!-- ======================================================== 6 讲义内容 -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令格式</div>
+        <div class="toc__items">
+          <div class="toc__item">R 格式、I 格式是什么</div>
+          <div class="toc__item">指令与机器语言的对应</div>
+          <div class="toc__item">与数组使用对应的汇编代码</div>
+          <div class="toc__item">与分支处理对应的汇编代码</div>
+          <div class="toc__item toc__item--active">无条件转移与 J 格式</div>
+          <div class="toc__item">大小比较指令</div>
+          <div class="toc__item">寻址模式</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本段目标</span>
+      <span>条件转移只能跳到附近（±32768 条指令以内），远距离跳转要用<span class="kw">无条件转移</span> <span class="mono">j</span> 指令。
+        本节要弄清 <span class="mono">J</span> 格式只有 26 位地址字段，却为什么能覆盖整个 <span class="kw">32 位地址空间</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">6 / 32</div>
+</section>
+
+<!-- ======================================================== 7 無条件分岐 -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">无条件转移</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">用途</span>
+      <span><span class="kw">无条件跳转</span>。</span>
+    </div>
+
+<pre class="code code--sm mt12">j L1    <span class="cmt"># 无条件跳转到带标号 L1 的指令</span></pre>
+
+    <div class="row row--top mt16" style="gap:24px">
+      <div class="col shrink0" style="width:600px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">J 格式</div>
+          <table class="tbl tbl--sm" style="table-layout:fixed">
+            <tbody>
+              <tr>
+                <td class="c" style="width:18.75%">op</td>
+                <td class="c" style="width:81.25%">address</td>
+              </tr>
+              <tr>
+                <td class="c num">6bit</td>
+                <td class="c num">26bit</td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="tbl tbl--sm mt10">
+            <tbody>
+              <tr><th style="width:220px">op:</th><td>指令操作码</td></tr>
+              <tr><th>address:</th><td>绝对地址</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout">
+          <span class="callout__tag">注意</span>
+          <span><span class="mono">address</span> 字段中存放的并不是真正的地址，而是<span class="kw">实际地址的 1/4 的值</span>
+            （也就是「<span class="kw-blue">第几条指令</span>」）。<br>
+            因此 26 位可以覆盖 <span class="mono">2<sup>26</sup></span> 条指令，即 <span class="mono">2<sup>28</sup></span> 字节的地址空间。</span>
+        </div>
+        <div class="note mt12">正因为指令按 4 字节对齐，地址的最低 2 位永远是 <span class="mono">00</span>，才可以省略不存。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">7 / 32</div>
+</section>
+
+<!-- ======================================================== 8 无条件转移（j L1 的例子） -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">无条件转移：<span class="mono">j L1</span> 的例子</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col shrink0" style="width:480px">
+        <table class="tbl tbl--sm">
+          <thead>
+            <tr><th style="width:100px">地址</th><th style="width:180px">指令</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c num">1000</td><td class="c">j L1</td><td></td></tr>
+            <tr class="alt"><td class="c num"></td><td class="c">...</td><td></td></tr>
+            <tr><td class="c num"></td><td class="c">...</td><td></td></tr>
+            <tr class="alt"><td class="c num">1024</td><td class="c">L1:</td><td class="red">跳转到 1024 号地址</td></tr>
+          </tbody>
+        </table>
+        <div class="note mt8">原文对照：<span class="mono">1024番地へジャンプ</span></div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">J 格式（本条 <span class="mono">j</span> 的值）</div>
+          <table class="tbl tbl--sm" style="table-layout:fixed">
+            <tbody>
+              <tr>
+                <td class="c" style="width:18.75%">op</td>
+                <td class="c" style="width:81.25%">address</td>
+              </tr>
+              <tr>
+                <td class="c num">6bit</td>
+                <td class="c num">26bit</td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="tbl tbl--sm mt10">
+            <tbody>
+              <tr><th style="width:200px">op: 指令操作码</th><td class="c num red">2</td></tr>
+              <tr><th>address: 绝对地址</th><td class="c num red">256<sub>10</sub></td></tr>
+            </tbody>
+          </table>
+          <div class="note mt8">1024 ÷ 4 = <span class="mono">256</span>，所以 <span class="mono">address</span> 字段中存入 256。</div>
+        </div>
+        <div class="code-label mt12">机器语言（二进制）</div>
+<pre class="code code--sm">000010 00000000000000000100000000</pre>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">8 / 32</div>
+</section>
+
+<!-- ======================================================== 9 无条件转移（PC 的值的变化） -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">无条件转移：PC 的值的变化</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col shrink0" style="width:560px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">回顾：<span class="mono">j L1</span></div>
+          <table class="tbl tbl--sm" style="table-layout:fixed">
+            <tbody>
+              <tr>
+                <td class="c" style="width:18.75%">op</td>
+                <td class="c" style="width:81.25%">address</td>
+              </tr>
+              <tr>
+                <td class="c num">6bit</td>
+                <td class="c num">26bit</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="note mt8">1000 <span class="mono">j L1</span> → 跳转到 1024（<span class="mono">address</span> = 256 = 1024 ÷ 4），
+            机器码为 <span class="mono">000010 00000000000000000100000000</span>。</div>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout callout--blue">
+          <span class="callout__tag">上位 4 位不变</span>
+          <span><span class="mono">j</span> 指令只改写 <span class="mono">PC</span> 的<span class="kw">低 28 位</span>，所以<span class="kw-blue">高 4 位保持原样</span>，
+            跳转只能在同一 <span class="mono">256MB</span> 区域（同一段）内进行。</span>
+        </div>
+        <div class="callout mt12">
+          <span class="callout__tag">低 2 位恒为 00</span>
+          <span><span class="mono">address</span> 字段存放的是「实际地址 ÷ 4」，拼回地址时要<span class="kw">左移 2 位</span>，
+            因此<span class="kw-blue">低 2 位始终是 00</span>。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-label mt14">PC 的值的变化（PC = 1000 → 1024）</div>
+<pre class="code code--sm">PC = 0000 0000 0000 0000 0000 0011 1110 1000    <span class="cmt"># 1000</span>
+     ↓  把低 28 位替换为 26bit 的 address×4
+PC = 0000 0000 0000 0000 0000 0100 0000 0000    <span class="cmt"># 1024</span>
+     ↑ 高 4 位不变          ↑ 这一段是 26bit 的 address（×4 之后）</pre>
+  </div>
+  <div class="page-no">9 / 32</div>
+</section>
+
+<!-- ======================================================== 10 与分支处理对应的汇编代码 -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">与分支处理对应的汇编代码</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--center" style="gap:18px">
+      <div class="col shrink0" style="width:70px">
+        <div class="note center">（例）</div>
+      </div>
+      <div class="col grow">
+<pre class="code code--sm">if(i==j) f=g+h; else f=g-h;</pre>
+      </div>
+      <div class="col shrink0" style="width:250px">
+        <div class="regmap" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:15px">寄存器分配</div>
+          <div class="regmap__grid" style="font-size:15px">
+            <div class="regmap__cell">f : $s0</div>
+            <div class="regmap__cell">g : $s1</div>
+            <div class="regmap__cell">h : $s2</div>
+            <div class="regmap__cell">i : $s3</div>
+            <div class="regmap__cell">j : $s4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row row--top mt16" style="gap:24px">
+      <div class="col shrink0" style="width:660px">
+        <div class="code-label">汇编代码</div>
+<pre class="code">bne $s3, $s4, Else    <span class="cmt"># i != j 则跳到 Else</span>
+add $s0, $s1, $s2     <span class="cmt"># f = g + h（then 部分）</span>
+j   Exit              <span class="cmt"># 跳过 else 部分</span>
+Else: sub $s0, $s1, $s2  <span class="cmt"># f = g - h（else 部分）</span>
+Exit:                 <span class="cmt"># 汇合点</span></pre>
+      </div>
+      <div class="col grow">
+        <div class="callout">
+          <span class="callout__tag">说明</span>
+          <span>用<span class="kw">相反的条件</span>（<span class="mono">bne</span>）跳过 <span class="mono">then</span> 部分，
+            <span class="mono">then</span> 部分结束后再用 <span class="mono">j</span> 跳过 <span class="mono">else</span> 部分，
+            两个分支最终在标号 <span class="mono">Exit</span> 处汇合。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">10 / 32</div>
+</section>
+
+<!-- ======================================================== 11 確認問題（while） -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>下面给出 <span class="mono">while</span> 语句与它对应的汇编代码。请填写汇编代码中的空栏。</span>
+    </div>
+
+    <div class="row row--center mt12" style="gap:18px">
+      <div class="col shrink0" style="width:70px">
+        <div class="note center">（例）</div>
+      </div>
+      <div class="col grow">
+<pre class="code code--sm">while(i!=a[j]) { i=i+1; }</pre>
+      </div>
+      <div class="col shrink0" style="width:250px">
+        <div class="regmap" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:15px">寄存器分配</div>
+          <div class="regmap__grid regmap__grid--one" style="font-size:15px">
+            <div class="regmap__cell">i : $s0</div>
+            <div class="regmap__cell">a : $s1</div>
+            <div class="regmap__cell">j : $s2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-label mt14">请填写空栏</div>
+<pre class="code"><span class="blank">Loop:</span> <span class="blank">(1)</span>  $t0, $s2, 2
+      add  $t0, $t0, $s1
+      lw   $t1, 0($t0)
+      <span class="blank">(2)</span>  $s0, $t1, <span class="hi-blue">Exit</span>
+      <span class="blank">(3)</span>  $s0, $s0, <span class="blank">(4)</span>
+      <span class="blank">(5)</span>  <span class="blank">(6)</span>
+<span class="blank">Exit:</span></pre>
+  </div>
+  <div class="page-no">11 / 32</div>
+</section>
+
+<!-- ======================================================== 12 確認問題（解答） -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题：解答与小结</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:80px">空栏</th>
+          <th style="width:230px">参考答案</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c red">(1)</td>
+          <td class="c">sll</td>
+          <td>用逻辑左移 2 位求出 <span class="mono">j×4</span>，即元素 <span class="mono">a[j]</span> 的字节偏移。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c red">(2)</td>
+          <td class="c">beq</td>
+          <td><span class="mono">i == a[j]</span> 时跳出循环：条件成立就转移到 <span class="mono">Exit</span>。</td>
+        </tr>
+        <tr>
+          <td class="c red">(3)</td>
+          <td class="c">addi</td>
+          <td>做立即数加法：<span class="mono">i = i + 1</span>。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c red">(4)</td>
+          <td class="c">1</td>
+          <td>循环变量每次加 <span class="mono">1</span>。</td>
+        </tr>
+        <tr>
+          <td class="c red">(5)</td>
+          <td class="c">j</td>
+          <td>循环体结束，无条件跳回循环开头。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c red">(6)</td>
+          <td class="c">Loop</td>
+          <td>跳转目标标号，即循环的条件判断处。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout--blue mt16">
+      <span class="callout__tag">小结</span>
+      <span><span class="mono">while</span> 循环的固定结构：<span class="kw">标号 Loop → 条件判断（beq/bne）→ 循环体 → j Loop</span>。
+        条件转移负责「跳出」，无条件转移负责「回到开头」。</span>
+    </div>
+  </div>
+  <div class="page-no">12 / 32</div>
+</section>
+
+<!-- ======================================================== 13 確認問題（Loop=768） -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li>假设带标号 <span class="mono">Loop</span> 的指令地址为 <span class="mono">768<sub>10</sub></span>。</li>
+      <li>把这些指令用二进制表示时，用<span class="kw">红色标出</span>的 <span class="mono">Exit</span>、<span class="mono">Loop</span> 对应的值是什么？</li>
+      <li>请分别用 <span class="mono">16</span> 位、<span class="mono">26</span> 位二进制回答。</li>
+    </ul>
+
+    <div class="row row--top mt16" style="gap:24px">
+      <div class="col shrink0" style="width:620px">
+        <div class="code-label">汇编代码</div>
+<pre class="code"><span class="blank">Loop:</span> beq  $s0, $s1, <span class="red">Exit</span>
+      addi $s0, $s0, 1
+      j    <span class="red">Loop</span>
+<span class="blank">Exit:</span></pre>
+      </div>
+      <div class="col grow">
+        <table class="tbl tbl--sm">
+          <thead>
+            <tr><th style="width:130px">地址</th><th>指令</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c num">768</td><td class="c">Loop: beq $s0, $s1, Exit</td></tr>
+            <tr class="alt"><td class="c num">772</td><td class="c">addi $s0, $s0, 1</td></tr>
+            <tr><td class="c num">776</td><td class="c">j Loop</td></tr>
+            <tr class="alt"><td class="c num">780</td><td class="c">Exit:</td></tr>
+          </tbody>
+        </table>
+        <div class="note mt8">每条指令 4 字节，所以 3 条指令依次落在 768、772、776，<span class="mono">Exit</span> 位于 780。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">13 / 32</div>
+</section>
+
+<!-- ======================================================== 14 確認問題（解答） -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题：解答（<span class="mono">Loop</span> = <span class="mono">768<sub>10</sub></span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>标号 <span class="mono">Loop</span> 的地址为 <span class="mono">768<sub>10</sub></span>；请用 16 位、26 位二进制分别回答红色标出的
+        <span class="mono">Exit</span>、<span class="mono">Loop</span> 对应的值。</span>
+    </div>
+
+    <div class="panel panel--tight mt14">
+      <div class="panel__title panel__title--red">① <span class="mono">Exit</span>：<span class="mono">beq</span> 的 16bit 偏移量</div>
+      <div class="row row--center" style="gap:16px">
+        <div class="col shrink0" style="width:560px">
+<pre class="code code--sm">偏移量 = (Exit − (PC + 4)) ÷ 4
+       = (780 − (768 + 4)) ÷ 4
+       = (780 − 772) ÷ 4 = 8 ÷ 4 = 2</pre>
+        </div>
+        <div class="col grow">
+          <div class="note">16 位二进制（补码形式）：</div>
+          <div class="mono" style="font-size:20px;font-weight:700;color:var(--accent)">0000 0000 0000 0010</div>
+          <div class="note mt8">即 <span class="mono">2</span>，表示「从下一条指令再往后 2 条指令」。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel--tight mt12">
+      <div class="panel__title panel__title--red">② <span class="mono">Loop</span>：<span class="mono">j</span> 的 26bit 地址字段</div>
+      <div class="row row--center" style="gap:16px">
+        <div class="col shrink0" style="width:560px">
+<pre class="code code--sm">address = 目标地址 ÷ 4 = 768 ÷ 4 = 192</pre>
+        </div>
+        <div class="col grow">
+          <div class="note">26 位二进制：</div>
+          <div class="mono" style="font-size:20px;font-weight:700;color:var(--accent)">00000000000000000011000000</div>
+          <div class="note mt8">即 <span class="mono">192</span>；拼回地址时左移 2 位就得到 768。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout mt12">
+      <span class="callout__tag">要点</span>
+      <span>条件转移的立即数是<span class="kw">相对偏移量</span>（以指令为单位、相对 <span class="mono">PC+4</span>），
+        而 <span class="mono">j</span> 指令的地址字段是<span class="kw-blue">绝对地址 ÷ 4</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">14 / 32</div>
+</section>
+
+<!-- ======================================================== 15 确认问题（bne 的 Loop） -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li>把以下指令用二进制表示时，用<span class="kw">红色标出</span>的 <span class="mono">Loop</span> 对应的值是什么？</li>
+      <li>请用 <span class="mono">16</span> 位二进制回答。</li>
+    </ul>
+
+    <div class="row row--top mt16" style="gap:24px">
+      <div class="col shrink0" style="width:620px">
+        <div class="code-label">汇编代码</div>
+<pre class="code"><span class="blank">Loop:</span> add  $s0, $s1, $s2
+      addi $s0, Ss0, 1
+      bne  $s0, $s1, <span class="red">Loop</span>
+<span class="blank">Next:</span></pre>
+        <div class="note mt8">原讲义中该行写作 <span class="mono">addi $s0, Ss0, 1</span>（第二个操作数首字母为大写 S），此处按原文照录。</div>
+      </div>
+      <div class="col grow">
+        <div class="callout">
+          <span class="callout__tag">提示</span>
+          <span>此题的答案<span class="kw">与 Loop 的绝对地址无关</span>：因为 <span class="mono">bne</span> 是<span class="kw-blue">相对地址指定</span>，
+            只需要用「目标 − (PC+4)」再除以 4 即可。</span>
+        </div>
+        <table class="tbl tbl--sm mt12">
+          <thead>
+            <tr><th style="width:120px">相对地址</th><th>指令</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c num">Loop+0</td><td class="c">add $s0, $s1, $s2</td></tr>
+            <tr class="alt"><td class="c num">Loop+4</td><td class="c">addi $s0, Ss0, 1</td></tr>
+            <tr><td class="c num">Loop+8</td><td class="c">bne $s0, $s1, Loop</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">15 / 32</div>
+</section>
+
+<!-- ======================================================== 16 確認問題（解答） -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题：解答（<span class="mono">bne</span> 的偏移量）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">题目</span>
+      <span>把指令用二进制表示时，红色标出的 <span class="mono">Loop</span> 对应的值是什么？请用 16 位二进制回答。</span>
+    </div>
+
+    <div class="row row--top mt14" style="gap:24px">
+      <div class="col shrink0" style="width:600px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">计算过程</div>
+<pre class="code code--sm">PC        = Loop + 8   （bne 自身的地址）
+PC + 4    = Loop + 12
+目标地址  = Loop + 0
+偏移量    = (目标 − (PC+4)) ÷ 4
+          = (Loop − (Loop + 12)) ÷ 4
+          = −12 ÷ 4 = −3</pre>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">16 位二进制（补码）</div>
+          <div class="mono center" style="font-size:26px;font-weight:700;color:var(--accent);letter-spacing:2px">1111 1111 1111 1101</div>
+          <div class="note mt10 center">−3 的 16 位补码 ⇒ <span class="mono">0xFFFD</span>，即「向前（低地址方向）跳 3 条指令」。</div>
+        </div>
+        <div class="callout mt12">
+          <span class="callout__tag">小结</span>
+          <span>条件转移的立即数是<span class="kw">带符号偏移量</span>：正数向后跳，负数向前跳，范围是
+            <span class="mono">−32768 ～ 32767</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">16 / 32</div>
+</section>
+
+<!-- ======================================================== 17 讲义内容 -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令格式</div>
+        <div class="toc__items">
+          <div class="toc__item">R 格式、I 格式是什么</div>
+          <div class="toc__item">指令与机器语言的对应</div>
+          <div class="toc__item">与数组使用对应的汇编代码</div>
+          <div class="toc__item">与分支处理对应的汇编代码</div>
+          <div class="toc__item">无条件转移与 J 格式</div>
+          <div class="toc__item toc__item--active">大小比较指令</div>
+          <div class="toc__item">寻址模式</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本段目标</span>
+      <span>条件转移只能判断「相等／不相等」。要实现 <span class="mono">&lt;</span>、<span class="mono">&gt;</span> 这类比较，
+        需要先用<span class="kw">大小比较指令</span>把比较结果变成 <span class="mono">0/1</span>，再用条件转移去测试这个结果。</span>
+    </div>
+  </div>
+  <div class="page-no">17 / 32</div>
+</section>
+
+<!-- ======================================================== 18 大小比較 -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">大小比较</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue callout--slim">
+      <span class="callout__tag">对应 &lt; 的比较指令</span>
+      <span>下面的两条指令把「小于」的判断结果写成 <span class="mono">0</span>／<span class="mono">1</span>，存入寄存器。</span>
+    </div>
+
+    <div class="row row--top mt12" style="gap:24px">
+      <div class="col shrink0" style="width:400px">
+<pre class="code code--sm">slt  $t0, $s0, $s1
+slti $t0, $s0, 5</pre>
+      </div>
+      <div class="col grow">
+        <ul class="bullets bullets--sub" style="gap:10px">
+          <li><span class="mono">slt $t0, $s0, $s1</span> …当 <span class="mono">$s0</span> 小于 <span class="mono">$s1</span> 时，把 <span class="mono">$t0</span> 置为 <span class="mono">1</span>；否则置为 <span class="mono">0</span>。</li>
+          <li><span class="mono">slti $t0, $s0, 5</span> …当 <span class="mono">$s0</span> 小于 <span class="mono">5</span> 时，把 <span class="mono">$t0</span> 置为 <span class="mono">1</span>；否则置为 <span class="mono">0</span>。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row row--top mt16" style="gap:24px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">R 格式</div>
+          <table class="tbl tbl--sm" style="table-layout:fixed">
+            <tbody>
+              <tr>
+                <td class="c" style="width:18.75%">op</td>
+                <td class="c" style="width:15.625%">rs</td>
+                <td class="c" style="width:15.625%">rt</td>
+                <td class="c" style="width:15.625%">rd</td>
+                <td class="c" style="width:15.625%">shamt</td>
+                <td class="c" style="width:18.75%">funct</td>
+              </tr>
+              <tr>
+                <td class="c num">6bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">6bit</td>
+              </tr>
+            </tbody>
+          </table>
+          <pre class="code code--sm mt10">slt (rd), (rs), (rt)</pre>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">I 格式</div>
+          <table class="tbl tbl--sm" style="table-layout:fixed">
+            <tbody>
+              <tr>
+                <td class="c" style="width:18.75%">op</td>
+                <td class="c" style="width:15.625%">rs</td>
+                <td class="c" style="width:15.625%">rt</td>
+                <td class="c" style="width:50%">imm.</td>
+              </tr>
+              <tr>
+                <td class="c num">6bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">5bit</td>
+                <td class="c num">16bit</td>
+              </tr>
+            </tbody>
+          </table>
+          <pre class="code code--sm mt10">slti (rt), (rs), (imm.)</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">18 / 32</div>
+</section>
+
+<!-- ======================================================== 19 大小比较（while 循环的例子） -->
+<section class="slide" id="s19">
+  <div class="slide__head">
+    <h2 class="slide__title">大小比较：<span class="mono">while</span> 循环的例子</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--center" style="gap:18px">
+      <div class="col shrink0" style="width:70px">
+        <div class="note center">（例）</div>
+      </div>
+      <div class="col grow">
+<pre class="code code--sm">while(i&gt;=0) i=i–1;</pre>
+      </div>
+      <div class="col shrink0" style="width:200px">
+        <div class="regmap" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:15px">寄存器分配</div>
+          <div class="regmap__grid regmap__grid--one" style="font-size:15px">
+            <div class="regmap__cell">i : $s1</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row row--top mt16" style="gap:24px">
+      <div class="col shrink0" style="width:640px">
+        <div class="code-label">汇编代码</div>
+<pre class="code">Loop: slt  $t0, $s1, $zero   <span class="cmt"># $t0 = (i &lt; 0)</span>
+      bne  $t0, $zero, Exit  <span class="cmt"># i &lt; 0 则跳出循环</span>
+      addi $s1, $s1, -1      <span class="cmt"># i = i - 1</span>
+      j    Loop              <span class="cmt"># 回到条件判断</span>
+Exit:</pre>
+      </div>
+      <div class="col grow">
+        <div class="callout">
+          <span class="callout__tag">说明</span>
+          <span><span class="mono">while(i&gt;=0)</span> 的跳出条件是 <span class="mono">i &lt; 0</span>。
+            由于没有「大于等于」的指令，就先用 <span class="mono">slt</span> 求出 <span class="mono">i &lt; 0</span> 的<span class="kw">布尔值</span>，
+            再用 <span class="mono">bne</span> 与 <span class="mono">$zero</span> 比较来判定。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">19 / 32</div>
+</section>
+
+<!-- ======================================================== 20 大小比较（为什么不直接分支） -->
+<section class="slide" id="s20">
+  <div class="slide__head">
+    <h2 class="slide__title">大小比较：为什么 <span class="mono">slt</span>、<span class="mono">slti</span> 不直接分支？</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col grow">
+        <div class="callout callout--red">
+          <span class="callout__tag">问</span>
+          <span><span class="mono">slt</span>、<span class="mono">slti</span> 为什么不直接分支？</span>
+        </div>
+        <ul class="bullets bullets--sub mt12" style="gap:10px">
+          <li><span class="hi">→</span> 因为指令会变得<span class="kw">过于复杂</span>。</li>
+          <li><span class="hi">→</span> 会导致<span class="kw">时钟周期时间延长</span>等代价。</li>
+        </ul>
+        <div class="note mt12">也就是说：把「比较」与「转移」分成两条指令，可以让每条指令都保持<span class="kw-blue">简单且等长</span>，
+          有利于流水线化与提高时钟频率。</div>
+      </div>
+
+      <div class="col shrink0" style="width:600px">
+        <div class="callout callout--blue">
+          <span class="callout__tag">问</span>
+          <span>对应 <span class="mono">&gt;</span>、<span class="mono">&gt;=</span> 等条件的指令呢？</span>
+        </div>
+        <ul class="bullets bullets--sub mt10" style="gap:8px">
+          <li>作为<span class="kw">伪指令</span>提供。</li>
+          <li>由<span class="kw-blue">汇编器</span>转换为<span class="kw">等效的指令序列</span>。</li>
+        </ul>
+        <table class="tbl tbl--sm mt12">
+          <thead>
+            <tr><th style="width:330px">伪指令</th><th>含义</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">blt (branch less than)</td><td>小于则转移</td></tr>
+            <tr class="alt"><td class="c">bgt (branch greater than)</td><td>大于则转移</td></tr>
+            <tr><td class="c">ble (branch less or equal)</td><td>小于等于则转移</td></tr>
+            <tr class="alt"><td class="c">bge (branch greater or equal)</td><td>大于等于则转移</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">20 / 32</div>
+</section>
+
+<!-- ======================================================== 21 讲义内容 -->
+<section class="slide" id="s21">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">指令格式</div>
+        <div class="toc__items">
+          <div class="toc__item">R 格式、I 格式是什么</div>
+          <div class="toc__item">指令与机器语言的对应</div>
+          <div class="toc__item">与数组使用对应的汇编代码</div>
+          <div class="toc__item">与分支处理对应的汇编代码</div>
+          <div class="toc__item">无条件转移与 J 格式</div>
+          <div class="toc__item">大小比较指令</div>
+          <div class="toc__item toc__item--active">寻址模式</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本段目标</span>
+      <span>把前面见到的各种「操作数写法」归纳成 <span class="kw">5 种寻址模式</span>：
+        寄存器寻址、基址相对寻址、立即数寻址、<span class="mono">PC</span> 相对寻址、伪直接寻址。</span>
+    </div>
+  </div>
+  <div class="page-no">21 / 32</div>
+</section>
+
+<!-- ======================================================== 22 寻址模式 -->
+<section class="slide" id="s22">
+  <div class="slide__head">
+    <h2 class="slide__title">寻址模式（<span class="mono">addressing mode</span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col grow">
+        <ul class="bullets bullets--compact">
+          <li>不同的指令对<span class="kw">操作数的解释方式</span>各不相同。</li>
+          <li><span class="hi">→</span> 指令所操作的对象，
+            <ul class="bullets bullets--sub" style="margin-top:6px">
+              <li>（<span class="mono">e.g.</span>, <span class="mono">add</span> 指令中要相加的值）</li>
+            </ul>
+          </li>
+          <li>指令所需要的<span class="kw">地址</span>，
+            <ul class="bullets bullets--sub" style="margin-top:6px">
+              <li>（<span class="mono">e.g.</span>, <span class="mono">j</span> 指令的跳转目标地址）</li>
+            </ul>
+          </li>
+          <li>会因指令而异。</li>
+          <li>把这些解释方式称为<span class="kw-blue">寻址模式</span>。</li>
+        </ul>
+      </div>
+
+      <div class="col shrink0" style="width:620px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">寻址模式的种类</div>
+          <table class="tbl tbl--sm">
+            <tbody>
+              <tr><td class="c">寄存器寻址</td><td class="c">register addressing</td></tr>
+              <tr class="alt"><td class="c">基址相对寻址</td><td class="c">base addressing</td></tr>
+              <tr><td class="c">立即数寻址</td><td class="c">immediate addressing</td></tr>
+              <tr class="alt"><td class="c">PC 相对寻址</td><td class="c">PC-relative addressing</td></tr>
+              <tr><td class="c">伪直接寻址</td><td class="c">pseudo direct addressing</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note mt12">接下来的 5 页会用具体的指令与位模式逐一说明这 5 种模式。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">22 / 32</div>
+</section>
+
+<!-- ======================================================== 23 寄存器寻址 -->
+<section class="slide" id="s23">
+  <div class="slide__head">
+    <h2 class="slide__title">寄存器寻址（<span class="mono">register addressing</span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="callout callout--blue">
+      <span class="callout__tag">定义</span>
+      <span>把<span class="kw">指定寄存器中的内容</span>作为操作数。</span>
+    </div>
+
+    <div class="code-label mt16">例：<span class="mono">add $t0, $s0, $s1</span></div>
+    <table class="tbl mt8" style="table-layout:fixed">
+      <thead>
+        <tr>
+          <th class="c" style="width:18.75%">op</th>
+          <th class="c" style="width:15.625%">rs</th>
+          <th class="c" style="width:15.625%">rt</th>
+          <th class="c" style="width:15.625%">rd</th>
+          <th class="c" style="width:15.625%">shamt</th>
+          <th class="c" style="width:18.75%">funct</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c num">000000</td>
+          <td class="c num">10000</td>
+          <td class="c num">10001</td>
+          <td class="c num">01000</td>
+          <td class="c num">00000</td>
+          <td class="c num">100000</td>
+        </tr>
+        <tr>
+          <td class="c red">add</td>
+          <td class="c red">$s0</td>
+          <td class="c red">$s1</td>
+          <td class="c red">$t0</td>
+          <td class="c">—</td>
+          <td class="c red">add</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt16">
+      <span class="callout__tag">解读</span>
+      <span>三个操作数全部放在寄存器里：<span class="mono">rs</span> = <span class="mono">$s0</span>（16）、<span class="mono">rt</span> = <span class="mono">$s1</span>（17）、
+        <span class="mono">rd</span> = <span class="mono">$t0</span>（8）；<span class="mono">op</span> = 0 且 <span class="mono">funct</span> = 32 共同表示「加法」。
+        这正是 <span class="mono">R</span> 格式最典型的用法。</span>
+    </div>
+  </div>
+  <div class="page-no">23 / 32</div>
+</section>
+
+<!-- ======================================================== 24 立即数寻址 -->
+<section class="slide" id="s24">
+  <div class="slide__head">
+    <h2 class="slide__title">立即数寻址（<span class="mono">immediate addressing</span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="callout callout--blue">
+      <span class="callout__tag">定义</span>
+      <span>把<span class="kw">指定的常数</span>作为操作数。</span>
+    </div>
+
+    <div class="code-label mt16">例：<span class="mono">andi $s1, $s0, 24</span></div>
+    <table class="tbl mt8" style="table-layout:fixed">
+      <thead>
+        <tr>
+          <th class="c" style="width:18.75%">op</th>
+          <th class="c" style="width:15.625%">rs</th>
+          <th class="c" style="width:15.625%">rt</th>
+          <th class="c" style="width:50%">immediate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c num">001100</td>
+          <td class="c num">10000</td>
+          <td class="c num">10001</td>
+          <td class="c num">0000000000011000</td>
+        </tr>
+        <tr>
+          <td class="c red">andi</td>
+          <td class="c red">$s0</td>
+          <td class="c red">$s1</td>
+          <td class="c red">24</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt16">
+      <span class="callout__tag">解读</span>
+      <span><span class="mono">andi</span> 是 <span class="mono">I</span> 格式的逻辑与指令：立即数字段里直接写着常数
+        <span class="mono">24</span>（16 位二进制 <span class="mono">0000000000011000</span>），
+        运算时不需要访问存储器，因此执行很快。</span>
+    </div>
+    <div class="note mt12">注意：<span class="mono">I</span> 格式中目的寄存器放在 <span class="mono">rt</span> 的位置上（此处 <span class="mono">rt</span> = <span class="mono">$s1</span>）。</div>
+  </div>
+  <div class="page-no">24 / 32</div>
+</section>
+
+<!-- ======================================================== 25 基址相对寻址 -->
+<section class="slide" id="s25">
+  <div class="slide__head">
+    <h2 class="slide__title">基址相对寻址（<span class="mono">base addressing</span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="callout callout--blue">
+      <span class="callout__tag">定义</span>
+      <span>把「<span class="kw">指定寄存器中的内容 ＋ 常数</span>」所指的<span class="kw-blue">存储器地址</span>中的内容作为操作数。</span>
+    </div>
+
+    <div class="code-label mt16">例：<span class="mono">lw $t0, 12($s0)</span></div>
+    <table class="tbl mt8" style="table-layout:fixed">
+      <thead>
+        <tr>
+          <th class="c" style="width:18.75%">op</th>
+          <th class="c" style="width:15.625%">rs</th>
+          <th class="c" style="width:15.625%">rt</th>
+          <th class="c" style="width:50%">immediate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c num">100011</td>
+          <td class="c num">10000</td>
+          <td class="c num">01000</td>
+          <td class="c num">0000000000001100</td>
+        </tr>
+        <tr>
+          <td class="c red">lw</td>
+          <td class="c red">$s0（基址）</td>
+          <td class="c red">$t0（目的）</td>
+          <td class="c red">12（偏移量）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt16">
+      <span class="callout__tag">解读</span>
+      <span>先从 <span class="mono">$s0</span> 中取出<span class="kw">基址</span>，再加上常数偏移 <span class="mono">12</span>，
+        得到存储器地址 <span class="mono">$s0 + 12</span>，最后把该地址中的内容装入 <span class="mono">$t0</span>。
+        数组访问就是靠这种模式实现的。</span>
+    </div>
+
+    <div class="panel panel--tight mt12">
+      <div class="panel__title panel__title--teal">地址计算</div>
+      <div class="mono" style="font-size:19px;color:#10314f">有效地址 = (rs) + immediate　→　($s0) + 12</div>
+    </div>
+  </div>
+  <div class="page-no">25 / 32</div>
+</section>
+
+<!-- ======================================================== 26 PC 相对寻址 -->
+<section class="slide" id="s26">
+  <div class="slide__head">
+    <h2 class="slide__title">PC 相对寻址（<span class="mono">PC-relative addressing</span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="callout callout--blue">
+      <span class="callout__tag">定义</span>
+      <span>表示「<span class="mono">(PC+4)</span> ＋（<span class="kw">指定常数 × 4</span>）」的地址。</span>
+    </div>
+
+    <div class="code-label mt16">例：<span class="mono">bne $t0, $s0, Label</span></div>
+    <table class="tbl mt8" style="table-layout:fixed">
+      <thead>
+        <tr>
+          <th class="c" style="width:18.75%">op</th>
+          <th class="c" style="width:15.625%">rs</th>
+          <th class="c" style="width:15.625%">rt</th>
+          <th class="c" style="width:50%">immediate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c num">000101</td>
+          <td class="c num">01000</td>
+          <td class="c num">10000</td>
+          <td class="c num">0000000000001100</td>
+        </tr>
+        <tr>
+          <td class="c red">bne</td>
+          <td class="c red">$t0</td>
+          <td class="c red">$s0</td>
+          <td class="c red">Label（偏移量）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt16">
+      <span class="callout__tag">解读</span>
+      <span>跳转目标 = <span class="mono">(PC + 4) + 立即数 × 4</span>。立即数是以<span class="kw">指令条数</span>为单位的相对偏移量，
+        乘 4 之后才变成<span class="kw">字节偏移</span>。条件转移（<span class="mono">beq</span>／<span class="mono">bne</span>）采用的就是这种模式。</span>
+    </div>
+
+    <div class="panel panel--tight mt12">
+      <div class="panel__title panel__title--teal">相对寻址的优点</div>
+      <ul class="bullets bullets--sub" style="gap:6px">
+        <li>只需 16 位就能表达偏移，不必在指令里塞进完整的 32 位地址。</li>
+        <li>整个程序被装入存储器的<span class="kw">任意位置</span>时，相对转移依然正确（与位置无关）。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-no">26 / 32</div>
+</section>
+
+<!-- ======================================================== 27 伪直接寻址 -->
+<section class="slide" id="s27">
+  <div class="slide__head">
+    <h2 class="slide__title">伪直接寻址（<span class="mono">pseudo direct addressing</span>）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="callout callout--blue">
+      <span class="callout__tag">定义</span>
+      <span>表示把「<span class="mono">PC</span> 的<span class="kw">高 4 位</span>」与「<span class="kw">指定常数 × 4</span>」<span class="kw-blue">拼接</span>起来的地址。</span>
+    </div>
+
+    <div class="code-label mt16">例：<span class="mono">j Label</span></div>
+    <table class="tbl mt8" style="table-layout:fixed">
+      <thead>
+        <tr>
+          <th class="c" style="width:18.75%">op</th>
+          <th class="c" style="width:81.25%">address</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c num">000010</td>
+          <td class="c num">00000000000010011100010000</td>
+        </tr>
+        <tr>
+          <td class="c red">j</td>
+          <td class="c red">Label（目标 ÷ 4）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="panel panel--tight mt16">
+      <div class="panel__title panel__title--red">例：PC 与跳转目标</div>
+      <div class="row row--center" style="gap:16px">
+        <div class="col grow">
+          <div class="note"><span class="mono">PC</span> = <span class="mono">00101100000000000010011100010000</span> 时，</div>
+          <div class="note">上述指令的跳转目标为：</div>
+        </div>
+        <div class="col shrink0" style="width:560px">
+          <div class="mono center" style="font-size:19px;font-weight:700;color:var(--accent)">00100000000000001001110001000000</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout mt14">
+      <span class="callout__tag">解读</span>
+      <span>高 4 位取<span class="kw">当前 PC 的高 4 位</span>（此例为 <span class="mono">0010</span>），低 28 位由 <span class="mono">address × 4</span> 给出，
+        两部分拼接即可得到 32 位跳转地址。所以 <span class="mono">j</span> 指令能<span class="kw-blue">在同一段内</span>跳到任意位置。</span>
+    </div>
+  </div>
+  <div class="page-no">27 / 32</div>
+</section>
+
+<!-- ======================================================== 28 32 位的立即数操作数（1） -->
+<section class="slide" id="s28">
+  <div class="slide__head">
+    <h2 class="slide__title">32 位的立即数操作数（1）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li>指令长度是 <span class="mono">32</span> 位。</li>
+      <li><span class="hi">→</span> 因此无法直接处理 32 位的操作数，但是…</li>
+      <li>可以把它<span class="kw">分成高位与低位</span>，用 <span class="mono">2</span> 条指令读入。</li>
+    </ul>
+
+    <div class="row row--top mt14" style="gap:24px">
+      <div class="col shrink0" style="width:560px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">想装入的 32 位数</div>
+          <div class="mono center" style="font-size:17px;color:#10314f">0000 0000 0011 1101 0000 1001 0000 0000</div>
+          <table class="tbl tbl--sm mt10">
+            <tbody>
+              <tr><th style="width:220px">高位 16 位</th><td class="c num red">61<sub>10</sub></td></tr>
+              <tr><th>低位 16 位</th><td class="c num red">2304<sub>10</sub></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout">
+          <span class="callout__tag">思路</span>
+          <span>先用 <span class="mono">lui</span> 把高 16 位放进寄存器，再用 <span class="mono">ori</span> 把低 16 位「或」进去。
+            两条指令合起来就构造出完整的 32 位常数。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row row--top mt20" style="gap:24px">
+      <div class="col grow">
+        <div class="code-label">① 装入高位</div>
+<pre class="code code--sm">lui $s0, 61        <span class="cmt"># 把常数读入 $s0 的高 16 位</span>
+                   <span class="cmt"># (load upper immediate)</span></pre>
+        <div class="mono mt8" style="font-size:15px;color:#10314f">0000 0000 0011 1101 0000 0000 0000 0000</div>
+      </div>
+      <div class="col grow">
+        <div class="code-label">② 装入低位</div>
+<pre class="code code--sm">ori $s0, $s0, 2304 <span class="cmt"># or 运算 (or immediate)</span></pre>
+        <div class="mono mt8" style="font-size:15px;color:#10314f">0000 0000 0011 1101 0000 1001 0000 0000</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">28 / 32</div>
+</section>
+
+<!-- ======================================================== 29 32 位的立即数操作数（2） -->
+<section class="slide" id="s29">
+  <div class="slide__head">
+    <h2 class="slide__title">32 位的立即数操作数（2）：负数的情况</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li>例如要装入 <span class="mono">-65552<sub>10</sub></span> 这个负数：</li>
+    </ul>
+
+    <div class="row row--top mt12" style="gap:24px">
+      <div class="col shrink0" style="width:560px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">想装入的 32 位数</div>
+          <div class="mono center" style="font-size:17px;color:#10314f">1111 1111 1111 1110 1111 1111 1111 0000</div>
+          <table class="tbl tbl--sm mt10">
+            <tbody>
+              <tr><th style="width:220px">高位 16 位</th><td class="c num red">-2<sub>10</sub></td></tr>
+              <tr><th>低位 16 位</th><td class="c num red">-16<sub>10</sub></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout">
+          <span class="callout__tag">负数也一样</span>
+          <span>负数同样按<span class="kw">补码</span>拆成高、低各 16 位。<span class="mono">lui</span> 与 <span class="mono">ori</span> 的立即数字段按<span class="kw-blue">带符号</span>解释，
+            所以这里写的是 <span class="mono">-2</span> 与 <span class="mono">-16</span>。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row row--top mt20" style="gap:24px">
+      <div class="col grow">
+        <div class="code-label">① 装入高位</div>
+<pre class="code code--sm">lui $s0, -2        <span class="cmt"># 把常数读入 $s0 的高 16 位</span>
+                   <span class="cmt"># (load upper immediate)</span></pre>
+        <div class="mono mt8" style="font-size:15px;color:#10314f">1111 1111 1111 1110 0000 0000 0000 0000</div>
+      </div>
+      <div class="col grow">
+        <div class="code-label">② 装入低位</div>
+<pre class="code code--sm">ori $s0, $s0, -16  <span class="cmt"># or 运算 (or immediate)</span></pre>
+        <div class="mono mt8" style="font-size:15px;color:#10314f">1111 1111 1111 1110 1111 1111 1111 0000</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">29 / 32</div>
+</section>
+
+<!-- ======================================================== 30 确认问题（寻址模式） -->
+<section class="slide" id="s30">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <ul class="bullets bullets--compact">
+      <li>请回答：下列各句分别说明的是<span class="kw">哪一种寻址模式</span>？</li>
+    </ul>
+
+    <div class="quiz mt16">
+      <div class="quiz__col">
+        <div class="quiz__item">
+          <span class="quiz__key">(1)</span>
+          <span>把「指定寄存器中的内容 ＋ 常数」所指的存储器地址中的内容作为操作数。</span>
+        </div>
+        <div class="quiz__item">
+          <span class="quiz__key">(2)</span>
+          <span>表示「<span class="mono">(PC+4)</span> ＋（指定常数 × 4）」的地址。</span>
+        </div>
+        <div class="quiz__item">
+          <span class="quiz__key">(3)</span>
+          <span>把指定寄存器中的内容作为操作数。</span>
+        </div>
+      </div>
+      <div class="quiz__col">
+        <div class="quiz__item">
+          <span class="quiz__key">(4)</span>
+          <span>表示把「<span class="mono">PC</span> 的高 4 位」与「指定常数 × 4」拼接起来的地址。</span>
+        </div>
+        <div class="quiz__item">
+          <span class="quiz__key">(5)</span>
+          <span>把指定的常数作为操作数。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel--tight mt20">
+      <div class="panel__title panel__title--teal">提示</div>
+      <ul class="bullets bullets--sub" style="gap:6px">
+        <li>先看操作数里出现了什么：<span class="kw">只有寄存器</span>／<span class="kw">只有常数</span>／<span class="kw">寄存器加常数</span>。</li>
+        <li>再看地址是怎么来的：与 <span class="mono">PC</span> 有关的是 <span class="mono">PC</span> 相对寻址；取 <span class="mono">PC</span> 高 4 位拼接常量的是伪直接寻址。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-no">30 / 32</div>
+</section>
+
+<!-- ======================================================== 31 確認問題（解答） -->
+<section class="slide" id="s31">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题：解答与小结</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:70px">题号</th>
+          <th style="width:260px">寻址模式</th>
+          <th>依据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">(1)</td>
+          <td class="c">基址相对寻址<br>(base addressing)</td>
+          <td>有效地址 = 寄存器内容 ＋ 常数，例如 <span class="mono">lw $t0, 12($s0)</span>。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">(2)</td>
+          <td class="c">PC 相对寻址<br>(PC-relative addressing)</td>
+          <td>目标地址 = <span class="mono">(PC+4) + 常数×4</span>，例如 <span class="mono">beq</span>／<span class="mono">bne</span>。</td>
+        </tr>
+        <tr>
+          <td class="c">(3)</td>
+          <td class="c">寄存器寻址<br>(register addressing)</td>
+          <td>操作数就在寄存器里，例如 <span class="mono">add $t0, $s0, $s1</span>。</td>
+        </tr>
+        <tr class="alt">
+          <td class="c">(4)</td>
+          <td class="c">伪直接寻址<br>(pseudo direct addressing)</td>
+          <td><span class="mono">PC</span> 高 4 位 ＋ 常数×4，例如 <span class="mono">j Label</span>。</td>
+        </tr>
+        <tr>
+          <td class="c">(5)</td>
+          <td class="c">立即数寻址<br>(immediate addressing)</td>
+          <td>操作数就是指令中的立即数，例如 <span class="mono">andi $s1, $s0, 24</span>、<span class="mono">addi</span>。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout--blue mt16">
+      <span class="callout__tag">小结</span>
+      <span>寻址模式决定「指令里的字段到底意味着什么」。<span class="kw">寄存器</span>与<span class="kw">立即数</span>模式最快；
+        <span class="kw">基址相对</span>模式支撑数组与结构体访问；<span class="kw">PC 相对</span>与<span class="kw">伪直接</span>模式用于转移，
+        前者与位置无关、后者可覆盖较大范围。</span>
+    </div>
+  </div>
+  <div class="page-no">31 / 32</div>
+</section>
+
+<!-- ======================================================== 32 参考文献 -->
+<section class="slide" id="s32">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:26px">
+    <div class="refs">
+      <div class="refs__item">
+        《计算机组成与设计：硬件／软件接口》第 5 版（上）
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span>
+      </div>
+      <div class="refs__item">
+        David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社
+        <span class="refs__en">David A.Patterson, John L. Hennessy 著、成田光彰 訳、日経BP社</span>
+      </div>
+      <div class="refs__item">
+        山下茂《计算机组成原理 1》课程讲义
+        <span class="refs__en">山下茂「計算機構成論１」講義資料</span>
+      </div>
+    </div>
+
+    <div class="callout mt24" style="font-size:18px">
+      <span class="callout__tag">本讲小结</span>
+      <span>条件转移（<span class="mono">beq</span>／<span class="mono">bne</span>）使用<span class="kw">相对地址指定</span>，靠 <span class="mono">PC</span> 与偏移量确定目标；
+        <span class="mono">j</span> 指令用 <span class="mono">PC</span> 高 4 位与 26 位地址字段拼接出跳转地址。大小比较由 <span class="mono">slt</span>／<span class="mono">slti</span> 产生
+        <span class="mono">0/1</span> 结果，再由条件转移判定；更复杂的比较条件则以<span class="kw">伪指令</span>形式由汇编器展开。最后，
+        所有操作数的取法都可以归结为 <span class="kw">5 种寻址模式</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">32 / 32</div>
+</section>
+
+</div>
+</body>
+</html>

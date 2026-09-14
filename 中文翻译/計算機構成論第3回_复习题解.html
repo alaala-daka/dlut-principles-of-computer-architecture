@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第3回 复习题解 · 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="3">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 复习题解</div>
+    <h1 class="cover__title cover__title--long">第 3 回 <em>确认问题</em>题解</h1>
+    <p class="cover__sub">符号扩展 · 移位运算 · 补码加减法</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    配套「計算機構成論 第3回」讲义
+  </div>
+  <div class="cover__badge">
+    原题解「確認問題（Sol3）」<br>
+    中文翻译版
+  </div>
+</section>
+
+<!-- ======================================================== 2 符号扩展 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（1）:向 16 位符号扩展</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="callout callout--blue" style="font-size:18px">
+      <span class="callout__tag">题目</span>
+      <span>把下列各数<span class="kw">符号扩展</span>到 16 位。</span>
+    </div>
+
+    <table class="tbl mt16">
+      <thead>
+        <tr><th style="width:110px">小题</th><th style="width:200px">原数（8 位）</th><th style="width:280px">符号扩展结果（16 位）</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="c">(1)</td><td class="c">00101010<sub>2</sub></td>
+          <td class="c red">00000000 00101010</td>
+          <td>最高位为 <span class="mono">0</span>（正数），高 8 位补 <span class="mono">0</span></td>
+        </tr>
+        <tr class="alt">
+          <td class="c">(2)</td><td class="c">10101010<sub>2</sub></td>
+          <td class="c red">11111111 10101010</td>
+          <td>最高位为 <span class="mono">1</span>（负数），高 8 位补 <span class="mono">1</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="row row--top mt20" style="gap:20px">
+      <div class="col grow">
+        <div class="callout callout--red" style="font-size:16px">
+          <span class="callout__tag">(3) 验证</span>
+          <span>确认 (2) 转换前后十进制数一致，从而验证所做的符号扩展是正确的。</span>
+        </div>
+      </div>
+      <div class="col shrink0" style="width:600px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">验证演算</div>
+<pre class="code code--sm code--wrap">10101010₂                       = -2⁷ + 2⁵ + 2³ + 2¹        = -86
+11111111 10101010₂ = -2¹⁵ + 2¹⁴ + … + 2⁸ + 2⁷ + 2⁵ + 2³ + 2¹
+                   = -2¹⁵ + 2¹⁴ + 2¹³ + 2¹² + 2¹¹ + 2¹⁰ + 2⁹ + 2⁸
+                     + 2⁷ + 2⁵ + 2³ + 2¹
+                   = -86   <span class="cmt"># 与 8 位时一致</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">1 / 4</div>
+</section>
+
+<!-- ======================================================== 3 移位运算 -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（2）:算术移位与逻辑移位</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue" style="font-size:18px">
+      <span class="callout__tag">题目</span>
+      <span>对下列各数进行算术移位、逻辑移位。</span>
+    </div>
+
+    <div class="row row--top mt14" style="gap:22px">
+      <div class="col shrink0" style="width:560px">
+        <table class="tbl tbl--sm">
+          <thead>
+            <tr><th style="width:56px">小题</th><th style="width:250px">题目</th><th>答案</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="c">(1)</td><td><span class="mono">11101010</span> 算术左移 1 位</td><td class="c red">11010100</td></tr>
+            <tr class="alt"><td class="c">(2)</td><td><span class="mono">10101010</span> 算术右移 1 位</td><td class="c red">11010101</td></tr>
+            <tr><td class="c">(3)</td><td><span class="mono">10101010</span> 逻辑左移 1 位</td><td class="c red">01010100</td></tr>
+            <tr class="alt"><td class="c">(4)</td><td><span class="mono">10101010</span> 逻辑右移 1 位</td><td class="c red">01010101</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">移位规则</div>
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:120px">种类</th><th>移入位</th><th>效果</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="c">算术左移</td><td>低位补 <span class="mono">0</span></td><td>相当于 ×2（符号位随之移出）</td></tr>
+              <tr class="alt"><td class="c">算术右移</td><td>高位补<span class="kw">符号位</span></td><td>相当于 ÷2，符号不变</td></tr>
+              <tr><td class="c">逻辑左移</td><td>低位补 <span class="mono">0</span></td><td>不保留符号，只按二进制位移</td></tr>
+              <tr class="alt"><td class="c">逻辑右移</td><td>高位补 <span class="mono">0</span></td><td>不保留符号，只按二进制位移</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout mt10" style="font-size:15px;padding:7px 11px">
+          <span class="callout__tag">要点</span>
+          <span>算术右移「补符号位」，所以负数右移后最高位仍为 <span class="mono">1</span>（如 (2)）；逻辑移位一律补 <span class="mono">0</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">2 / 4</div>
+</section>
+
+<!-- ======================================================== 4 减法的实现 -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（3）:用 2 的补数实现减法</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:20px">
+    <ul class="bullets">
+      <li>设有两个二进制数 <span class="mono">A、B</span>。</li>
+      <li>要求 <span class="mono">A - B</span> 的结果时，只需<span class="kw">先取被减数 B 的 2 的补数，再与 A 相加</span>。</li>
+    </ul>
+
+    <div class="row row--top mt24" style="gap:22px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">原理</div>
+<pre class="code code--sm">A - B  =  A + (-B)  =  A + (~B + 1)
+
+即：把减法 <span class="kw">统一转换为加法</span>，
+    加法器电路不必为减法单独设计。</pre>
+        </div>
+      </div>
+      <div class="col shrink0" style="width:520px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">例:求 B 的 2 的补数</div>
+<pre class="code code--sm">B = 00000101₂  (= 5)
+~B = 11111010
+-B = 11111011   <span class="cmt"># 逐位取反再加 1</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">3 / 4</div>
+</section>
+
+<!-- ======================================================== 5 补码加减法计算 -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（4）:用 8 位二进制计算</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="callout callout--blue" style="font-size:17px;padding:8px 13px">
+      <span class="callout__tag">题目</span>
+      <span>用 8 位二进制数计算下列各式。</span>
+    </div>
+
+    <div class="row row--top mt12" style="gap:18px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title" style="font-size:16px">(1) (-1) + 1 = 0</div>
+<pre class="code code--sm">  11111111   <span class="cmt"># -1</span>
++ 00000001   <span class="cmt">#  1</span>
+-----------
+1 00000000   <span class="cmt"># 最高位进位溢出，8 位结果 = 00000000 = 0</span></pre>
+        </div>
+
+        <div class="panel panel--tight mt10">
+          <div class="panel__title" style="font-size:16px">(2) 3 + (-2) = 1</div>
+<pre class="code code--sm">  00000011   <span class="cmt">#  3</span>
++ 11111110   <span class="cmt"># -2</span>
+-----------
+1 00000001   <span class="cmt"># 8 位结果 = 00000001 = 1</span></pre>
+        </div>
+      </div>
+
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title" style="font-size:16px">(3) 3 + (-5) = -2</div>
+<pre class="code code--sm">  00000011   <span class="cmt">#  3</span>
++ 11111011   <span class="cmt"># -5</span>
+-----------
+  11111110   <span class="cmt"># = -2</span></pre>
+        </div>
+
+        <div class="panel panel--tight mt10">
+          <div class="panel__title panel__title--teal" style="font-size:16px">各数的 2 的补数（参考）</div>
+<pre class="code code--sm"> 1 = 00000001  → 11111111  <span class="cmt"># -1</span>
+ 2 = 00000010  → 11111110  <span class="cmt"># -2</span>
+ 5 = 00000101  → 11111011  <span class="cmt"># -5</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="note mt10">
+      注意：8 位运算中最高位产生的进位被<span class="kw">丢弃</span>（第 9 位的 <span class="mono">1</span> 超出 8 位范围），这正是 2 的补数能让加法「自动处理正负号」的原因。
+    </div>
+  </div>
+  <div class="page-no">4 / 4</div>
+</section>
+
+</div>
+</body>
+</html>
