@@ -1,5 +1,5 @@
-# 制作 HTML 过程中使用的工具与工作产物
-.tools/
+# 制作 HTML 过程中使用的脚本（中间稿、截图等产物一并入库）
+.tools/*.py
 
 # 密钥（火山引擎 API KEY）
 火山引擎API KEY.txt
