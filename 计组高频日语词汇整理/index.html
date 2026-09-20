@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>計算機構成論 高頻日本語単語 — 计组高频日语词汇表（日中对照）</title>
+<style>
+:root{
+  --paper:#fffefb;
+  --ink:#1f2933;
+  --ink-soft:#45525f;
+  --ink-mute:#8a94a0;
+  --line:#e7e2d8;
+  --line-soft:#f1ede4;
+  --accent:#cf2036;
+  --mark:#ffe9a8;
+  --jp:"Hiragino Mincho ProN","Hiragino Mincho Pro","Yu Mincho",YuMincho,"Noto Serif JP","Source Han Serif JP","MS Mincho",serif;
+  --sans:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans CJK SC",system-ui,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","Consolas","SFMono-Regular","DejaVu Sans Mono",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#f4f1ea;color:var(--ink);font-family:var(--sans);line-height:1.6}
+.page{max-width:1020px;margin:0 auto;padding:0 20px 64px;background:var(--paper);box-shadow:0 0 24px rgba(31,41,51,.08);min-height:100vh}
+
+.masthead{padding:44px 8px 26px;border-bottom:3px double var(--line)}
+.masthead__row{display:flex;align-items:flex-start;gap:20px}
+.masthead__no{
+  flex:0 0 auto;width:64px;height:64px;background:#6b7280;color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:var(--jp);font-size:26px;line-height:1.15;letter-spacing:2px;border-radius:2px;
+}
+.masthead__no small{font-size:10px;letter-spacing:1px;opacity:.85}
+h1{margin:0;font-family:var(--jp);font-size:32px;font-weight:700;letter-spacing:1px}
+h1 ruby>rt{font-size:11px;color:var(--ink-mute);font-weight:400}
+.masthead__sub{margin:8px 0 0;font-size:14px;color:var(--ink-soft)}
+.masthead__meta{margin:10px 0 0;font-size:12.5px;color:var(--ink-mute)}
+.masthead__stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.stat{font-size:12px;color:var(--ink-soft);background:#f7f4ec;border:1px solid var(--line);border-radius:999px;padding:2px 12px}
+.stat b{color:var(--accent);font-weight:700}
+
+.toolbar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,254,251,.96);
+  border-bottom:1px solid var(--line);
+  padding:12px 8px 10px;margin:0 -8px;
+}
+.toolbar__row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.search{
+  flex:1 1 240px;min-width:200px;
+  font-size:15px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;
+  background:#fff;color:var(--ink);font-family:var(--sans);
+}
+.search:focus{outline:2px solid #bcd7f2;border-color:#1660a8}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  border:1px solid var(--line);background:#fff;border-radius:999px;
+  font-size:12.5px;padding:4px 12px;cursor:pointer;color:var(--ink-soft);font-family:var(--sans);
+}
+.chip:hover{border-color:#c9c2b4;background:#faf8f2}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.toolbar__opts{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:10px;font-size:12.5px;color:var(--ink-soft)}
+.toolbar__opts label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.count{margin-left:auto;font-size:12.5px;color:var(--ink-mute);font-variant-numeric:tabular-nums}
+.count b{color:var(--accent)}
+
+.cat{margin-top:38px}
+.cat__head{
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  border-left:5px solid var(--cat-accent,var(--accent));
+  padding:2px 0 2px 12px;margin-bottom:2px;
+}
+.cat__jp{font-family:var(--jp);font-size:21px;font-weight:700;letter-spacing:1px}
+.cat__zh{font-size:13px;color:var(--ink-mute)}
+.cat__n{margin-left:auto;font-size:12px;color:var(--ink-mute);font-variant-numeric:tabular-nums}
+.cat[data-cat="base"]{--cat-accent:#1d6fb8}
+.cat[data-cat="num"]{--cat-accent:#c2710a}
+.cat[data-cat="arch"]{--cat-accent:#0369a1}
+.cat[data-cat="addr"]{--cat-accent:#4d7c0f}
+.cat[data-cat="link"]{--cat-accent:#7c3aed}
+.cat[data-cat="misc"]{--cat-accent:#be123c}
+
+.entry{
+  display:grid;
+  grid-template-columns:330px 84px 1fr;
+  column-gap:18px;
+  padding:11px 4px 10px;
+  border-bottom:1px solid var(--line-soft);
+}
+.entry:hover{background:#faf8f2}
+.entry__w{display:flex;align-items:baseline;gap:2px;flex-wrap:wrap}
+.word{font-family:var(--jp);font-size:19px;line-height:1.45;color:var(--ink)}
+.word ruby>rt{font-size:10px;color:#a39c8d;letter-spacing:0}
+.idx{
+  flex:0 0 auto;align-self:flex-start;margin-top:4px;
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:19px;height:19px;padding:0 3px;margin-left:7px;
+  border:1px solid #b9b2a4;border-radius:50%;
+  font-size:11px;line-height:1;color:var(--ink-soft);font-variant-numeric:tabular-nums;
+  font-family:var(--sans);
+}
+.entry__p{font-family:var(--jp);font-size:13.5px;color:var(--ink-soft);white-space:nowrap;padding-top:2px}
+.entry__z{font-size:15px;color:var(--ink)}
+.alias{display:block;font-size:11.5px;color:var(--ink-mute);font-family:var(--mono);margin-top:1px}
+
+.ex{grid-column:1 / -1;margin:6px 0 2px}
+.ex>summary{
+  list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+  font-size:11.5px;color:var(--ink-mute);user-select:none;
+}
+.ex>summary::-webkit-details-marker{display:none}
+.ex>summary::before{content:"▸";font-size:10px;transition:transform .15s}
+.ex[open]>summary::before{transform:rotate(90deg)}
+.exmark{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:17px;height:17px;border:1px solid var(--cat-accent,var(--accent));color:var(--cat-accent,var(--accent));
+  border-radius:3px;font-family:var(--jp);font-size:11px;line-height:1;
+}
+.src{font-family:var(--sans);font-variant-numeric:tabular-nums}
+.exgrid{
+  display:grid;grid-template-columns:1.25fr 1fr;gap:4px 22px;
+  margin:7px 0 4px;padding:9px 12px;
+  background:#faf8f2;border-left:3px solid var(--cat-accent,var(--accent));
+  border-radius:0 4px 4px 0;
+}
+.exj{font-family:var(--jp);font-size:14.5px;color:var(--ink)}
+.exj ruby>rt{font-size:9.5px;color:#a39c8d}
+.exj b{color:var(--accent);font-weight:700}
+.exz{font-size:13px;color:var(--ink-soft)}
+.exz b{color:var(--accent)}
+
+mark{background:var(--mark);padding:0 1px;border-radius:2px}
+
+.appendix{margin-top:52px}
+.appendix__title{
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  border-left:5px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:14px;
+}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:8px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:#f7f4ec;font-weight:600;font-size:13px;color:var(--ink-soft)}
+td.jp{font-family:var(--jp)}
+td.mono,.mono{font-family:var(--mono);font-size:12.5px}
+tr:nth-child(even) td{background:#fcfaf5}
+.note{font-size:12px;color:var(--ink-mute)}
+
+.foot{margin-top:56px;border-top:3px double var(--line);padding-top:18px;font-size:12.5px;color:var(--ink-mute)}
+.foot h2{font-size:14px;color:var(--ink-soft);margin:0 0 8px;font-weight:600}
+.foot ul{margin:6px 0 14px;padding-left:20px}
+.foot li{margin:3px 0}
+.foot a{color:#1660a8;text-decoration:none}
+.foot a:hover{text-decoration:underline}
+.noresult{padding:36px 8px;text-align:center;color:var(--ink-mute);font-size:14px}
+
+body.hide-furi rt{display:none}
+body.hide-ex .ex{display:none}
+
+@media (max-width:760px){
+  .entry{grid-template-columns:1fr;row-gap:2px}
+  .entry__p{padding-top:0}
+  .exgrid{grid-template-columns:1fr}
+}
+@media print{
+  .toolbar{display:none}
+  .page{box-shadow:none;max-width:none}
+  .ex{display:block!important}
+  .entry{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="masthead__row">
+    <div class="masthead__no">単<small>たん</small>語<small>ご</small></div>
+    <div>
+      <h1><ruby>計算機構成論<rt>けいさんきこうせいろん</rt></ruby>　<ruby>高頻<rt>こうひん</rt></ruby><ruby>日本語<rt>にほんご</rt></ruby><ruby>単語<rt>たんご</rt></ruby></h1>
+      <p class="masthead__sub">计算机组成原理（计组）· 日语讲义高频词汇 · 日中对照词汇表</p>
+      <p class="masthead__meta">词汇出处：立命館大学「計算機構成論」日语讲义与试题 —— 第1／2／5／6／7／8回（確認問題・中間試験含む）</p>
+      <div class="masthead__stats">
+        <span class="stat">收词 <b id="stat-n">–</b> 条</span>
+        <span class="stat">分类 <b>6</b> 类</span>
+        <span class="stat">例文 <b id="stat-ex">–</b> 句</span>
+        <span class="stat">纯静态单文件 · vanilla HTML/CSS/JS · 无外部依赖</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar" id="toolbar">
+  <div class="toolbar__row">
+    <input class="search" id="q" type="search" placeholder="搜索：日语／读音／中文／英文（如 即値・そくち・immediate・栈）" aria-label="搜索词汇">
+    <div class="chips" id="chips" role="group" aria-label="按分类筛选"></div>
+  </div>
+  <div class="toolbar__opts">
+    <label><input type="checkbox" id="opt-furi" checked> 显示ふりがな（振假名）</label>
+    <label><input type="checkbox" id="opt-ex"> 展开全部例文</label>
+    <span class="count" id="count"></span>
+  </div>
+</div>
+
+<main id="list"></main>
+<div class="noresult" id="noresult" hidden>没有匹配的词汇。请换个关键词，或点「全部」清除筛选。</div>
+
+<section class="appendix" id="apx-units">
+  <div class="appendix__title"><span class="cat__jp">付録① 単位・接頭辞</span><span class="cat__zh">单位与前缀速查</span></div>
+  <table>
+    <thead><tr><th style="width:150px">单位／前缀</th><th style="width:130px">读音</th><th style="width:110px">英文</th><th>含义</th></tr></thead>
+    <tbody>
+      <tr><td class="jp">1 バイト</td><td class="jp">いち バイト</td><td class="mono">byte</td><td>8 ビット（位）</td></tr>
+      <tr><td class="jp">1 語（ワード）</td><td class="jp">いち ワード</td><td class="mono">word</td><td>MIPS 中 32 ビット＝4 バイト＝1 語</td></tr>
+      <tr><td class="jp">キロ（k）</td><td class="jp">きろ</td><td class="mono">kilo</td><td>10³ ＝ 1000（1 kB＝1000 バイト）</td></tr>
+      <tr><td class="jp">メガ（M）</td><td class="jp">めが</td><td class="mono">mega</td><td>10⁶（1 MB＝1000 kB）</td></tr>
+      <tr><td class="jp">ギガ（G）</td><td class="jp">ぎが</td><td class="mono">giga</td><td>10⁹（1 GB＝1000 MB）</td></tr>
+      <tr><td class="jp">テラ（T）</td><td class="jp">てら</td><td class="mono">tera</td><td>10¹²（1 TB＝1000 GB）</td></tr>
+      <tr><td class="jp">ペタ（P）</td><td class="jp">ぺた</td><td class="mono">peta</td><td>10¹⁵（1 PB＝1000 TB）</td></tr>
+      <tr><td class="jp">エクサ（E）</td><td class="jp">えくさ</td><td class="mono">exa</td><td>10¹⁸（1 EB＝1000 PB）</td></tr>
+      <tr><td class="jp">キビ（Ki）</td><td class="jp">きび</td><td class="mono">kibi</td><td>2¹⁰ ＝ 1024（1 KiB＝1024 バイト）</td></tr>
+      <tr><td class="jp">メビ（Mi）</td><td class="jp">めび</td><td class="mono">mebi</td><td>2²⁰（1 MiB＝1024 KiB）</td></tr>
+      <tr><td class="jp">ギビ（Gi）</td><td class="jp">ぎび</td><td class="mono">gibi</td><td>2³⁰（1 GiB＝1024 MiB）</td></tr>
+      <tr><td class="jp">ミリ（m）</td><td class="jp">みり</td><td class="mono">milli</td><td>10⁻³（1 ミリ秒＝1000 マイクロ秒）</td></tr>
+      <tr><td class="jp">マイクロ（μ）</td><td class="jp">まいくろ</td><td class="mono">micro</td><td>10⁻⁶（1 マイクロ秒＝1000 ナノ秒）</td></tr>
+      <tr><td class="jp">ナノ（n）</td><td class="jp">なの</td><td class="mono">nano</td><td>10⁻⁹（1 ナノ秒＝1000 ピコ秒）</td></tr>
+      <tr><td class="jp">ピコ（p）</td><td class="jp">ぴこ</td><td class="mono">pico</td><td>10⁻¹²</td></tr>
+    </tbody>
+  </table>
+  <p class="note">出典：確認問題（Sol1 p2）、中間試験 三・(16)–(20)。注意：十进制前缀按 1000 进，二进制前缀按 1024 进。</p>
+</section>
+
+<section class="appendix" id="apx-regs">
+  <div class="appendix__title"><span class="cat__jp">付録② MIPS レジスタ一覧</span><span class="cat__zh">MIPS 寄存器一览（第7回 p6）</span></div>
+  <table>
+    <thead><tr><th style="width:120px">寄存器</th><th style="width:90px">编号</th><th>作用（原文）</th><th style="width:230px">中文</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">$zero</td><td class="mono">0</td><td class="jp">常にゼロ</td><td>恒为零寄存器</td></tr>
+      <tr><td class="mono">$at</td><td class="mono">1</td><td class="jp">アセンブラが一時的に使用</td><td>汇编器临时使用</td></tr>
+      <tr><td class="mono">$v0–$v1</td><td class="mono">2–3</td><td class="jp">戻り値用</td><td>返回值用</td></tr>
+      <tr><td class="mono">$a0–$a3</td><td class="mono">4–7</td><td class="jp">引数用</td><td>参数（实参）用</td></tr>
+      <tr><td class="mono">$t0–$t9</td><td class="mono">8–15, 24–25</td><td class="jp">一時レジスタ（一時変数用）</td><td>临时寄存器（不退避）</td></tr>
+      <tr><td class="mono">$s0–$s7</td><td class="mono">16–23</td><td class="jp">退避レジスタ（変数用）</td><td>保存寄存器（需退避）</td></tr>
+      <tr><td class="mono">$k0–$k1</td><td class="mono">26–27</td><td class="jp">OSカーネル用に予約</td><td>预留给 OS 内核</td></tr>
+      <tr><td class="mono">$gp</td><td class="mono">28</td><td class="jp">グローバルポインタ</td><td>全局指针</td></tr>
+      <tr><td class="mono">$sp</td><td class="mono">29</td><td class="jp">スタックポインタ</td><td>栈指针</td></tr>
+      <tr><td class="mono">$fp</td><td class="mono">30</td><td class="jp">フレームポインタ</td><td>帧指针</td></tr>
+      <tr><td class="mono">$ra</td><td class="mono">31</td><td class="jp">リターンアドレス</td><td>返回地址寄存器</td></tr>
+      <tr><td class="mono">PC</td><td class="mono">—</td><td class="jp">現在実行中の命令のアドレスを保持</td><td>程序计数器（不属于32个通用寄存器）</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="appendix" id="apx-fmt">
+  <div class="appendix__title"><span class="cat__jp">付録③ 命令形式のフィールド</span><span class="cat__zh">指令格式的字段构成（第5回 p3–4）</span></div>
+  <table>
+    <thead><tr><th style="width:90px">形式</th><th>字段构成</th><th style="width:300px">主要指令</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="jp">R<ruby>形式<rt>けいしき</rt></ruby></td>
+        <td class="mono">op 6bit｜rs 5bit｜rt 5bit｜rd 5bit｜shamt 5bit｜funct 6bit</td>
+        <td class="mono">add・sub・sll・srl・slt</td>
+      </tr>
+      <tr>
+        <td class="jp">I<ruby>形式<rt>けいしき</rt></ruby></td>
+        <td class="mono">op 6bit｜rs 5bit｜rt 5bit｜immediate 16bit</td>
+        <td class="mono">addi・addiu・lw・sw・beq・bne・slti</td>
+      </tr>
+      <tr>
+        <td class="jp">J<ruby>形式<rt>けいしき</rt></ruby></td>
+        <td class="mono">op 6bit｜address 26bit</td>
+        <td class="mono">j・jal</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">字段含义：op＝命令操作コード、rs／rt＝第1・第2ソースオペランド、rd＝デスティネーションオペランド、shamt＝シフト量、funct＝機能コード、immediate＝即値オペランド。</p>
+</section>
+
+<footer class="foot">
+  <h2>说明</h2>
+  <ul>
+    <li>收词范围：「計算機構成論」第1–8回日语讲义、確認問題（Sol1／Sol3／Sol4）及中間試験中出现的<strong>计算机组成原理相关日语词汇</strong>；词条按主题分为 6 类，可分类浏览或用上方搜索框检索。</li>
+    <li>读音（ふりがな）与词性为整理时补注，以讲义原文用语为准；<strong>词条左侧圈号为整理编号，不是音调符号</strong>。</li>
+    <li>例文全部摘自讲义原文（<span class="mono">Sol1・第2回・第5回〜第8回・期中</span>），句中<b>加粗</b>处为该词条本体；指令名（add 等）与寄存器名按项目约定保持原文不译。</li>
+    <li>本页为纯静态单文件 HTML（vanilla HTML/CSS/JS，无外部依赖、无 Web 字体），可离线双击打开，支持 Ctrl+F 全文检索与打印。</li>
+    <li>原始讲义版权归立命館大学 双見京介・山下茂・薛昕惟 老师所有，本表仅为个人学习整理，请勿用于商业用途。</li>
+  </ul>
+  <h2>相关</h2>
+  <ul>
+    <li><a href="../README.md">项目 README（trans-for-CS）</a></li>
+    <li><a href="../中文翻译/計算機構成論第5回.html">中文译文幻灯片示例：計算機構成論第5回</a></li>
+  </ul>
+</footer>
+
+</div>
+
+<script>
+const CATS = {
+  base:{jp:"計算機の基礎",zh:"计算机基础"},
+  num:{jp:"数値の表現",zh:"数值表示"},
+  arch:{jp:"命令とアーキテクチャ",zh:"指令与体系结构"},
+  addr:{jp:"アドレシング・モード",zh:"寻址方式"},
+  link:{jp:"翻訳とリンク",zh:"编译与链接"},
+  misc:{jp:"性能・記憶装置・試験のことば",zh:"性能·存储器件·考试用语"}
+};
+
+const WORDS = [
+/* ---------------- 計算機の基礎 ---------------- */
+{c:"base",w:"<ruby>計算機<rt>けいさんき</rt></ruby>",p:"名",z:"计算机",a:"computer",e:"計算機の設計概念、すなわち、計算機がどのように作られるかのことを、<b>計算機アーキテクチャ</b>と呼ぶ。",ez:"计算机的设计概念，即计算机是如何构成的，称为计算机体系结构。",s:"Sol1 p1"},
+{c:"base",w:"ハードウェア",p:"名",z:"硬件",a:"hardware",e:"計算機のうち、回路、装置などの物理的な実体を持つものを、<b>ハードウェア</b>と呼ぶ。",ez:"在计算机中，把电路、装置等具有物理实体的部分称为硬件。",s:"Sol1 p1"},
+{c:"base",w:"ソフトウェア",p:"名",z:"软件",a:"software",e:"これに対して、プログラムなどを<b>ソフトウェア</b>と呼ぶ。",ez:"与此相对，把程序等称为软件。",s:"Sol1 p1"},
+{c:"base",w:"アプリケーション",p:"名",z:"应用程序",a:"application",s:"Sol1 p1"},
+{c:"base",w:"OS",p:"名",z:"操作系统",a:"operating system",e:"OSは、計算機上の基本的な管理を担当するソフトウェアである。例として、WindowsやUnixなどが挙げられる。",ez:"OS 是负责计算机基本管理的软件，例如 Windows、Unix 等。",s:"Sol1 p1"},
+{c:"base",w:"<ruby>計算機<rt>けいさんき</rt></ruby>アーキテクチャ",p:"名",z:"计算机体系结构",a:"computer architecture",s:"Sol1 p1"},
+{c:"base",w:"CPU",p:"名",z:"中央处理器",a:"central processing unit",e:"計算機を構成する装置のうち、演算や制御を行うもの。",ez:"构成计算机的装置中，负责运算和控制的是 CPU。",s:"期中(13)"},
+{c:"base",w:"プロセッサ",p:"名",z:"处理器",a:"processor",e:"プロセッサ・メモリを構成するものは、トランジスタ、論理素子、ICである。",ez:"构成处理器与存储器的，是晶体管、逻辑元件、IC。",s:"第2回 p2"},
+{c:"base",w:"メモリ",p:"名",z:"存储器；内存",a:"memory",e:"処理を行うための命令やデータを、あらかじめメモリ内に格納しておく。",ez:"把进行处理所需的指令和数据预先存入存储器中。",s:"Sol1 p3"},
+{c:"base",w:"<ruby>五大装置<rt>ごだいそうち</rt></ruby>",p:"名",z:"五大装置",a:"five major units",e:"計算機の5大装置とは、演算装置、制御装置、記憶装置、入力装置、出力装置である。",ez:"计算机的五大装置是运算器、控制器、存储器、输入设备、输出设备。",s:"Sol1 p2"},
+{c:"base",w:"<ruby>演算装置<rt>えんざんそうち</rt></ruby>",p:"名",z:"运算器",a:"arithmetic unit",s:"Sol1 p2"},
+{c:"base",w:"<ruby>制御装置<rt>せいぎょそうち</rt></ruby>",p:"名",z:"控制器",a:"control unit",s:"Sol1 p2"},
+{c:"base",w:"<ruby>記憶装置<rt>きおくそうち</rt></ruby>",p:"名",z:"存储装置",a:"memory unit",e:"キーボード→入力　ディスプレイ→出力　メモリ→記憶",ez:"键盘→输入　显示器→输出　内存→存储",s:"Sol1 p2"},
+{c:"base",w:"<ruby>入力装置<rt>にゅうりょくそうち</rt></ruby>",p:"名",z:"输入设备",a:"input unit",s:"Sol1 p2"},
+{c:"base",w:"<ruby>出力装置<rt>しゅつりょくそうち</rt></ruby>",p:"名",z:"输出设备",a:"output unit",s:"Sol1 p2"},
+{c:"base",w:"トランジスタ",p:"名",z:"晶体管",a:"transistor",e:"電気的なON/OFF切り替えができる。",ez:"可以进行电气的开／关切换。",s:"第2回 p3"},
+{c:"base",w:"<ruby>論理<rt>ろんり</rt></ruby>ゲート",p:"名",z:"逻辑门",a:"logic gate",e:"基本的な論理演算に対応する電子回路。AND, OR, NOT, NAND, NOR, XORなど。",ez:"对应基本逻辑运算的电子电路，如 AND、OR、NOT 等。",s:"第2回 p4"},
+{c:"base",w:"<ruby>論理演算<rt>ろんりえんざん</rt></ruby>",p:"名",z:"逻辑运算",a:"logic operation",s:"第2回 p4"},
+{c:"base",w:"<ruby>論理<rt>ろんり</rt></ruby><ruby>素子<rt>そし</rt></ruby>",p:"名",z:"逻辑元件",a:"logic element",e:"AND、OR、NOTなどの論理を実現するための素子を論理ゲートと呼ぶ。",ez:"把实现 AND、OR、NOT 等逻辑的元件称为逻辑门。",s:"第2回 p10"},
+{c:"base",w:"<ruby>集積回路<rt>しゅうせきかいろ</rt></ruby>",p:"名",z:"集成电路",a:"integrated circuit (IC)",e:"数十個から数百万個のトランジスタを集積した電子素子。チップ(chip)とも呼ばれる。",ez:"集成了数十至数百万个晶体管的电子元件，也称为芯片。",s:"第2回 p5"},
+{c:"base",w:"チップ",p:"名",z:"芯片",a:"chip",s:"第2回 p5"},
+{c:"base",w:"<ruby>記憶回路<rt>きおくかいろ</rt></ruby>",p:"名",z:"记忆电路",a:"memory circuit",e:"記憶回路で情報を記憶する（例：レジスタ）。",ez:"用记忆电路保存信息（例：寄存器）。",s:"第2回 p6"},
+{c:"base",w:"シフトレジスタ",p:"名",z:"移位寄存器",a:"shift register",s:"第2回 p6"},
+{c:"base",w:"LSI",p:"名",z:"大规模集成电路",a:"large scale integration",e:"特に大規模なICのこと。千～数十万個のトランジスタを集積する。",ez:"特指大规模 IC，集成一千到几十万个晶体管。",s:"第2回 p7"},
+{c:"base",w:"VLSI",p:"名",z:"超大规模集成电路",a:"very large scale integration",e:"数十万～数百万個のトランジスタを集積する。",ez:"集成几十万到几百万个晶体管。",s:"第2回 p7"},
+{c:"base",w:"ULSI",p:"名",z:"甚大规模集成电路",a:"ultra large scale integration",e:"1000万個以上のトランジスタを集積する。",ez:"集成 1000 万个以上晶体管。",s:"第2回 p7"},
+{c:"base",w:"ウェーハ",p:"名",z:"晶圆",a:"wafer",e:"シリコンインゴットを薄切り（～2.5mm）にしてウェーハを作成する。",ez:"把硅锭切成薄片（约 2.5mm）制成晶圆。",s:"第2回 p8"},
+{c:"base",w:"シリコンインゴット",p:"名",z:"硅锭",a:"silicon ingot",s:"第2回 p8"},
+{c:"base",w:"ダイ",p:"名",z:"裸片；管芯",a:"die",e:"ウェーハからダイ（チップ）を切り出す。",ez:"从晶圆上切下裸片（芯片）。",s:"第2回 p8"},
+{c:"base",w:"パッケージ<ruby>化<rt>か</rt></ruby>",p:"名",z:"封装",a:"packaging",e:"ダイをパッケージ化する。",ez:"把裸片封装起来。",s:"第2回 p8"},
+{c:"base",w:"ソース",p:"名",z:"源极",a:"source",s:"第2回 p3"},
+{c:"base",w:"ドレイン",p:"名",z:"漏极",a:"drain",s:"第2回 p3"},
+{c:"base",w:"ポリシリコン",p:"名",z:"多晶硅",a:"polysilicon",s:"第2回 p3"},
+{c:"base",w:"<ruby>絶縁膜<rt>ぜつえんまく</rt></ruby>",p:"名",z:"绝缘膜",a:"insulating film",s:"第2回 p3"},
+{c:"base",w:"p<ruby>型<rt>がた</rt></ruby><ruby>基板<rt>きばん</rt></ruby>",p:"名",z:"p 型衬底",a:"p-type substrate",s:"第2回 p3"},
+/* ---------------- 数値の表現 ---------------- */
+{c:"num",w:"2<ruby>進数<rt>しんすう</rt></ruby>",p:"名",z:"二进制数",a:"binary",e:"コンピュータ内部のデータや命令はすべて2進数で表現される。",ez:"计算机内部的数据和指令全部用二进制表示。",s:"第2回 p13"},
+{c:"num",w:"10<ruby>進数<rt>しんすう</rt></ruby>",p:"名",z:"十进制数",a:"decimal",s:"第2回 p12"},
+{c:"num",w:"16<ruby>進数<rt>しんすう</rt></ruby>",p:"名",z:"十六进制数",a:"hexadecimal",e:"16進数：0～9,a～fで表現した数値。",ez:"十六进制数：用 0～9、a～f 表示的数。",s:"第2回 p12"},
+{c:"num",w:"<ruby>基数<rt>きすう</rt></ruby>",p:"名",z:"基数",a:"radix / base number",e:"2を基数として整数を表す方法。",ez:"以 2 为基数表示整数的方法。",s:"第2回 p29"},
+{c:"num",w:"ビット",p:"名",z:"位；比特",a:"bit",e:"各桁をビット(bit: binary digit)と呼ぶ。",ez:"每一位称为一个比特（bit）。",s:"第2回 p29"},
+{c:"num",w:"<ruby>最上位<rt>さいじょうい</rt></ruby>ビット",p:"名",z:"最高位",a:"MSB / most significant bit",s:"第2回 p29"},
+{c:"num",w:"<ruby>最下位<rt>さいかい</rt></ruby>ビット",p:"名",z:"最低位",a:"LSB / least significant bit",s:"第2回 p29"},
+{c:"num",w:"<ruby>符号<rt>ふごう</rt></ruby>",p:"名",z:"符号",a:"sign",e:"符号(1:負数, 0:正数)を示す。",ez:"表示符号（1 负、0 正）。",s:"第2回 p17"},
+{c:"num",w:"<ruby>符号<rt>ふごう</rt></ruby>ビット",p:"名",z:"符号位",a:"sign bit",e:"最上位ビットは、符号ビットと呼ばれる。",ez:"最高位称为符号位。",s:"第2回 p31"},
+{c:"num",w:"<ruby>負数<rt>ふすう</rt></ruby>",p:"名",z:"负数",a:"negative number",s:"第2回 p17"},
+{c:"num",w:"<ruby>負数<rt>ふすう</rt></ruby><ruby>表現<rt>ひょうげん</rt></ruby>",p:"名",z:"负数表示（法）",a:"negative number representation",s:"第2回 p17"},
+{c:"num",w:"<ruby>絶対値<rt>ぜっち</rt></ruby><ruby>表現<rt>ひょうげん</rt></ruby>",p:"名",z:"原码表示",a:"sign-magnitude",e:"符号(1:負数, 0:正数)＋絶対値で表現する。",ez:"用符号（1负0正）加绝对值表示。",s:"第2回 p17"},
+{c:"num",w:"1<ruby>の補数<rt>のほすう</rt></ruby>",p:"名",z:"反码",a:"one's complement",e:"0と1を反転して表現する。",ez:"把 0 和 1 取反来表示。",s:"第2回 p18"},
+{c:"num",w:"2<ruby>の補数<rt>のほすう</rt></ruby>",p:"名",z:"补码",a:"two's complement",e:"1の補数＋1で表現する。加算が簡単にできる。",ez:"用反码加 1 表示；可以简便地进行加法运算。",s:"第2回 p19・21"},
+{c:"num",w:"<ruby>符号拡張<rt>ふごうかくちょう</rt></ruby>",p:"名",z:"符号扩展",a:"sign extension",e:"符号拡張：より多くのビットを使った値に変換すること(8bit→16bit)。",ez:"符号扩展：转换为使用更多位数的值（8位→16位）。",s:"第2回 p21"},
+{c:"num",w:"<ruby>論理<rt>ろんり</rt></ruby>シフト",p:"名",z:"逻辑移位",a:"logical shift",e:"sll $s0, $s1, 4 …$s1の値を4ビット左に論理シフトして$s0に格納する。",ez:"sll：把 $s1 的值逻辑左移 4 位后存入 $s0。",s:"第5回 p18"},
+{c:"num",w:"<ruby>算術<rt>さんじゅつ</rt></ruby>シフト",p:"名",z:"算术移位",a:"arithmetic shift",e:"10101010を1ビット右に算術シフトせよ。",ez:"把 10101010 算术右移 1 位。",s:"Sol3 p2"},
+{c:"num",w:"シフト<ruby>演算<rt>えんざん</rt></ruby>",p:"名",z:"移位运算",a:"shift operation",e:"シフト演算を使って4倍を計算する。",ez:"用移位运算来计算 4 倍。",s:"第5回 p21"},
+{c:"num",w:"シフト<ruby>量<rt>りょう</rt></ruby>",p:"名",z:"移位量",a:"shift amount",e:"shamt: シフト量(shift amount)",ez:"shamt：移位量（shift amount）。",s:"第5回 p4"},
+{c:"num",w:"<ruby>符号<rt>ふごう</rt></ruby>なし<ruby>整数<rt>せいすう</rt></ruby>",p:"名",z:"无符号整数",a:"unsigned integer",e:"addiu命令は、符号なし整数(unsigned integer)の加算を行う。",ez:"addiu 指令进行无符号整数的加法。",s:"第5回 p9"},
+{c:"num",w:"<ruby>符号<rt>ふごう</rt></ruby><ruby>付<rt>つ</rt></ruby>き<ruby>整数<rt>せいすう</rt></ruby>",p:"名",z:"有符号整数",a:"signed integer",e:"符号付き16bit整数で相対アドレス指定をする。",ez:"用有符号 16 位整数进行相对寻址。",s:"第6回 p3"},
+{c:"num",w:"<ruby>変換<rt>へんかん</rt></ruby>",p:"名",z:"转换",a:"conversion",s:"第2回 p15"},
+{c:"num",w:"<ruby>桁<rt>けた</rt></ruby>",p:"名",z:"位；数位",a:"digit",e:"各桁に重みを割り当てる。",ez:"给每一位分配权重。",s:"第2回 p29"},
+{c:"num",w:"<ruby>重み<rt>おもみ</rt></ruby>",p:"名",z:"权重",a:"weight",s:"第2回 p29"},
+/* ---------------- 命令とアーキテクチャ（1） ---------------- */
+{c:"arch",w:"<ruby>命令<rt>めいれい</rt></ruby>",p:"名",z:"指令",a:"instruction",e:"コンピュータ言語の言葉。",ez:"计算机语言的词汇。",s:"Sol4 p1"},
+{c:"arch",w:"<ruby>機械語<rt>きかいご</rt></ruby>",p:"名",z:"机器语言",a:"machine language",e:"高級言語のプログラムは、コンパイラ、アセンブラ等により機械語のコードに変換される。",ez:"高级语言程序经编译器、汇编器等转换为机器语言代码。",s:"第2回 p9"},
+{c:"arch",w:"アセンブリ<ruby>言語<rt>げんご</rt></ruby>",p:"名",z:"汇编语言",a:"assembly language",e:"高級言語のプログラムを機械語に変換する途中で用いられる中間言語。",ez:"把高级语言程序转换为机器语言过程中使用的中间语言。",s:"期中(9)"},
+{c:"arch",w:"<ruby>命令<rt>めいれい</rt></ruby>セット",p:"名",z:"指令集；指令系统",a:"instruction set",e:"コンピュータの語彙（一揃いの命令）。",ez:"计算机的词汇（一整套指令）。",s:"Sol4 p1"},
+{c:"arch",w:"<ruby>命令形式<rt>めいれいけいしき</rt></ruby>",p:"名",z:"指令格式",a:"instruction format",e:"各命令の初めの6ビット(opcode)を読み込めば、形式がわかるようになっている。",ez:"只要读出每条命令开头的 6 位（opcode），就能知道其格式。",s:"第5回 p17"},
+{c:"arch",w:"R<ruby>形式<rt>けいしき</rt></ruby>",p:"名",z:"R 型格式",a:"R-format",e:"add $s0, $s1, $s2 はR形式である。",ez:"add 指令属于 R 型格式。",s:"第5回 p3"},
+{c:"arch",w:"I<ruby>形式<rt>けいしき</rt></ruby>",p:"名",z:"I 型格式",a:"I-format",e:"addi, lw, sw, beq, bne はI形式である。",ez:"addi、lw、sw、beq、bne 属于 I 型格式。",s:"第5回 p3"},
+{c:"arch",w:"J<ruby>形式<rt>けいしき</rt></ruby>",p:"名",z:"J 型格式",a:"J-format",e:"j, jal はJ形式である。",ez:"j、jal 属于 J 型格式。",s:"第5回 p3"},
+{c:"arch",w:"フィールド",p:"名",z:"字段",a:"field",e:"各フィールドと命令の対応を確認する。",ez:"确认各字段与指令的对应关系。",s:"第5回 p5"},
+{c:"arch",w:"<ruby>命令<rt>めいれい</rt></ruby><ruby>操作<rt>そうさ</rt></ruby>コード",p:"名",z:"操作码",a:"opcode",e:"命令操作コード(opcode:オペコード)は命令の初めの6ビットである。",ez:"操作码是指令开头的 6 个位。",s:"第5回 p4"},
+{c:"arch",w:"オペコード",p:"名",z:"操作码",a:"opcode",s:"第5回 p4"},
+{c:"arch",w:"オペランド",p:"名",z:"操作数",a:"operand",e:"命令の演算対象。",ez:"指令的运算对象。",s:"Sol4 p1"},
+{c:"arch",w:"ソースオペランド",p:"名",z:"源操作数",a:"source operand",e:"rs: 第1ソースオペランド　rt: 第2ソースオペランド",ez:"rs：第 1 源操作数；rt：第 2 源操作数。",s:"第5回 p4"},
+{c:"arch",w:"デスティネーションオペランド",p:"名",z:"目的操作数",a:"destination operand",e:"rd: デスティネーションオペランド(destination operand)",ez:"rd：目的操作数。",s:"第5回 p4"},
+{c:"arch",w:"<ruby>即値<rt>そくち</rt></ruby>",p:"名",z:"立即数",a:"immediate",e:"即値(immediate)：演算に使うオペランドに直接書かれた値。",ez:"立即数：直接写在操作数中、供运算使用的值。",s:"第5回 p6"},
+{c:"arch",w:"<ruby>即値<rt>そくち</rt></ruby>オペランド",p:"名",z:"立即数操作数",a:"immediate operand",e:"I形式は16bitの即値オペランドを保持できる。",ez:"I 型格式可保持 16 位的立即数操作数。",s:"第5回 p8"},
+{c:"arch",w:"<ruby>機能<rt>きのう</rt></ruby>コード",p:"名",z:"功能码",a:"function code",e:"funct: 機能コード(function code)",ez:"funct：功能码。",s:"第5回 p4"},
+{c:"arch",w:"レジスタ",p:"名",z:"寄存器",a:"register",e:"CPU内で演算対象のデータを格納するための記憶領域。",ez:"CPU 内用于存放运算对象数据的存储区域。",s:"Sol4 p1"},
+{c:"arch",w:"<ruby>汎用<rt>はんよう</rt></ruby>レジスタ",p:"名",z:"通用寄存器",a:"general-purpose register",e:"プログラムカウンタは汎用レジスタ32種類の中にはない。",ez:"程序计数器不属于 32 个通用寄存器。",s:"第6回 p5"},
+{c:"arch",w:"<ruby>一時<rt>いちじ</rt></ruby>レジスタ",p:"名",z:"临时寄存器",a:"temporary register",e:"$t0-$t9(一時レジスタ)は退避しない。",ez:"$t0–$t9（临时寄存器）不需要退避。",s:"第7回 p17"},
+{c:"arch",w:"<ruby>退避<rt>たいひ</rt></ruby>レジスタ",p:"名",z:"保存寄存器",a:"saved register",e:"$s0-$s7(退避レジスタ)、$ra(リターンアドレス)等は退避させる。",ez:"$s0–$s7（保存寄存器）、$ra（返回地址）等需要退避。",s:"第7回 p17"},
+{c:"arch",w:"プログラムカウンタ",p:"名",z:"程序计数器",a:"program counter (PC)",e:"現在実行中の命令が格納されているアドレスを保持するレジスタ。",ez:"保存当前正在执行的指令所在地址的寄存器。",s:"第6回 p5"},
+{c:"arch",w:"スタックポインタ",p:"名",z:"栈指针",a:"stack pointer ($sp)",e:"スタックの先頭アドレスをレジスタ$spで記憶する。",ez:"用寄存器 $sp 记住栈顶地址。",s:"第7回 p14"},
+{c:"arch",w:"フレームポインタ",p:"名",z:"帧指针",a:"frame pointer ($fp)",e:"フレームポインタ$fpはフレームの開始アドレスを指す。",ez:"帧指针 $fp 指向帧的起始地址。",s:"第7回 p19"},
+{c:"arch",w:"グローバルポインタ",p:"名",z:"全局指针",a:"global pointer ($gp)",e:"$gp：静的データにアクセスするための基準アドレス。",ez:"$gp：访问静态数据的基准地址。",s:"第7回 p21"},
+{c:"arch",w:"リターンアドレス",p:"名",z:"返回地址",a:"return address ($ra)",e:"次の命令のアドレスをレジスタ$raに保存する。",ez:"把下一条指令的地址保存到寄存器 $ra。",s:"第7回 p7"},
+/* ---------------- 命令とアーキテクチャ（2） ---------------- */
+{c:"arch",w:"<ruby>手続き<rt>てつづき</rt></ruby>",p:"名",z:"过程；子程序",a:"procedure",e:"手続き(procedure)：プログラムの一部を構成する一連の処理。C言語だと「関数」。",ez:"过程：构成程序一部分的一系列处理，在 C 语言中即「函数」。",s:"第7回 p3"},
+{c:"arch",w:"<ruby>関数<rt>かんすう</rt></ruby>",p:"名",z:"函数",a:"function",s:"第7回 p3"},
+{c:"arch",w:"<ruby>関数<rt>かんすう</rt></ruby><ruby>呼<rt>よ</rt></ruby>び<ruby>出<rt>だ</rt></ruby>し",p:"名",z:"函数调用",a:"function call",s:"第7回 p3"},
+{c:"arch",w:"<ruby>引数<rt>ひきすう</rt></ruby>",p:"名",z:"参数",a:"argument",e:"手続きからアクセスできる場所に引数の値を置く。",ez:"把参数的值放到过程能够访问的位置。",s:"第7回 p4"},
+{c:"arch",w:"<ruby>実引数<rt>じつひきすう</rt></ruby>",p:"名",z:"实参",a:"actual argument",s:"第7回 p3"},
+{c:"arch",w:"<ruby>仮引数<rt>かひきすう</rt></ruby>",p:"名",z:"形参",a:"formal argument",s:"第7回 p3"},
+{c:"arch",w:"<ruby>戻り値<rt>もどりち</rt></ruby>",p:"名",z:"返回值",a:"return value",e:"呼び出し元からアクセスできる場所に結果(戻り値)を置く。※返り値とも言う",ez:"把结果（返回值）放到调用方能够访问的位置。※也说「返り値」。",s:"第7回 p4"},
+{c:"arch",w:"<ruby>分岐処理<rt>ぶんぎしょり</rt></ruby>",p:"名",z:"分支处理",a:"branching",e:"beq $s0, $s1, L1 …$s0と$s1の値が等しいとき、ラベルL1が付いた命令へジャンプする。",ez:"beq：当 $s0 与 $s1 的值相等时，跳转到带有标号 L1 的指令。",s:"第6回 p3"},
+{c:"arch",w:"<ruby>無条件<rt>むじょうけん</rt></ruby><ruby>分岐<rt>ぶんぎ</rt></ruby>",p:"名",z:"无条件跳转",a:"unconditional branch",e:"j L1 …無条件でラベルL1が付いた命令へジャンプする。",ez:"j：无条件跳转到带有标号 L1 的指令。",s:"第6回 p7"},
+{c:"arch",w:"<ruby>大小<rt>だいしょう</rt></ruby><ruby>比較<rt>ひかく</rt></ruby>",p:"名",z:"大小比较",a:"comparison",e:"slt $t0, $s0, $s1 …$s0が$s1より小さいとき、$t0を1に設定する。",ez:"slt：当 $s0 小于 $s1 时，把 $t0 置 1。",s:"第6回 p18"},
+{c:"arch",w:"<ruby>擬似<rt>ぎじ</rt></ruby><ruby>命令<rt>めいれい</rt></ruby>",p:"名",z:"伪指令",a:"pseudo-instruction",e:"擬似命令として用意されている。アセンブラが同じ働きの命令列に変換する。",ez:"作为伪指令提供，汇编器会将其转换为功能相同的指令序列。",s:"第6回 p20"},
+{c:"arch",w:"ラベル",p:"名",z:"标号",a:"label",e:"ラベルL1が付いた命令へジャンプする。",ez:"跳转到带有标号 L1 的指令。",s:"第6回 p3"},
+{c:"arch",w:"<ruby>配列<rt>はいれつ</rt></ruby>",p:"名",z:"数组",a:"array",e:"a[300] = b + a[200] をアセンブリコードで表す。",ez:"用汇编代码表示数组访问。",s:"第5回 p20"},
+{c:"arch",w:"<ruby>要素<rt>ようそ</rt></ruby>",p:"名",z:"元素",a:"element",e:"メモリアドレスのオフセットは配列の要素数の4倍。",ez:"内存地址的偏移量是数组元素个数的 4 倍。",s:"第5回 p20"},
+{c:"arch",w:"オフセット",p:"名",z:"偏移量",a:"offset",s:"第5回 p20"},
+{c:"arch",w:"メモリアドレス",p:"名",z:"内存地址",a:"memory address",s:"第5回 p20"},
+{c:"arch",w:"<ruby>番地<rt>ばんち</rt></ruby>",p:"名",z:"地址",a:"address",e:"現在のPCが2048なら、次の命令の番地は2048＋4になる。",ez:"若当前 PC 为 2048，则下一条指令的地址为 2048+4。",s:"第6回 p5"},
+{c:"arch",w:"ジャンプ",p:"動Ⅲ",z:"跳转",a:"jump",s:"第6回 p3"},
+{c:"arch",w:"<ruby>積<rt>つ</rt></ruby>む",p:"動Ⅰ",z:"压入；堆积",a:"push / stack",e:"「スタックにFを積む」ともいう。",ez:"也说「把 F 压入栈」。",s:"第7回 p9"},
+{c:"arch",w:"<ruby>下<rt>お</rt></ruby>ろす",p:"動Ⅰ",z:"弹出；取下",a:"pop / take out",e:"「スタックからFを下ろす」ともいう。",ez:"也说「从栈中取下 F」。",s:"第7回 p9"},
+{c:"arch",w:"<ruby>退避<rt>たいひ</rt></ruby>する",p:"動Ⅲ",z:"保存；备份",a:"save / back up",e:"Aの中で使っていたレジスタ内のデータをメモリ(スタック)に退避させないといけない。",ez:"必须把过程中使用的寄存器数据保存（退避）到内存（栈）中。",s:"第7回 p17"},
+{c:"arch",w:"<ruby>復元<rt>ふくげん</rt></ruby>する",p:"動Ⅲ",z:"恢复",a:"restore",e:"Bの実行が終了したら、スタックからポップして値をレジスタに戻す（復元する）。",ez:"B 执行结束后，从栈中弹出并写回寄存器（恢复）。",s:"第7回 p17"},
+{c:"arch",w:"<ruby>確保<rt>かくほ</rt></ruby>する",p:"動Ⅲ",z:"分配；确保",a:"allocate / secure",e:"手続き内部での処理に必要なメモリ資源を確保する。",ez:"分配过程内部处理所需的内存资源。",s:"第7回 p4"},
+{c:"arch",w:"<ruby>解放<rt>かいほう</rt></ruby>する",p:"動Ⅲ",z:"释放",a:"release / free",e:"動的データのメモリ解放。C言語だとfree()。",ez:"释放动态数据的内存；在 C 语言中是 free()。",s:"第7回 p24"},
+{c:"arch",w:"スタック",p:"名",z:"栈",a:"stack",e:"後から入れたデータを先に取り出すデータ構造。LIFO (last in, first out)。",ez:"后进先出（LIFO）的数据结构。",s:"第7回 p9"},
+{c:"arch",w:"プッシュ",p:"名",z:"压栈；推入",a:"push",e:"プッシュ(push)：値の保存。",ez:"push：保存值（压栈）。",s:"第7回 p9"},
+{c:"arch",w:"ポップ",p:"名",z:"弹栈；取出",a:"pop",e:"ポップ(pop)：値の取り出し。",ez:"pop：取出值（弹栈）。",s:"第7回 p9"},
+{c:"arch",w:"LIFO",p:"名",z:"后进先出",a:"last in, first out",s:"第7回 p9"},
+{c:"arch",w:"リーフ<ruby>手続き<rt>てつづき</rt></ruby>",p:"名",z:"叶子过程",a:"leaf procedure",e:"他の手続きを呼ばない手続きをリーフ(leaf)手続きと呼ぶ。",ez:"把不调用其他过程的过程称为叶子过程。",s:"第7回 p13"},
+{c:"arch",w:"<ruby>手続き<rt>てつづき</rt></ruby>フレーム",p:"名",z:"过程帧；栈帧",a:"procedure frame / stack frame",e:"その手続きを呼ぶときに新しく確保されたスタック上の領域（スタックフレームとも）。",ez:"调用该过程时在栈上新分配的区域（也称栈帧）。",s:"第7回 p19"},
+{c:"arch",w:"ヒープ",p:"名",z:"堆",a:"heap",e:"ヒープ(heap)：動的変数を格納する領域。",ez:"堆：存放动态变量的区域。",s:"第7回 p21"},
+{c:"arch",w:"ローカル<ruby>変数<rt>へんすう</rt></ruby>",p:"名",z:"局部变量",a:"local variable",e:"ローカル変数、引数などはスタックに置かれる。",ez:"局部变量、参数等放在栈中。",s:"第7回 p21"},
+{c:"arch",w:"<ruby>自動<rt>じどう</rt></ruby><ruby>変数<rt>へんすう</rt></ruby>",p:"名",z:"自动变量",a:"automatic variable",e:"自動変数(局所変数)はスタックに置かれる。",ez:"自动变量（局部变量）放在栈中。",s:"第7回 p23"},
+{c:"arch",w:"<ruby>外部<rt>がいぶ</rt></ruby><ruby>変数<rt>へんすう</rt></ruby>",p:"名",z:"外部变量",a:"external variable",e:"外部変数はどこからでもアクセス可能で、静的データ・セグメントに置かれる。",ez:"外部变量可从任何位置访问，放在静态数据段。",s:"第7回 p23"},
+{c:"arch",w:"<ruby>静的<rt>せいてき</rt></ruby><ruby>変数<rt>へんすう</rt></ruby>",p:"名",z:"静态变量",a:"static variable",s:"第7回 p23"},
+{c:"arch",w:"ポインタ",p:"名",z:"指针",a:"pointer",s:"第7回 p24"},
+{c:"arch",w:"メモリ・リーク",p:"名",z:"内存泄漏",a:"memory leak",e:"解放し忘れると、メモリ・リーク(memory leak)が発生する。",ez:"忘记释放就会发生内存泄漏。",s:"第7回 p24"},
+{c:"arch",w:"ガベージ・コレクション",p:"名",z:"垃圾回收",a:"garbage collection",e:"Java等の場合はガベージ・コレクション(garbage collection)により、適切に・自動的に解放が行われる。",ez:"Java 等语言通过垃圾回收机制自动、妥善地释放内存。",s:"第7回 p24"},
+{c:"arch",w:"スピルアウト",p:"名",z:"寄存器溢出（值写入栈）",a:"spill out",e:"レジスタに入りきらない引数や戻り値はメモリ中のスタックに積まれる(スピルアウト)。",ez:"寄存器放不下的参数和返回值会被写入内存中的栈（spill out）。",s:"第7回 p12"},
+/* ---------------- アドレシング・モード ---------------- */
+{c:"addr",w:"アドレシング・モード",p:"名",z:"寻址方式",a:"addressing mode",e:"命令によってオペランドの解釈のしかたが異なる。それらの解釈の方法をアドレシング・モードと呼ぶ。",ez:"指令不同，对操作数的解释方式也不同。这些解释方式称为寻址方式。",s:"第6回 p22"},
+{c:"addr",w:"レジスタ・アドレシング",p:"名",z:"寄存器寻址",a:"register addressing",e:"指定したレジスタの中身をオペランドにする。",ez:"把指定寄存器中的内容作为操作数。",s:"第6回 p23"},
+{c:"addr",w:"<ruby>即値<rt>そくち</rt></ruby>アドレシング",p:"名",z:"立即数寻址",a:"immediate addressing",e:"指定した定数をオペランドにする。",ez:"把指定的常数作为操作数。",s:"第6回 p24"},
+{c:"addr",w:"ベース<ruby>相対<rt>そうたい</rt></ruby>アドレシング",p:"名",z:"基址寻址",a:"base addressing",e:"指定したレジスタの中身＋定数のメモリアドレスの内容をオペランドにする。",ez:"把「指定寄存器的内容＋常数」所指的内存地址中的内容作为操作数。",s:"第6回 p25"},
+{c:"addr",w:"PC<ruby>相対<rt>そうたい</rt></ruby>アドレシング",p:"名",z:"PC 相对寻址",a:"PC-relative addressing",e:"(PC+4)+(指定した定数×4) のアドレスを示す。",ez:"指示 (PC+4)+(指定常数×4) 的地址。",s:"第6回 p26"},
+{c:"addr",w:"<ruby>擬似<rt>ぎじ</rt></ruby><ruby>直接<rt>ちょくせつ</rt></ruby>アドレシング",p:"名",z:"伪直接寻址",a:"pseudo-direct addressing",e:"PCの上位4ビット と 指定した定数×4 を つなげたアドレスを示す。",ez:"指示由 PC 高 4 位与「指定常数×4」拼接而成的地址。",s:"第6回 p27"},
+{c:"addr",w:"<ruby>相対<rt>そうたい</rt></ruby>アドレス<ruby>指定<rt>してい</rt></ruby>",p:"名",z:"相对地址指定",a:"relative addressing",e:"beq命令、bne命令は相対アドレス指定である。",ez:"beq、bne 指令采用相对寻址。",s:"第6回 p4"},
+{c:"addr",w:"<ruby>絶対<rt>ぜったい</rt></ruby>アドレス",p:"名",z:"绝对地址",a:"absolute address",e:"address: 絶対アドレス（ただし、実際のアドレスの1/4の値）。",ez:"address：绝对地址（实际地址的 1/4）。",s:"第6回 p7"},
+{c:"addr",w:"<ruby>読<rt>よ</rt></ruby>み<ruby>出<rt>だ</rt></ruby>し",p:"名",z:"读出",a:"read",e:"メモリから1語読み出す（lw命令）。",ez:"从内存读出一个字（lw 指令）。",s:"Sol4 p2"},
+{c:"addr",w:"<ruby>書<rt>か</rt></ruby>き<ruby>込<rt>こ</rt></ruby>み",p:"名",z:"写入",a:"write",e:"メモリに1語書き込む（sw命令）。",ez:"向内存写入一个字（sw 指令）。",s:"Sol4 p2"},
+/* ---------------- 翻訳とリンク ---------------- */
+{c:"link",w:"コンパイラ",p:"名",z:"编译器",a:"compiler",e:"ソースコードをアセンブリコードに変換する。",ez:"把源代码转换为汇编代码。",s:"第8回 p5"},
+{c:"link",w:"アセンブラ",p:"名",z:"汇编器",a:"assembler",e:"アセンブリコードを機械語に変換する（アセンブルする）。",ez:"把汇编代码转换为机器语言（汇编）。",s:"第8回 p7"},
+{c:"link",w:"リンカ",p:"名",z:"链接器",a:"linker",e:"個別にコンパイル、アセンブルされたプログラムをつなぎ合わせて、1つの実行可能なオブジェクトファイルを作る。",ez:"把分别编译、汇编好的程序连接起来，生成一个可执行的目标文件。",s:"第8回 p11"},
+{c:"link",w:"ローダ",p:"名",z:"装载器",a:"loader",e:"リンク後のオブジェクトファイルをメモリに読み込む。",ez:"把链接后的目标文件读入内存。",s:"第8回 p18"},
+{c:"link",w:"ソースコード",p:"名",z:"源代码",a:"source code",s:"第2回 p9"},
+{c:"link",w:"コンパイル",p:"名",z:"编译",a:"compile",e:"ソースコードをアセンブリ言語に変換する処理。",ez:"把源代码转换为汇编语言的处理。",s:"期中(17)"},
+{c:"link",w:"アセンブル",p:"名",z:"汇编",a:"assemble",e:"アセンブリコードを機械語に変換する処理。",ez:"把汇编代码转换为机器语言的处理。",s:"期中・第8回"},
+{c:"link",w:"リンク",p:"名",z:"链接",a:"link",e:"外部参照を解決し、メモリ上のプログラムの配置を決定する。",ez:"解析外部引用，并决定程序在内存中的布局。",s:"第8回 p11"},
+{c:"link",w:"オブジェクトファイル",p:"名",z:"目标文件",a:"object file",e:"オブジェクトファイル（目的ファイル）に出力する。",ez:"输出到目标文件。",s:"第8回 p7"},
+{c:"link",w:"<ruby>実行<rt>じっこう</rt></ruby>ファイル",p:"名",z:"可执行文件",a:"executable file",s:"第8回 p4"},
+{c:"link",w:"セクション",p:"名",z:"节；区段",a:"section",e:"オブジェクトファイルは以下の6セクションで構成される(UNIXの場合)。",ez:"目标文件由以下 6 个节构成（UNIX 的情况）。",s:"第8回 p9"},
+{c:"link",w:"ヘッダー",p:"名",z:"头部",a:"header",e:"オブジェクト・ファイル・ヘッダー：テキスト・セグメント、静的データ・セグメントのサイズを示す。",ez:"目标文件头：指示代码段与静态数据段的大小。",s:"第8回 p9"},
+{c:"link",w:"テキスト・セグメント",p:"名",z:"代码段",a:"text segment",e:"テキスト・セグメント：機械語のプログラムコード。",ez:"代码段：机器语言的程序代码。",s:"第8回 p9"},
+{c:"link",w:"<ruby>静的<rt>せいてき</rt></ruby>データ・セグメント",p:"名",z:"静态数据段",a:"static data segment",e:"静的データ・セグメント：実行中に割り当てられるデータ。",ez:"静态数据段：执行时分配的数据。",s:"第8回 p9"},
+{c:"link",w:"リロケーション<ruby>情報<rt>じょうほう</rt></ruby>",p:"名",z:"重定位信息",a:"relocation information",e:"リロケーション情報：プログラムをメモリにロードしたときの絶対アドレスに依存する命令語、データ語を示す。",ez:"重定位信息：指示依赖于加载到内存时绝对地址的指令字、数据字。",s:"第8回 p9"},
+{c:"link",w:"シンボル・テーブル",p:"名",z:"符号表",a:"symbol table",e:"シンボル・テーブルの生成：ラベル名と命令のアドレスの対応を管理する。",ez:"生成符号表：管理标号名与指令地址的对应关系。",s:"第8回 p8"},
+{c:"link",w:"デバッグ<ruby>情報<rt>じょうほう</rt></ruby>",p:"名",z:"调试信息",a:"debugging information",e:"デバッグ情報：コンパイルに関する情報。デバッガ等で使用される。",ez:"调试信息：与编译相关的信息，供调试器等使用。",s:"第8回 p9"},
+{c:"link",w:"<ruby>外部<rt>がいぶ</rt></ruby><ruby>参照<rt>さんしょう</rt></ruby>",p:"名",z:"外部引用",a:"external reference",e:"外部参照を解決(e.g., 他のファイルにあるラベル名)。",ez:"解析外部引用（例如其他文件中的标号名）。",s:"第8回 p11"},
+{c:"link",w:"<ruby>標準<rt>ひょうじゅん</rt></ruby>ライブラリ",p:"名",z:"标准库",a:"standard library",e:"C言語でのプログラム開発では、標準ライブラリも使用する。stdio.h, stdlib.h 等々。",ez:"C 语言程序开发中也使用标准库，如 stdio.h、stdlib.h 等。",s:"第8回 p3"},
+{c:"link",w:"<ruby>実行<rt>じっこう</rt></ruby><ruby>可能<rt>かのう</rt></ruby>",p:"形動",z:"可执行的",a:"executable",s:"第8回 p11"},
+/* ---------------- 性能・記憶装置・試験のことば ---------------- */
+{c:"misc",w:"クロック<ruby>周波数<rt>しゅうはすう</rt></ruby>",p:"名",z:"时钟频率",a:"clock frequency",e:"CPU における 1 秒あたりのクロック数。",ez:"CPU 每秒的时钟数。",s:"期中(15)"},
+{c:"misc",w:"スループット",p:"名",z:"吞吐量",a:"throughput",e:"CPU が一定時間内に行った作業量。",ez:"CPU 在一定时间内完成的工作量。",s:"期中(14)"},
+{c:"misc",w:"<ruby>応答<rt>おうとう</rt></ruby><ruby>時間<rt>じかん</rt></ruby>",p:"名",z:"响应时间",a:"response time",s:"期中(14)"},
+{c:"misc",w:"<ruby>揮発性<rt>きはつせい</rt></ruby>",p:"名",z:"易失性",a:"volatile",e:"揮発性:SRAM, DRAM　不揮発性:磁気ディスク",ez:"易失性：SRAM、DRAM；非易失性：磁盘。",s:"Sol1 p3"},
+{c:"misc",w:"<ruby>不揮発性<rt>ふきはつせい</rt></ruby>",p:"名",z:"非易失性",a:"non-volatile",e:"計算機の電源を切ると、不揮発性メモリに保存されたデータは消えない。",ez:"关闭电源后，非易失性存储器中保存的数据不会丢失。",s:"期中・二(12)"},
+{c:"misc",w:"リフレッシュ",p:"名",z:"刷新；再生",a:"refresh",e:"DRAMはデータ保持のためにリフレッシュが必要である。",ez:"DRAM 为保持数据需要刷新。",s:"期中・二(13)"},
+{c:"misc",w:"SRAM",p:"名",z:"静态随机存储器",a:"static RAM",e:"速度の速い順：SRAM＞DRAM＞磁気ディスク",ez:"速度排序：SRAM＞DRAM＞磁盘。",s:"Sol1 p3"},
+{c:"misc",w:"DRAM",p:"名",z:"动态随机存储器",a:"dynamic RAM",s:"Sol1 p3"},
+{c:"misc",w:"キャッシュ",p:"名",z:"高速缓存",a:"cache",e:"記憶装置の一種。メモリより高速にアクセスできる。",ez:"存储装置的一种，比内存访问速度更快。",s:"期中(4)"},
+{c:"misc",w:"<ruby>磁気<rt>じき</rt></ruby>ディスク",p:"名",z:"磁盘",a:"magnetic disk",e:"ビットあたりのコストの高い順：SRAM＞DRAM＞磁気ディスク",ez:"每比特成本排序：SRAM＞DRAM＞磁盘。",s:"Sol1 p3"},
+{c:"misc",w:"ハードディスク",p:"名",z:"硬盘",a:"hard disk (HDD)",s:"期中"},
+{c:"misc",w:"プログラム<ruby>内蔵<rt>ないぞう</rt></ruby><ruby>方式<rt>ほうしき</rt></ruby>",p:"名",z:"存储程序方式",a:"stored program method",e:"処理を行うための命令やデータを、あらかじめメモリ内に格納しておく方式。",ez:"把进行处理所需的指令和数据预先存入内存的方式。",s:"Sol1 p3"},
+{c:"misc",w:"フォン・ノイマン",p:"名",z:"冯·诺依曼",a:"von Neumann",e:"フォン・ノイマンはプログラム内蔵方式の考案者とされている。",ez:"冯·诺依曼被认为是存储程序方式的提出者。",s:"Sol1 p3"},
+{c:"misc",w:"ビッグエンディアン",p:"名",z:"大端方式",a:"big-endian",e:"語を上位バイトから順にメモリに格納する方法。",ez:"把字按从高位字节到低位字节的顺序存入内存的方法。",s:"Sol4 p2"},
+{c:"misc",w:"リトルエンディアン",p:"名",z:"小端方式",a:"little-endian",e:"語を下位バイトから順にメモリに格納する方法。",ez:"把字按从低位字节到高位字节的顺序存入内存的方法。",s:"Sol4 p2"},
+{c:"misc",w:"<ruby>整列化<rt>せいれつか</rt></ruby><ruby>制約<rt>せいやく</rt></ruby>",p:"名",z:"对齐约束",a:"alignment restriction",e:"整列化制約に従って格納された語を順に読み出す際、メモリアクセスは4バイト単位で行われる。",ez:"按对齐约束存放的字顺序读出时，内存访问以 4 字节为单位进行。",s:"Sol4 p2"},
+{c:"misc",w:"RISC",p:"名",z:"精简指令集计算机",a:"reduced instruction set computer",e:"1命令でできることは少ないが、命令が単純となるような命令セットの設計方針。",ez:"单条指令功能少、指令简单的指令集设计方针。",s:"Sol4 p1"},
+{c:"misc",w:"CISC",p:"名",z:"复杂指令集计算机",a:"complex instruction set computer",e:"1命令でできることが多いが、命令が複雑となるような命令セットの設計方針。",ez:"单条指令功能多、指令复杂的指令集设计方针。",s:"Sol4 p1"},
+{c:"misc",w:"<ruby>空欄<rt>くうらん</rt></ruby>",p:"名",z:"空格",a:"blank",e:"それぞれの空欄にあてはまる数値や語句を選び、A～Dの記号で答えよ。",ez:"选出符合各空格的数值或词语，用 A～D 的记号作答。",s:"期中(26)項"},
+{c:"misc",w:"<ruby>選択肢<rt>せんたくし</rt></ruby>",p:"名",z:"选项",a:"choice",e:"以下の各問の答えをA～Dから選べ。",ez:"从 A～D 中选择下列各题的答案。",s:"期中・一"},
+{c:"misc",w:"<ruby>語群<rt>ごぐん</rt></ruby>",p:"名",z:"备选词群",a:"word bank",e:"以下の空欄に当てはまる語句を語群から選べ。",ez:"从备选词群中选择填入下列空格的词语。",s:"Sol1 p1"},
+{c:"misc",w:"<ruby>配点<rt>はいてん</rt></ruby>",p:"名",z:"分值",a:"points allocated",s:"期中 配点表"},
+{c:"misc",w:"<ruby>得点<rt>とくてん</rt></ruby>",p:"名",z:"得分",a:"score",s:"期中 得点欄"},
+{c:"misc",w:"ただし",p:"副・接",z:"但是；前提是",a:"provided that",e:"ただし、変数f,g,iはそれぞれレジスタ$s0,$s1,$s2に対応しているものとする。",ez:"但是，假设变量 f、g、i 分别对应寄存器 $s0、$s1、$s2。",s:"期中・五"},
+{c:"misc",w:"すなわち",p:"副",z:"即；亦即",a:"that is / namely",e:"計算機の設計概念、すなわち、計算機がどのように作られるかのこと。",ez:"计算机的设计概念，即计算机是如何构成的。",s:"Sol1 p1"},
+{c:"misc",w:"それぞれ",p:"副",z:"分别；各自",a:"respectively",e:"それぞれの空欄にあてはまる数値や語句を選べ。",ez:"选出符合各空格的数值或词语。",s:"期中"},
+{c:"misc",w:"<ruby>等々<rt>とうとう</rt></ruby>",p:"名",z:"等等",a:"and so on",e:"例として、WindowsやUnixなどが挙げられる。",ez:"例如 Windows、Unix 等。",s:"Sol1 p1"},
+{c:"misc",w:"<ruby>当<rt>あ</rt></ruby>てはまる",p:"動Ⅰ",z:"符合；适用于",a:"fit / apply",e:"それぞれの空欄にあてはまる語句を語群から選べ。",ez:"从备选词群中选择符合各空格的词语。",s:"Sol1 p1"},
+{c:"misc",w:"<ruby>仮定<rt>かてい</rt></ruby>する",p:"動Ⅲ",z:"假设",a:"assume",e:"ラベルLoopの付いた命令文のアドレスは768だと仮定する。",ez:"假设带有标号 Loop 的指令地址为 768。",s:"第6回 p13"},
+{c:"misc",w:"<ruby>閉巻<rt>へいかん</rt></ruby>",p:"名",z:"闭卷",a:"closed book",s:"期中 試験形式"},
+{c:"misc",w:"<ruby>再掲<rt>さいけい</rt></ruby>",p:"名",z:"重新刊登；再刊",a:"reprint",s:"第7回 p19"},
+{c:"misc",w:"<ruby>参考文献<rt>さんこうぶんけん</rt></ruby>",p:"名",z:"参考文献",a:"references",s:"各回 最終頁"},
+];
+
+const listEl = document.getElementById("list");
+const chipsEl = document.getElementById("chips");
+const qEl = document.getElementById("q");
+const countEl = document.getElementById("count");
+const noresultEl = document.getElementById("noresult");
+const optFuri = document.getElementById("opt-furi");
+const optEx = document.getElementById("opt-ex");
+
+let curCat = "all";
+const strip = s => s.replace(/<[^>]*>/g, "");
+
+function render(){
+  const cats = ["all", ...Object.keys(CATS)];
+  chipsEl.innerHTML = cats.map(c=>{
+    const n = c==="all" ? WORDS.length : WORDS.filter(w=>w.c===c).length;
+    const label = c==="all" ? "全部" : CATS[c].jp;
+    return `<button class="chip" type="button" data-cat="${c}" aria-pressed="${c===curCat}">${label} ${n}</button>`;
+  }).join("");
+
+  let html = "";
+  let no = 0;
+  for(const key of Object.keys(CATS)){
+    const items = WORDS.filter(w=>w.c===key);
+    if(!items.length) continue;
+    html += `<section class="cat" data-cat="${key}">
+  <div class="cat__head"><span class="cat__jp">${CATS[key].jp}</span><span class="cat__zh">${CATS[key].zh}</span><span class="cat__n">${items.length}語</span></div>
+  <div class="cat__body">`;
+    for(const w of items){
+      no++;
+      const plain = strip(w.w) + " " + strip(w.z||"") + " " + (w.a||"") + " " + (w.r||"");
+      const exHtml = w.e ? `<details class="ex"><summary><span class="exmark">例</span><span class="src">${w.s||""}</span></summary>
+      <div class="exgrid"><div class="exj">${w.e}</div><div class="exz">${w.ez||""}</div></div></details>` : "";
+      html += `<div class="entry" data-cat="${key}" data-s="${plain.toLowerCase()}">
+    <div class="entry__w"><span class="word">${w.w}</span><span class="idx">${no}</span></div>
+    <div class="entry__p">〈${w.p}〉</div>
+    <div class="entry__z">${w.z}${w.a?`<span class="alias">${w.a}</span>`:""}</div>
+    ${exHtml}
+  </div>`;
+    }
+    html += `</div></section>`;
+  }
+  listEl.innerHTML = html;
+  document.getElementById("stat-n").textContent = WORDS.length;
+  document.getElementById("stat-ex").textContent = WORDS.filter(w=>w.e).length;
+  apply();
+}
+
+chipsEl.addEventListener("click", e=>{
+  const btn = e.target.closest(".chip");
+  if(!btn) return;
+  curCat = btn.dataset.cat;
+  chipsEl.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed", String(c===btn)));
+  apply();
+});
+
+qEl.addEventListener("input", apply);
+
+optFuri.addEventListener("change", ()=>{ document.body.classList.toggle("hide-furi", !optFuri.checked); });
+optEx.addEventListener("change", ()=>{
+  document.body.classList.toggle("hide-ex", !optEx.checked);
+  listEl.querySelectorAll("details.ex").forEach(d=>{ d.open = optEx.checked; });
+});
+
+function clearMarks(root){
+  root.querySelectorAll("mark").forEach(m=>{
+    const t = document.createTextNode(m.textContent);
+    m.parentNode.replaceChild(t, m);
+  });
+}
+
+function highlight(entry, q){
+  clearMarks(entry);
+  if(!q) return;
+  const walker = document.createTreeWalker(entry, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  for(const n of nodes){
+    const t = n.textContent;
+    const idx = t.toLowerCase().indexOf(q);
+    if(idx < 0) continue;
+    const tail = n.splitText(idx);
+    const mid = tail.splitText(q.length);
+    const mark = document.createElement("mark");
+    mark.textContent = tail.textContent;
+    tail.parentNode.replaceChild(mark, tail);
+    void mid;
+  }
+}
+
+function apply(){
+  const q = qEl.value.trim().toLowerCase();
+  const entries = listEl.querySelectorAll(".entry");
+  let visible = 0;
+  entries.forEach(en=>{
+    const okCat = curCat === "all" || en.dataset.cat === curCat;
+    const okQ = !q || en.dataset.s.includes(q);
+    const show = okCat && okQ;
+    en.style.display = show ? "" : "none";
+    if(show){ visible++; highlight(en, q); }
+  });
+  const perCat = {all:0};
+  entries.forEach(en=>{
+    if(!q || en.dataset.s.includes(q)){
+      perCat[en.dataset.cat] = (perCat[en.dataset.cat]||0) + 1;
+      perCat.all++;
+    }
+  });
+  chipsEl.querySelectorAll(".chip").forEach(c=>{
+    const key = c.dataset.cat;
+    const n = perCat[key] || 0;
+    c.textContent = (key === "all" ? "全部" : CATS[key].jp) + " " + n;
+  });
+  listEl.querySelectorAll(".cat").forEach(sec=>{
+    const shown = sec.querySelectorAll('.entry:not([style*="display: none"])').length;
+    sec.style.display = shown ? "" : "none";
+    const nEl = sec.querySelector(".cat__n");
+    if(nEl){
+      const total = sec.querySelectorAll(".entry").length;
+      nEl.textContent = q || curCat!=="all" ? `${shown} / ${total}語` : `${total}語`;
+    }
+  });
+  countEl.innerHTML = `显示 <b>${visible}</b> / ${WORDS.length} 語`;
+  noresultEl.hidden = visible > 0;
+}
+
+render();
+</script>
+</body>
+</html>
