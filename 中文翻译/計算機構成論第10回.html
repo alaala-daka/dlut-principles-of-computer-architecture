@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第10讲 算术运算的执行（1）· 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="10">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 10 讲</div>
+    <h1 class="cover__title">算术运算的<em>执行</em>（1）</h1>
+    <p class="cover__sub">二进制加减运算 · 移位 · 符号扩展 · ALU</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    薛昕惟
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第10回 ―算術演算の実行(1)―」<br>
+    中文翻译版
+  </div>
+  <div class="page-no" style="color:#8fb0cc">1 / 32</div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">算术运算的执行</div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">二进制数的加、减、AND/OR 运算
+            <span class="toc__item--jp">2進数の加算・減算・AND/OR演算 / シフト演算、符号拡張</span></div>
+          <div class="toc__item">算术运算单元（ALU）
+            <span class="toc__item--jp">算術演算ユニット(ALU)</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt24">
+      <span class="callout__tag">说明</span>
+      <span>本讲先复习二进制数的加、减与 AND/OR 运算，再复习<span class="kw-blue">移位运算</span>（日文：シフト演算 / shift operation）与<span class="kw-blue">符号扩展</span>（日文：符号拡張 / sign extension），最后进入<span class="kw-blue">算术逻辑单元</span>（日文：算術論理演算ユニット / ALU）的电路实现。</span>
+    </div>
+  </div>
+  <div class="page-no">2 / 32</div>
+</section>
+
+<!-- ======================================================== 3 二进制数的加法（复习） -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的加法（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li>正数 ＋ 正数</li>
+    </ul>
+    <div class="row row--top mt12" style="gap:16px">
+      <div class="col shrink0" style="width:520px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.34">       00001111  15₁₀
+   <span class="hi">+</span>   00000010   2₁₀     <span class="kw">正确</span>
+   ─────────────
+       00010001  17₁₀</pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="row row--top mt12" style="gap:16px">
+      <div class="col shrink0" style="width:520px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.34">       01111110 126₁₀
+   <span class="hi">+</span>   00000010   2₁₀     <span class="red">溢出</span>
+   ─────────────
+       10000000 128₁₀</pre>
+      </div>
+      <div class="col grow" style="padding-top:6px">
+        <div class="callout callout--red" style="font-size:17px;padding:9px 12px">
+          <span class="callout__tag">溢出</span>
+          <span><span class="kw">溢出</span>（日文：桁あふれ / オーバーフロー：overflow）</span>
+        </div>
+        <div class="callout callout--slim mt10">
+          <span class="callout__tag">✕ 这是 -128</span>
+          <span>把 <span class="mono">10000000</span> 解释成有符号数时，它是 <span class="mono">-128</span>。</span>
+        </div>
+        <div class="callout callout--blue callout--slim mt10">
+          <span class="callout__tag">如何处理</span>
+          <span>如何处理取决于<span class="kw-blue">编程语言</span>等的规定。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">3 / 32</div>
+</section>
+
+<!-- ======================================================== 4 确认问题 -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="qbox" style="font-size:21px">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(1)</span>用二进制数的竖式笔算计算
+      <span class="mono">00011110₂ + 00010010₂</span>，并用十进制数作答。
+    </div>
+    <div class="qbox mt20" style="font-size:21px">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(2)</span>用十进制数给出 <span class="mono">01100110₂ - 00011000₂</span> 的结果。
+    </div>
+  </div>
+  <div class="page-no">4 / 32</div>
+</section>
+
+<!-- ======================================================== 5 确认问题（答案） -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（答案）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="abox" style="font-size:17px;padding:8px 12px">
+      <span class="abox__tag">答案</span>
+      <span class="qno">(1)</span>用二进制数的竖式笔算计算 <span class="mono">00011110₂ + 00010010₂</span>，并用十进制数作答：
+    </div>
+    <div class="row row--top mt8" style="gap:16px">
+      <div class="col shrink0" style="width:470px">
+<pre class="code code--ans" style="font-size:18px">       00011110   30₁₀
+   <span class="hi-blue">+</span>   00010010   18₁₀
+   ─────────────
+       00110000   <span class="hi">48₁₀</span></pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+
+    <div class="abox mt12" style="font-size:17px;padding:8px 12px">
+      <span class="abox__tag">答案</span>
+      <span class="qno">(2)</span>用十进制数给出 <span class="mono">01100110₂ - 00011000₂</span> 的结果：
+    </div>
+    <div class="row row--top mt8" style="gap:16px">
+      <div class="col shrink0" style="width:600px">
+<pre class="code code--ans" style="font-size:17px">   <span class="kw-teal">反码</span>          <span class="kw-teal">补码</span>
+   00011000  ⇨  11100111  ⇨  11101000
+
+       01100110  102₁₀
+   <span class="hi-blue">+</span>   11101000  -24₁₀
+   ─────────────
+       01001110   <span class="hi">78₁₀</span></pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+  </div>
+  <div class="page-no">5 / 32</div>
+</section>
+
+<!-- ======================================================== 6 二进制数的负数表示 -补码- （复习） -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的负数表示 ― 补码 ―（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="row row--top" style="gap:26px">
+      <div class="col shrink0">
+        <table class="tbl tbl--xs" style="width:210px">
+          <thead><tr><th class="c" style="width:105px">十进制数</th><th class="c" style="width:105px">二进制数</th></tr></thead>
+          <tbody>
+            <tr><td class="c">-8</td><td class="c">1000</td></tr>
+            <tr class="alt"><td class="c">-7</td><td class="c">1001</td></tr>
+            <tr><td class="c">-6</td><td class="c">1010</td></tr>
+            <tr class="alt"><td class="c">-5</td><td class="c">1011</td></tr>
+            <tr><td class="c">-4</td><td class="c">1100</td></tr>
+            <tr class="alt"><td class="c">-3</td><td class="c">1101</td></tr>
+            <tr><td class="c">-2</td><td class="c">1110</td></tr>
+            <tr class="alt"><td class="c">-1</td><td class="c">1111</td></tr>
+            <tr><td class="c">-0</td><td class="c">0000</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col shrink0">
+        <table class="tbl tbl--xs" style="width:210px">
+          <thead><tr><th class="c" style="width:105px">十进制数</th><th class="c" style="width:105px">二进制数</th></tr></thead>
+          <tbody>
+            <tr><td class="c">8</td><td class="c">-</td></tr>
+            <tr class="alt"><td class="c">7</td><td class="c">0111</td></tr>
+            <tr><td class="c">6</td><td class="c">0110</td></tr>
+            <tr class="alt"><td class="c">5</td><td class="c">0101</td></tr>
+            <tr><td class="c">4</td><td class="c">0100</td></tr>
+            <tr class="alt"><td class="c">3</td><td class="c">0011</td></tr>
+            <tr><td class="c">2</td><td class="c">0010</td></tr>
+            <tr class="alt"><td class="c">1</td><td class="c">0001</td></tr>
+            <tr><td class="c">0</td><td class="c">0000</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col grow" style="padding-top:18px">
+        <div class="callout" style="font-size:17px;padding:9px 12px">
+          <span class="callout__tag">4 位无法表示</span>
+          <span>在 <span class="mono">4</span> 位下，<span class="mono">8</span> 与 <span class="mono">-8</span> 之外的对称值无法表示。</span>
+        </div>
+      </div>
+    </div>
+    <div class="note center mt8" style="font-size:20px">补码 ＝ <span class="mono">反码 + 1</span>（日文：1の補数＋1）</div>
+  </div>
+  <div class="page-no">6 / 32</div>
+</section>
+
+<!-- ======================================================== 7 二进制数的减法（复习） -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的减法（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li>只要做「正数 ＋ 负数」即可</li>
+    </ul>
+    <div class="row row--top mt8" style="gap:16px">
+      <div class="col shrink0" style="width:470px">
+<pre class="code code--plain" style="font-size:18px;line-height:1.32">       00001111   15₁₀
+   <span class="hi">+</span>   11111110   -2₁₀     <span class="kw">正确</span>
+   ─────────────
+       00001101   13₁₀
+       ↑<span class="cmt">此处的进位忽略</span></pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="row row--top mt10" style="gap:16px">
+      <div class="col shrink0" style="width:470px">
+<pre class="code code--plain" style="font-size:18px;line-height:1.32">       00001111   15₁₀
+   <span class="hi">+</span>   11101101  -19₁₀     <span class="kw">正确</span>
+   ─────────────
+       11111100   -4₁₀</pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="callout callout--blue mt12" style="font-size:18px">
+      <span class="callout__tag">结论</span>
+      <span>在「正数 ＋ 负数」时<span class="kw-blue">不会发生</span>溢出。</span>
+    </div>
+  </div>
+  <div class="page-no">7 / 32</div>
+</section>
+
+<!-- ======================================================== 8 二进制数的减法（复习） -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的减法（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li>「负数 ＋ 负数」的情形</li>
+    </ul>
+    <div class="row row--top mt8" style="gap:16px">
+      <div class="col shrink0" style="width:470px">
+<pre class="code code--plain" style="font-size:18px;line-height:1.32">       11110001  -15₁₀
+   <span class="hi">+</span>   11111110   -2₁₀     <span class="kw">正确</span>
+   ─────────────
+       11101111  -17₁₀</pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="row row--top mt10" style="gap:16px">
+      <div class="col shrink0" style="width:470px">
+<pre class="code code--plain" style="font-size:18px;line-height:1.32">       10000011 -125₁₀
+   <span class="hi">+</span>   11111100   -4₁₀     <span class="red">溢出</span>
+   ─────────────
+       01111111 -129₁₀
+                ↑<span class="cmt">这是 127</span></pre>
+      </div>
+      <div class="col grow" style="padding-top:20px">
+        <div class="callout callout--red" style="font-size:18px">
+          <span class="callout__tag">✕</span>
+          <span>结果的 <span class="mono">01111111</span> 若按有符号数解释是 <span class="mono">127</span>，与真正的和 <span class="mono">-129</span> 不符 → <span class="kw">发生溢出</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">8 / 32</div>
+</section>
+
+<!-- ======================================================== 9 AND、OR 运算 -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">AND、OR 运算</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li>AND 运算</li>
+    </ul>
+    <div class="row row--top mt8" style="gap:16px">
+      <div class="col shrink0" style="width:340px">
+<pre class="code code--plain" style="font-size:18px;line-height:1.32">       11110001
+   <span class="hi">&amp;</span>   00110110
+   ─────────────
+       00110000</pre>
+      </div>
+      <div class="col grow" style="padding-top:26px">
+        <div class="note" style="font-size:18px;color:var(--ink-soft)">两个比特都为 <span class="mono">1</span> 的那些位结果为 <span class="mono">1</span>，<br>其它位结果为 <span class="mono">0</span>。</div>
+      </div>
+    </div>
+
+    <ul class="bullets bullets--compact mt12">
+      <li>OR 运算</li>
+    </ul>
+    <div class="row row--top mt8" style="gap:16px">
+      <div class="col shrink0" style="width:340px">
+<pre class="code code--plain" style="font-size:18px;line-height:1.32">       11110001
+   <span class="hi">|</span>   00110110
+   ─────────────
+       11110111</pre>
+      </div>
+      <div class="col grow" style="padding-top:26px">
+        <div class="note" style="font-size:18px;color:var(--ink-soft)">两个比特中只要有 <span class="mono">1</span> 的那些位结果为 <span class="mono">1</span>，<br>其它位结果为 <span class="mono">0</span>。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">9 / 32</div>
+</section>
+
+<!-- ======================================================== 10 确认问题 -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="qbox">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(1)</span>请计算 <span class="mono">01010101₂</span> <span class="mono">&amp;</span> <span class="mono">11110000₂</span>。
+    </div>
+    <div class="qbox mt10">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(2)</span>请计算 <span class="mono">01010101₂</span> <span class="mono">|</span> <span class="mono">11110000₂</span>。
+    </div>
+    <div class="qbox mt10">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(3)</span>寄存器 <span class="mono">$s0</span> 中存放着 <span class="mono">15₁₀</span>。执行指令 <span class="mono">sll $s0, $s0, 2</span> 之后，<span class="mono">$s0</span> 的内容会变成什么？请用二进制数回答。
+    </div>
+    <div class="qbox mt10">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(4)</span>寄存器 <span class="mono">$s0</span> 中存放着 <span class="mono">-2₁₀</span>。执行指令 <span class="mono">sra $s0, $s0, 1</span> 之后，<span class="mono">$s0</span> 的内容会变成什么？请用二进制数回答。
+      <div class="note mt8" style="color:#8a6200">※<span class="mono">sra</span> 是执行右算术移位的指令。</div>
+    </div>
+  </div>
+  <div class="page-no">10 / 32</div>
+</section>
+
+<!-- ======================================================== 11 确认问题（答案） -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（答案）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="abox abox--slim">
+      <span class="abox__tag">答案</span>
+      <span class="qno">(1)</span><span class="mono">01010101₂ &amp; 11110000₂</span> ＝ <span class="mono red" style="font-size:19px">01010000</span>
+    </div>
+    <div class="abox abox--slim mt8">
+      <span class="abox__tag">答案</span>
+      <span class="qno">(2)</span><span class="mono">01010101₂ | 11110000₂</span> ＝ <span class="mono red" style="font-size:19px">11110101</span>
+    </div>
+    <div class="abox abox--slim mt8">
+      <span class="abox__tag">答案</span>
+      <span class="qno">(3)</span><span class="mono">$s0</span> 中存放 <span class="mono">15₁₀</span>，执行 <span class="mono">sll $s0, $s0, 2</span> 后，<span class="mono">$s0</span> 的内容为
+      <span class="mono red" style="font-size:19px">0000 0000 0000 0000 0000 0000 0011 1100</span>
+    </div>
+    <div class="abox abox--slim mt8">
+      <span class="abox__tag">答案</span>
+      <span class="qno">(4)</span><span class="mono">$s0</span> 中存放 <span class="mono">-2₁₀</span>，执行 <span class="mono">sra $s0, $s0, 1</span> 后，<span class="mono">$s0</span> 的内容为
+      <span class="mono red" style="font-size:19px">1111 1111 1111 1111 1111 1111 1111 1111</span>
+    </div>
+    <div class="callout callout--blue mt12" style="font-size:17px">
+      <span class="callout__tag">说明</span>
+      <span><span class="mono">sll</span> 是左移 2 位的左逻辑移位；<span class="mono">sra</span> 是右算术移位，移位时保持<span class="kw-blue">符号位</span>不变。以上答案值照原讲义给出的结果照录。</span>
+    </div>
+  </div>
+  <div class="page-no">11 / 32</div>
+</section>
+
+<!-- ======================================================== 12 移位运算（复习） -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">移位运算（shift operation）（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>把二进制数的比特向左或向右错开的运算</li>
+    </ul>
+    <div class="row row--top mt12" style="gap:18px">
+      <div class="col shrink0" style="width:560px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.42">   00001100₂ = 8+4 =  12₁₀
+   <span class="hi">⇙⇙⇙⇙⇙⇙⇙⇙</span>          <span class="hi">⇩</span> <span class="kw">2 倍</span>
+   00011000₂ = 16+8 = 24₁₀
+   <span class="cmt">↑最高位丢弃</span>   <span class="cmt">↑最低位补 0</span></pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="row row--top mt16" style="gap:18px">
+      <div class="col shrink0" style="width:560px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.42">   00001100₂ = 8+4 =  12₁₀
+   <span class="hi">⇘⇘⇘⇘⇘⇘⇘⇘</span>          <span class="hi">⇩</span> <span class="kw">1/2 倍</span>
+   00000110₂ = 4+2 =   6₁₀</pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="callout callout--blue callout--slim mt12">
+      <span class="callout__tag">要点</span>
+      <span>左移时<span class="kw-blue">最高位比特被丢弃</span>；右移时<span class="kw-blue">最低位补 0</span>，被移出的低位被舍弃。</span>
+    </div>
+  </div>
+  <div class="page-no">12 / 32</div>
+</section>
+
+<!-- ======================================================== 13 移位运算（复习） -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">移位运算（shift operation）（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>要注意左端与右端</li>
+    </ul>
+    <div class="row row--top mt12" style="gap:16px">
+      <div class="col shrink0" style="width:210px;padding-top:14px">
+        <div class="note" style="font-size:19px;color:var(--ink-soft);line-height:1.4">向左<br>移位 1 比特</div>
+      </div>
+      <div class="col shrink0" style="width:520px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.42">   11000000₂ = 128+64 = 192₁₀
+   <span class="hi">⇙⇙⇙⇙⇙⇙⇙⇙</span>          <span class="hi">⇩</span> <span class="red">不成 2 倍</span>
+   10000000₂ =      128 = 128₁₀</pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="row row--top mt16" style="gap:16px">
+      <div class="col shrink0" style="width:210px;padding-top:14px">
+        <div class="note" style="font-size:19px;color:var(--ink-soft);line-height:1.4">向右<br>移位 1 比特</div>
+      </div>
+      <div class="col shrink0" style="width:520px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.42">   00001001₂ = 8+1 = 9₁₀
+   <span class="hi">⇘⇘⇘⇘⇘⇘⇘⇘</span>          <span class="hi">⇩</span> <span class="kw">1/2 倍</span>
+   00000100₂ =   4 = 4₁₀  <span class="cmt">（舍去</span>
+                        <span class="cmt">小数部分）</span></pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+  </div>
+  <div class="page-no">13 / 32</div>
+</section>
+
+<!-- ======================================================== 14 算术移位（复习） -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">算术移位（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>有符号数的情形
+        <ul class="bullets bullets--sub">
+          <li><span class="kw">算术移位</span>（日文：算術シフト / arithmetic shift）</li>
+        </ul>
+      </li>
+    </ul>
+    <div class="row row--top mt12" style="gap:16px">
+      <div class="col shrink0" style="width:210px;padding-top:14px">
+        <div class="note" style="font-size:19px;color:var(--ink-soft);line-height:1.4">向右<br>移位 1 比特</div>
+      </div>
+      <div class="col shrink0" style="width:520px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.42">   11111000₂ = -8₁₀
+   <span class="hi">↘↘↘↘↘↘↘↘</span>
+   11111100₂ = -4₁₀</pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="row row--top mt16" style="gap:16px">
+      <div class="col shrink0" style="width:210px;padding-top:14px">
+        <div class="note" style="font-size:19px;color:var(--ink-soft);line-height:1.4">向左<br>移位 1 比特</div>
+      </div>
+      <div class="col shrink0" style="width:520px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.42">   11111000₂ = -8₁₀
+   <span class="hi">↙↙↙↙↙↙↙↙</span>
+   11110000₂ = -16₁₀</pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="note mt12" style="font-size:16px">※也可以把它看作<span class="kw">逻辑左移</span>。</div>
+  </div>
+  <div class="page-no">14 / 32</div>
+</section>
+
+<!-- ======================================================== 15 逻辑移位（复习） -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">逻辑移位（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>无符号数的情形
+        <ul class="bullets bullets--sub">
+          <li><span class="kw">逻辑移位</span>（日文：論理シフト / logical shift）</li>
+        </ul>
+      </li>
+    </ul>
+    <div class="row row--top mt12" style="gap:16px">
+      <div class="col shrink0" style="width:210px;padding-top:14px">
+        <div class="note" style="font-size:19px;color:var(--ink-soft);line-height:1.4">向右<br>移位 1 比特</div>
+      </div>
+      <div class="col shrink0" style="width:470px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.42">   11111000₂ = 248₁₀
+   <span class="hi">⇘⇘⇘⇘⇘⇘⇘⇘</span>
+   01111100₂ = 124₁₀</pre>
+      </div>
+      <div class="col grow" style="padding-top:22px">
+        <div class="callout callout--slim">
+          <span class="callout__tag">不考虑符号位</span>
+        </div>
+      </div>
+    </div>
+    <div class="row row--top mt16" style="gap:16px">
+      <div class="col shrink0" style="width:210px;padding-top:14px">
+        <div class="note" style="font-size:19px;color:var(--ink-soft);line-height:1.4">向左<br>移位 1 比特</div>
+      </div>
+      <div class="col shrink0" style="width:470px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.42">   01111000₂ = 120₁₀
+   <span class="hi">⇙⇙⇙⇙⇙⇙⇙⇙</span>
+   11110000₂ = 240₁₀</pre>
+      </div>
+      <div class="col grow"></div>
+    </div>
+  </div>
+  <div class="page-no">15 / 32</div>
+</section>
+
+<!-- ======================================================== 16 确认问题 -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(1)</span>请把指令 <span class="mono">addi $s0, $zero, -1</span> 转换为机器语言。
+    </div>
+    <div class="panel panel--tight mt10" style="background:#fbfcfe">
+      <div class="note" style="font-size:17px;color:var(--ink-soft)">
+        ※<span class="mono">addi</span> 是 I 格式，opcode 为 <span class="mono">8₁₆</span><br>
+        ※<span class="mono">$s0</span> 是第 <span class="mono">10₁₆</span> 号，<span class="mono">$zero</span> 是第 <span class="mono">0₁₆</span> 号
+      </div>
+      <div class="ibox mt8">
+        <div class="iformat grow">
+          <div class="iformat__row">
+            <div class="iformat__cell" style="flex:6 1 0;font-size:19px">op</div>
+            <div class="iformat__cell" style="flex:5 1 0;font-size:19px">rs</div>
+            <div class="iformat__cell" style="flex:5 1 0;font-size:19px">rt</div>
+            <div class="iformat__cell" style="flex:16 1 0;font-size:19px">immediate</div>
+          </div>
+        </div>
+      </div>
+      <div class="row mt8" style="gap:0;font-family:var(--mono);font-size:15px;color:var(--ink-mute);text-align:center">
+        <div class="col" style="flex:6 1 0">6bit</div>
+        <div class="col" style="flex:5 1 0">5bit</div>
+        <div class="col" style="flex:5 1 0">5bit</div>
+        <div class="col" style="flex:16 1 0">16bit</div>
+      </div>
+    </div>
+
+    <div class="qbox mt16" style="font-size:19px">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(2)</span>执行 (1) 的指令后，<span class="mono">$s0</span> 的内容会变成什么？请用二进制数表示。
+    </div>
+  </div>
+  <div class="page-no">16 / 32</div>
+</section>
+
+<!-- ======================================================== 17 确认问题（提示：符号扩展） -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(1)</span>请把指令 <span class="mono">addi $s0, $zero, -1</span> 转换为机器语言。
+    </div>
+    <div class="panel panel--tight mt10" style="background:#fbfcfe">
+      <div class="note" style="font-size:17px;color:var(--ink-soft)">
+        ※<span class="mono">addi</span> 是 I 格式，opcode 为 <span class="mono">8₁₆</span><br>
+        ※<span class="mono">$s0</span> 是第 <span class="mono">10₁₆</span> 号，<span class="mono">$zero</span> 是第 <span class="mono">0₁₆</span> 号
+      </div>
+      <div class="ibox mt8">
+        <div class="iformat grow">
+          <div class="iformat__row">
+            <div class="iformat__cell" style="flex:6 1 0;font-size:19px">op</div>
+            <div class="iformat__cell" style="flex:5 1 0;font-size:19px">rs</div>
+            <div class="iformat__cell" style="flex:5 1 0;font-size:19px">rt</div>
+            <div class="iformat__cell" style="flex:16 1 0;font-size:19px">immediate</div>
+          </div>
+        </div>
+      </div>
+      <div class="row mt8" style="gap:0;font-family:var(--mono);font-size:15px;color:var(--ink-mute);text-align:center">
+        <div class="col" style="flex:6 1 0">6bit</div>
+        <div class="col" style="flex:5 1 0">5bit</div>
+        <div class="col" style="flex:5 1 0">5bit</div>
+        <div class="col" style="flex:16 1 0">16bit</div>
+      </div>
+    </div>
+
+    <div class="qbox mt16" style="font-size:19px">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(2)</span>执行 (1) 的指令后，<span class="mono">$s0</span> 的内容会变成什么？请用二进制数表示。
+    </div>
+    <div class="row mt16">
+      <div class="col grow"></div>
+      <div class="col shrink0">
+        <div class="callout" style="font-size:20px">
+          <span class="callout__tag">符号扩展</span>
+        </div>
+      </div>
+      <div class="col grow"></div>
+    </div>
+  </div>
+  <div class="page-no">17 / 32</div>
+</section>
+
+<!-- ======================================================== 18 二进制数的符号扩展（复习） -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的符号扩展（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>用更多位宽表示同一个值的方法
+        <ul class="bullets bullets--sub">
+          <li>e.g., 8 位二进制数 → 16 位二进制数</li>
+        </ul>
+      </li>
+      <li>把新值的<span class="kw">高位比特</span>用原值<span class="kw">最高位比特</span>填充即可
+        <ul class="bullets bullets--sub">
+          <li>负数以<span class="kw-blue">补码表示</span>为前提</li>
+        </ul>
+      </li>
+    </ul>
+    <div class="row row--top mt16" style="gap:16px">
+      <div class="col shrink0" style="width:600px">
+<pre class="code code--plain" style="font-size:19px;line-height:1.5">8bit              <span class="hi">0</span>0001111
+16bit  <span class="hi">000000000</span>0000111
+
+8bit              <span class="hi">1</span>1110001
+16bit  <span class="hi">111111111</span>1110001</pre>
+      </div>
+      <div class="col shrink0" style="width:140px;padding-top:14px">
+        <div class="note mono" style="font-size:20px;color:var(--ink)">15₁₀</div>
+        <div class="note mono mt24" style="font-size:20px;color:var(--ink)">-15₁₀</div>
+      </div>
+      <div class="col grow"></div>
+    </div>
+    <div class="callout callout--blue callout--slim mt10">
+      <span class="callout__tag">符号扩展</span>
+      <span>红线下划线标出的部分表示：新补齐的高位全部由原数的<span class="kw-blue">符号位</span>填充（正数补 <span class="mono">0</span>，负数补 <span class="mono">1</span>）。</span>
+    </div>
+  </div>
+  <div class="page-no">18 / 32</div>
+</section>
+
+<!-- ======================================================== 19 讲义内容 -->
+<section class="slide" id="s19">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">算术运算的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">二进制数的加、减、AND/OR 运算</div>
+          <div class="toc__item toc__item--active">算术运算单元（ALU）
+            <span class="toc__item--jp">算術演算ユニット(ALU)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">19 / 32</div>
+</section>
+
+<!-- ======================================================== 20 算术逻辑单元 -->
+<section class="slide" id="s20">
+  <div class="slide__head">
+    <h2 class="slide__title">算术逻辑单元</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>ALU（arithmetic logic unit）
+        <ul class="bullets bullets--sub">
+          <li>算术运算（加法、减法）</li>
+          <li>逻辑运算（AND、OR）</li>
+        </ul>
+      </li>
+      <li>进行上述等等的运算</li>
+    </ul>
+
+    <div class="row row--center mt10">
+      <div class="col shrink0">
+        <svg width="340" height="256" viewBox="-10 -10 380 286" style="display:block" aria-label="ALU 模块框图：输入 a、b，控制输入 ALU 操作，输出零判定、结果、溢出、进位输出">
+          <defs>
+            <marker id="al-arrow" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 z" fill="#10314f"></path>
+            </marker>
+          </defs>
+          <!-- ALU 梯形本体 -->
+          <path d="M96,34 L236,34 L236,100 L300,135 L236,170 L236,236 L96,236 L163,135 Z"
+                fill="#fdfbe9" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+          <text x="152" y="142" font-size="21" font-family="monospace" fill="#10314f" text-anchor="middle">ALU</text>
+          <!-- a 输入 -->
+          <line x1="26" y1="72" x2="94" y2="72" stroke="#10314f" stroke-width="1.8" marker-end="url(#al-arrow)"></line>
+          <text x="18" y="78" font-size="18" font-family="monospace" fill="#10314f" text-anchor="end">a</text>
+          <!-- b 输入 -->
+          <line x1="26" y1="202" x2="94" y2="202" stroke="#10314f" stroke-width="1.8" marker-end="url(#al-arrow)"></line>
+          <text x="18" y="208" font-size="18" font-family="monospace" fill="#10314f" text-anchor="end">b</text>
+          <!-- ALU 操作 控制输入 -->
+          <line x1="178" y1="10" x2="178" y2="32" stroke="#10314f" stroke-width="1.8" marker-end="url(#al-arrow)"></line>
+          <text x="178" y="6" font-size="16" fill="#10314f" text-anchor="middle">ALU 操作</text>
+          <!-- 右侧三条输出 -->
+          <line x1="301" y1="106" x2="352" y2="106" stroke="#10314f" stroke-width="1.8" marker-end="url(#al-arrow)"></line>
+          <text x="357" y="111" font-size="16" fill="#10314f">零判定</text>
+          <line x1="301" y1="135" x2="352" y2="135" stroke="#10314f" stroke-width="1.8" marker-end="url(#al-arrow)"></line>
+          <text x="357" y="140" font-size="16" fill="#10314f">结果</text>
+          <line x1="301" y1="164" x2="352" y2="164" stroke="#10314f" stroke-width="1.8" marker-end="url(#al-arrow)"></line>
+          <text x="357" y="169" font-size="16" fill="#10314f">溢出</text>
+          <!-- 进位输出 -->
+          <line x1="168" y1="237" x2="168" y2="262" stroke="#10314f" stroke-width="1.8" marker-end="url(#al-arrow)"></line>
+          <text x="168" y="274" font-size="16" fill="#10314f" text-anchor="middle">进位输出</text>
+        </svg>
+      </div>
+      <div class="col grow"></div>
+    </div>
+  </div>
+  <div class="page-no">20 / 32</div>
+</section>
+
+<!-- ======================================================== 21 逻辑运算的实现 -->
+<section class="slide" id="s21">
+  <div class="slide__head">
+    <h2 class="slide__title">逻辑运算的实现</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>AND 运算、OR 运算的实现</li>
+    </ul>
+
+      <svg width="940" height="290" viewBox="0 0 940 290" style="display:block;margin-top:4px" aria-label="AND 门与 OR 门并联后由 MUX 选择输出的电路，右下角给出 MUX 的内部结构">
+      <defs>
+        <marker id="g21-ar" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 z" fill="#10314f"></path>
+        </marker>
+      </defs>
+
+      <!-- ============ 主电路 ============ -->
+      <!-- A 输入 -->
+      <text x="8" y="80" font-size="19" font-family="monospace" fill="#10314f">A</text>
+      <polyline points="30,74 88,74" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="30,74 30,120 240,120" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <!-- B 输入 -->
+      <text x="8" y="192" font-size="19" font-family="monospace" fill="#10314f">B</text>
+      <polyline points="30,186 88,186" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="30,186 30,232 240,232" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="88,74 88,120" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="88,186 88,232" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- AND 门（D 形） -->
+      <path d="M88,26 L160,26 A40,40 0 0 1 160,106 L88,106 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <!-- OR 门 -->
+      <path d="M88,142 Q112,172 88,202 Q144,202 178,172 Q144,142 88,142 Z"
+            fill="#e4f0f7" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+
+      <!-- 门输出到 MUX 的连线 -->
+      <polyline points="200,66 262,66 262,132 290,132" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="178,172 230,172 230,212 290,212" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- MUX（梯形） -->
+      <path d="M292,110 L368,110 L368,230 L292,230 L308,170 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <text x="332" y="170" font-size="18" font-family="monospace" fill="#10314f" text-anchor="middle">MUX</text>
+      <!-- MUX 控制 -->
+      <line x1="330" y1="56" x2="330" y2="108" stroke="#10314f" stroke-width="1.8" marker-end="url(#g21-ar)"></line>
+      <text x="330" y="46" font-size="19" fill="#10314f" text-anchor="middle">MUX 控制</text>
+      <!-- 输出 X -->
+      <line x1="369" y1="170" x2="474" y2="170" stroke="#10314f" stroke-width="1.8"></line>
+      <text x="484" y="177" font-size="20" font-family="monospace" fill="#10314f">X</text>
+
+      <!-- ============ 右下角：多路选择器的内部结构 ============ -->
+      <rect x="480" y="136" width="440" height="154" fill="#fbfcfe" stroke="#10314f" stroke-width="1.8"></rect>
+      <text x="494" y="164" font-size="18" fill="#10314f">多路选择器（选择器）</text>
+      <line x1="369" y1="180" x2="480" y2="176" stroke="#10314f" stroke-width="1.2" stroke-dasharray="5 4"></line>
+      <!-- 内部 A 输入 -->
+      <text x="498" y="208" font-size="16" font-family="monospace" fill="#10314f">A</text>
+      <polyline points="516,202 620,202" fill="none" stroke="#10314f" stroke-width="1.6"></polyline>
+      <polyline points="516,202 516,244 620,244" fill="none" stroke="#10314f" stroke-width="1.6"></polyline>
+      <!-- 内部 AND 门 ×2 -->
+      <path d="M620,190 L654,190 A21,21 0 0 1 654,232 L620,232 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="1.8" stroke-linejoin="round"></path>
+      <path d="M620,238 L654,238 A21,21 0 0 1 654,280 L620,280 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="1.8" stroke-linejoin="round"></path>
+      <!-- 内部 MUX 控制：分别接到两个 AND 门的控制输入 -->
+      <text x="632" y="258" font-size="14" fill="#10314f" text-anchor="end">MUX 控制</text>
+      <line x1="636" y1="168" x2="636" y2="252" stroke="#10314f" stroke-width="1.4"></line>
+      <line x1="636" y1="211" x2="620" y2="211" stroke="#10314f" stroke-width="1.4"></line>
+      <line x1="636" y1="268" x2="620" y2="268" stroke="#10314f" stroke-width="1.4"></line>
+      <circle cx="620" cy="268" r="4" fill="#fff" stroke="#10314f" stroke-width="1.4"></circle>
+      <!-- 内部 B 输入 -->
+      <text x="498" y="292" font-size="16" font-family="monospace" fill="#10314f">B</text>
+      <polyline points="516,286 620,286" fill="none" stroke="#10314f" stroke-width="1.6"></polyline>
+      <polyline points="516,286 516,292 618,292" fill="none" stroke="#10314f" stroke-width="1.6"></polyline>
+      <!-- 内部 OR 门 -->
+      <path d="M686,214 Q700,236 686,258 Q722,258 740,236 Q722,214 686,214 Z"
+            fill="#e4f0f7" stroke="#10314f" stroke-width="1.8" stroke-linejoin="round"></path>
+      <polyline points="670,211 676,211" fill="none" stroke="#10314f" stroke-width="1.6"></polyline>
+      <polyline points="670,259 676,259" fill="none" stroke="#10314f" stroke-width="1.6"></polyline>
+      <polyline points="741,236 840,236" fill="none" stroke="#10314f" stroke-width="1.6"></polyline>
+      <text x="848" y="242" font-size="16" font-family="monospace" fill="#10314f">X</text>
+    </svg>
+
+    <div class="callout callout--blue callout--slim mt8" style="font-size:16px">
+      <span class="callout__tag">说明</span>
+      <span>A 与 B 同时送入 <span class="kw-blue">AND 门</span> 与 <span class="kw-blue">OR 门</span>，两个结果再由 <span class="kw-blue">MUX</span>（多路选择器 / 选择器）按「MUX 控制」信号选择其中一个，作为 X 输出。MUX 的内部就是两个 AND 门加一个 OR 门。</span>
+    </div>
+  </div>
+  <div class="page-no">21 / 32</div>
+</section>
+
+<!-- ======================================================== 22 1 位加法器的实现 -->
+<section class="slide" id="s22">
+  <div class="slide__head">
+    <h2 class="slide__title">1 位加法器的实现</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>全加器（含来自低位的进位）</li>
+    </ul>
+
+    <svg width="988" height="390" viewBox="0 0 1080 426" style="display:block;margin-top:4px" aria-label="1 位全加器电路：三个 NAND/NOR 门构成的和输出 S，三个 AND 门与一个 OR 门构成的进位输出 Cout">
+      <defs>
+        <marker id="g22-ar" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 z" fill="#10314f"></path>
+        </marker>
+      </defs>
+
+      <!-- ---------- 输入引线与母线 ---------- -->
+      <text x="20" y="54" font-size="19" font-family="monospace" fill="#10314f">A</text>
+      <text x="20" y="104" font-size="19" font-family="monospace" fill="#10314f">B</text>
+      <text x="8" y="154" font-size="19" font-family="monospace" fill="#10314f">Cin</text>
+      <!-- 三条垂直母线：A(x=46) B(x=72) Cin(x=96) -->
+      <polyline points="46,48 190,48" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="46,48 46,327" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="72,98 190,98" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="72,98 72,316" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="96,148 190,148" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="96,148 96,354" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- ============ 求 S 的部分 ============ -->
+      <!-- NAND 门（A,B,Cin） -->
+      <path d="M200,26 L280,26 A46,46 0 0 1 280,118 L200,118 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <circle cx="333" cy="72" r="6.5" fill="#fff" stroke="#10314f" stroke-width="2"></circle>
+      <polyline points="150,48 150,48 200,48" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="170,48 170,72 200,72" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="96,148 96,72 170,72" fill="none" stroke="#10314f" stroke-width="1.8" opacity="0"></polyline>
+
+      <!-- NOR 门（A,B,Cin） -->
+      <path d="M200,162 Q226,198 200,234 Q260,234 298,198 Q260,162 200,162 Z"
+            fill="#e4f0f7" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <circle cx="305" cy="198" r="6.5" fill="#fff" stroke="#10314f" stroke-width="2"></circle>
+      <polyline points="72,98 72,180 200,180" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="96,148 96,204 200,204" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="46,48 46,228 200,228" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="46,48 46,60 150,60 150,48" fill="none" stroke="#10314f" stroke-width="1.8" opacity="0"></polyline>
+
+      <!-- 中间 XOR 门：NOR(A,B) ⊕ Cin -->
+      <path d="M370,164 Q396,198 370,232 Q430,232 468,198 Q430,164 370,164 Z"
+            fill="#e4f0f7" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <polyline points="340,72 500,72 500,184 478,184" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="312,198 340,198" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="340,184 340,198" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="340,184 478,184" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- 输出 S 的 XOR 门 -->
+      <path d="M560,162 Q586,198 560,234 Q620,234 658,198 Q620,162 560,162 Z"
+            fill="#e4f0f7" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <line x1="469" y1="198" x2="560" y2="198" stroke="#10314f" stroke-width="1.8"></line>
+      <line x1="659" y1="198" x2="960" y2="198" stroke="#10314f" stroke-width="1.8"></line>
+      <text x="972" y="205" font-size="20" font-family="monospace" fill="#10314f">S</text>
+
+      <!-- ============ 求 Cout 的部分：三个 AND 门 → 一个 OR 门 ============ -->
+      <!-- 输入母线延伸到下方 -->
+      <polyline points="40,48 40,404" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="70,98 70,396" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="100,148 100,412" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <!-- AND 门 ①：A·B -->
+      <path d="M150,292 L190,292 A27,27 0 0 1 190,346 L150,346 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <polyline points="40,404 120,404 120,300 150,300" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="70,268 120,268 120,268 150,268" fill="none" stroke="#10314f" stroke-width="1.8" opacity="0"></polyline>
+      <polyline points="70,384 130,384 130,268 150,268" fill="none" stroke="#10314f" stroke-width="1.8" opacity="0"></polyline>
+      <polyline points="70,396 130,396 130,320 150,320" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <!-- AND 门 ②：A·Cin -->
+      <path d="M320,292 L360,292 A27,27 0 0 1 360,346 L320,346 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <polyline points="40,404 240,404 240,300 320,300" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="100,412 260,412 260,320 320,320" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <!-- AND 门 ③：B·Cin -->
+      <path d="M490,292 L530,292 A27,27 0 0 1 530,346 L490,346 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <polyline points="70,396 470,396 470,300 490,300" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="70,396 470,396" fill="none" stroke="#10314f" stroke-width="1.8" opacity="0"></polyline>
+      <polyline points="100,412 470,412 470,412 490,412" fill="none" stroke="#10314f" stroke-width="1.8" opacity="0"></polyline>
+      <polyline points="100,412 465,412 465,320 490,320" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- OR 门（三输入） -->
+      <path d="M660,318 Q686,354 660,390 Q720,390 758,354 Q720,318 660,318 Z"
+            fill="#e4f0f7" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <polyline points="191,309 640,309" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="191,324 620,324 620,332" fill="none" stroke="#10314f" stroke-width="1.8" opacity="0"></polyline>
+      <polyline points="361,309 361,324 640,324" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="531,309 531,338 640,338" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="531,338 640,338" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="620,338 620,370 640,370" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="191,309 191,370 640,370" fill="none" stroke="#10314f" stroke-width="1.8" opacity="0"></polyline>
+      <polyline points="640,309 640,370" fill="none" stroke="#10314f" stroke-width="1.8" opacity="0"></polyline>
+      <line x1="759" y1="354" x2="960" y2="354" stroke="#10314f" stroke-width="1.8"></line>
+      <text x="972" y="361" font-size="20" font-family="monospace" fill="#10314f">Cout</text>
+    </svg>
+
+    <div class="row mt8" style="gap:22px">
+      <div class="col grow">
+        <div class="callout callout--blue callout--slim">
+          <span class="callout__tag">说明</span>
+          <span><span class="mono">S</span> ＝ A ⊕ B ⊕ Cin（由三个 NAND/NOR 门与两个 XOR 门构成的网络求和）；<span class="mono">Cout</span> 由三个 AND 门（A·B、A·Cin、B·Cin）经一个 OR 门汇总得到。<span class="kw-blue">Cin</span> 即「来自低位的进位」。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">22 / 32</div>
+</section>
+
+<!-- ======================================================== 23 可以做逻辑运算与加法的 ALU -->
+<section class="slide" id="s23">
+  <div class="slide__head">
+    <h2 class="slide__title">可以做逻辑运算与加法的 ALU</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <svg width="1054" height="370" viewBox="0 0 1140 400" style="display:block" aria-label="ALU 内部：AND 门、OR 门与全加器并联，结果由 MUX 按控制信号选择输出">
+      <defs>
+        <marker id="g23-ar" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 z" fill="#10314f"></path>
+        </marker>
+      </defs>
+
+      <!-- A / B 输入与总线 -->
+      <text x="20" y="184" font-size="20" font-family="monospace" fill="#10314f">A</text>
+      <text x="20" y="274" font-size="20" font-family="monospace" fill="#10314f">B</text>
+      <polyline points="46,178 110,178" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="46,268 110,268" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="72,178 72,196 130,196" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <!-- A：一路进 AND 门，一路下引到全加器 -->
+      <polyline points="72,178 72,344 388,344" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <!-- B：一路进 OR 门，一路下引到全加器 -->
+      <polyline points="96,268 96,278 130,278" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="96,268 96,372 388,372" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- AND 门 -->
+      <path d="M130,158 L170,158 A26,26 0 0 1 170,210 L130,210 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <polyline points="96,268 96,196 130,196" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <!-- OR 门 -->
+      <path d="M130,248 Q156,282 130,316 Q190,316 228,282 Q190,248 130,248 Z"
+            fill="#e4f0f7" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <polyline points="72,178 72,300 130,300" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- Cin -->
+      <line x1="330" y1="118" x2="330" y2="220" stroke="#10314f" stroke-width="1.8"></line>
+      <text x="330" y="108" font-size="20" font-family="monospace" fill="#10314f" text-anchor="middle">Cin</text>
+      <polyline points="330,220 388,220" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- 全加器 方框 -->
+      <rect x="388" y="180" width="150" height="150" fill="#fdfbe9" stroke="#10314f" stroke-width="2.2"></rect>
+      <text x="463" y="250" font-size="19" fill="#10314f" text-anchor="middle">全加器</text>
+      <text x="463" y="272" font-size="14" fill="#10314f" text-anchor="middle">full adder</text>
+
+      <!-- 全加器输出 -->
+      <polyline points="463,331 463,360" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <text x="463" y="382" font-size="20" font-family="monospace" fill="#10314f" text-anchor="middle">Cout</text>
+      <polyline points="539,238 600,238" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+      <polyline points="539,272 570,272 570,306 600,306" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- AND 输出接 MUX 的一个输入 -->
+      <polyline points="190,184 260,184 260,166 600,166" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+
+      <!-- MUX 梯形 -->
+      <path d="M600,140 L692,140 L692,330 L600,330 L620,235 Z"
+            fill="#fdfbe9" stroke="#10314f" stroke-width="2.2" stroke-linejoin="round"></path>
+      <text x="650" y="240" font-size="18" font-family="monospace" fill="#10314f" text-anchor="middle">MUX</text>
+      <line x1="646" y1="82" x2="646" y2="138" stroke="#10314f" stroke-width="1.8"></line>
+      <text x="646" y="72" font-size="19" fill="#10314f" text-anchor="middle">MUX 控制</text>
+      <line x1="693" y1="235" x2="790" y2="235" stroke="#10314f" stroke-width="1.8"></line>
+      <text x="800" y="242" font-size="20" fill="#10314f">结果</text>
+
+      <!-- 说明框 -->
+      <rect x="800" y="290" width="320" height="96" fill="#fbfcfe" stroke="#10314f" stroke-width="1.6"></rect>
+      <text x="960" y="330" font-size="18" fill="#10314f" text-anchor="middle">把这些单元连接起来，</text>
+      <text x="960" y="360" font-size="18" fill="#10314f" text-anchor="middle">就可以进行 n 位运算</text>
+      <polyline points="756,254 800,296" fill="none" stroke="#10314f" stroke-width="1.2" stroke-dasharray="5 4"></polyline>
+    </svg>
+
+    <div class="row mt8" style="gap:22px">
+      <div class="col grow">
+        <div class="callout callout--blue callout--slim">
+          <span class="callout__tag">说明</span>
+          <span>把 <span class="mono">n</span> 个这样的 1 位单元<span class="kw-blue">串联</span>起来（低位的 <span class="mono">Cout</span> 接到高位的 <span class="mono">Cin</span>），就可以进行 <span class="mono">n</span> 位的运算。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">23 / 32</div>
+</section>
+
+<!-- ======================================================== 24 减法器的实现 -->
+<section class="slide" id="s24">
+  <div class="slide__head">
+    <h2 class="slide__title">减法器的实现</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>只要引入一条可以指定「<span class="kw">取输入值的补码</span>」的<span class="kw-blue">控制信号</span>即可
+        <ul class="bullets bullets--sub">
+          <li>→ 之后交给加法器去做加法</li>
+        </ul>
+      </li>
+      <li>具体做法
+        <ul class="bullets bullets--sub">
+          <li>各比特取反</li>
+          <li>在最低位比特上加 1</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="panel panel--tight mt16">
+      <div class="panel__title">取补码的控制信号（日文：入力値の2の補数を取る）</div>
+      <svg width="1060" height="212" viewBox="0 0 1060 212" style="display:block" aria-label="减法器实现：输入 A 与 B 经各比特取反后送入 n 位加法器，控制信号同时驱动最低位的加 1">
+        <defs>
+          <marker id="g24-ar" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6 z" fill="#10314f"></path>
+          </marker>
+        </defs>
+        <!-- 控制信号 -->
+        <text x="16" y="88" font-size="17" fill="#10314f">控制信号</text>
+        <text x="16" y="110" font-size="14" fill="#10314f">「取输入的补码」</text>
+        <circle cx="140" cy="96" r="4" fill="#10314f"></circle>
+        <polyline points="140,96 140,176 250,176" fill="none" stroke="#10314f" stroke-width="1.8"></polyline>
+        <line x1="251" y1="176" x2="270" y2="176" stroke="#10314f" stroke-width="1.8" marker-end="url(#g24-ar)"></line>
+        <text x="200" y="196" font-size="14" fill="#10314f">最低位加 1（Cin = 1）</text>
+
+        <!-- 取反单元 ×2 -->
+        <rect x="250" y="44" width="140" height="60" fill="#fdfbe9" stroke="#10314f" stroke-width="2"></rect>
+        <text x="320" y="70" font-size="16" fill="#10314f" text-anchor="middle">各比特取反</text>
+        <text x="320" y="92" font-size="13" fill="#10314f" text-anchor="middle">NOT / XOR</text>
+        <rect x="250" y="112" width="140" height="60" fill="#fdfbe9" stroke="#10314f" stroke-width="2"></rect>
+        <text x="320" y="138" font-size="16" fill="#10314f" text-anchor="middle">各比特取反</text>
+        <text x="320" y="160" font-size="13" fill="#10314f" text-anchor="middle">NOT / XOR</text>
+        <text x="200" y="80" font-size="18" font-family="monospace" fill="#10314f">A</text>
+        <line x1="216" y1="74" x2="248" y2="74" stroke="#10314f" stroke-width="1.8" marker-end="url(#g24-ar)"></line>
+        <text x="200" y="144" font-size="18" font-family="monospace" fill="#10314f">B</text>
+        <line x1="216" y1="138" x2="248" y2="138" stroke="#10314f" stroke-width="1.8" marker-end="url(#g24-ar)"></line>
+        <line x1="392" y1="74" x2="470" y2="74" stroke="#10314f" stroke-width="1.8" marker-end="url(#g24-ar)"></line>
+        <line x1="392" y1="138" x2="470" y2="138" stroke="#10314f" stroke-width="1.8" marker-end="url(#g24-ar)"></line>
+
+        <!-- 加法器 -->
+        <rect x="472" y="40" width="240" height="120" fill="#e4f0f7" stroke="#10314f" stroke-width="2.2"></rect>
+        <text x="592" y="94" font-size="19" fill="#10314f" text-anchor="middle">n 位加法器</text>
+        <text x="592" y="118" font-size="14" fill="#10314f" text-anchor="middle">adder</text>
+        <line x1="714" y1="100" x2="790" y2="100" stroke="#10314f" stroke-width="1.8" marker-end="url(#g24-ar)"></line>
+        <text x="800" y="106" font-size="18" font-family="monospace" fill="#10314f">A - B</text>
+        <text x="800" y="130" font-size="14" fill="#10314f">（A 的补码 ＋ B）</text>
+
+        <!-- 结果说明 -->
+        <line x1="140" y1="176" x2="472" y2="176" stroke="#10314f" stroke-width="1.2" stroke-dasharray="5 4"></line>
+        <rect x="472" y="182" width="560" height="26" fill="#fbfcfe" stroke="#10314f" stroke-width="1.2"></rect>
+        <text x="486" y="200" font-size="14.5" fill="#10314f">各比特取反后再在最低位加 1 ＝ 取补码；控制信号同时驱动「取反」与最低位的 +1</text>
+      </svg>
+    </div>
+  </div>
+  <div class="page-no">24 / 32</div>
+</section>
+
+<!-- ======================================================== 25 加减运算中的溢出判定 -->
+<section class="slide" id="s25">
+  <div class="slide__head">
+    <h2 class="slide__title">加减运算中的溢出判定</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <table class="tbl tbl--sm" style="width:820px;margin:0 auto">
+      <thead>
+        <tr>
+          <th class="c" style="width:170px">操作</th>
+          <th class="c" style="width:200px">操作数 A</th>
+          <th class="c" style="width:200px">操作数 B</th>
+          <th class="c" style="width:200px">结果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="c">A+B</td><td class="c">非负</td><td class="c">非负</td><td class="c">负</td></tr>
+        <tr class="alt"><td class="c">A+B</td><td class="c">负</td><td class="c">负</td><td class="c">非负</td></tr>
+        <tr><td class="c">A-B</td><td class="c">非负</td><td class="c">负</td><td class="c">负</td></tr>
+        <tr class="alt"><td class="c">A-B</td><td class="c">负</td><td class="c">非负</td><td class="c">非负</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout--blue callout--slim mt16" style="font-size:20px;justify-content:center">
+      <span>→ 实际上可以用更简单的方法判定</span>
+    </div>
+
+    <div class="row row--center mt16" style="gap:20px">
+      <div class="col shrink0">
+        <svg width="540" height="164" viewBox="0 0 540 164" style="display:block" aria-label="ALU 模块框图：a、b 输入，ALU 操作 控制输入，输出零判定、结果、溢出与进位输出">
+          <defs>
+            <marker id="al25-ar" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 z" fill="#10314f"></path>
+            </marker>
+          </defs>
+          <path d="M110,24 L200,24 L200,58 L240,80 L200,102 L200,136 L110,136 L146,80 Z"
+                fill="#fdfbe9" stroke="#10314f" stroke-width="2" stroke-linejoin="round"></path>
+          <text x="170" y="86" font-size="17" font-family="monospace" fill="#10314f" text-anchor="middle">ALU</text>
+          <line x1="52" y1="46" x2="108" y2="46" stroke="#10314f" stroke-width="1.6" marker-end="url(#al25-ar)"></line>
+          <text x="44" y="52" font-size="17" font-family="monospace" fill="#10314f" text-anchor="end">a</text>
+          <line x1="52" y1="114" x2="108" y2="114" stroke="#10314f" stroke-width="1.6" marker-end="url(#al25-ar)"></line>
+          <text x="44" y="120" font-size="17" font-family="monospace" fill="#10314f" text-anchor="end">b</text>
+          <line x1="150" y1="4" x2="150" y2="22" stroke="#10314f" stroke-width="1.6" marker-end="url(#al25-ar)"></line>
+          <text x="176" y="14" font-size="15" fill="#10314f">ALU 操作</text>
+          <line x1="241" y1="62" x2="300" y2="62" stroke="#10314f" stroke-width="1.6" marker-end="url(#al25-ar)"></line>
+          <text x="307" y="68" font-size="15" fill="#10314f">零判定</text>
+          <line x1="241" y1="80" x2="300" y2="80" stroke="#10314f" stroke-width="1.6" marker-end="url(#al25-ar)"></line>
+          <text x="307" y="86" font-size="15" fill="#10314f">结果</text>
+          <line x1="241" y1="98" x2="300" y2="98" stroke="#10314f" stroke-width="1.6" marker-end="url(#al25-ar)"></line>
+          <text x="307" y="104" font-size="15" fill="#10314f">溢出</text>
+          <line x1="140" y1="137" x2="140" y2="156" stroke="#10314f" stroke-width="1.6" marker-end="url(#al25-ar)"></line>
+          <text x="140" y="172" font-size="15" fill="#10314f" text-anchor="middle">进位输出</text>
+        </svg>
+      </div>
+      <div class="col shrink0" style="width:330px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">为什么不能只看结果？</div>
+          <div class="note" style="font-size:16px;color:var(--ink-soft);line-height:1.6">
+            「结果」本身<span class="kw">不是</span>判定溢出的全部依据——上表说明：
+            必须结合<span class="kw">操作</span>与<span class="kw">操作数的符号</span>一起看，才能判断结果的符号是否合理。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">25 / 32</div>
+</section>
+
+<!-- ======================================================== 26 加减运算中的溢出判定 -->
+<section class="slide" id="s26">
+  <div class="slide__head">
+    <h2 class="slide__title">加减运算中的溢出判定</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--slim" style="font-size:19px">
+      <span>如果使用补码，减法也可以当作加法来处理，因此<span class="kw">只考虑加法</span>即可</span>
+    </div>
+
+    <div class="row row--top mt16" style="gap:26px">
+      <div class="col grow">
+        <div class="code-label">① 正 ＋ 正</div>
+<pre class="code code--plain" style="font-size:17px;line-height:1.34">      00111111   63
+  <span class="hi">+</span>   00000011    3
+  ─────────────
+      001000010   66</pre>
+      </div>
+      <div class="col grow">
+        <div class="code-label">② 负 ＋ 负</div>
+<pre class="code code--plain" style="font-size:17px;line-height:1.34">      11000001  -63
+  <span class="hi">+</span>   11111101   -3
+  ─────────────
+  <span class="red">①  </span>110111110  -66
+  <span class="cmt">↑ 忽略</span></pre>
+      </div>
+    </div>
+
+    <div class="callout callout--red mt16" style="font-size:18px">
+      <span class="callout__tag">忽略</span>
+      <span>超出 8 位的那一位进位（上面的 <span class="mono">①</span>）<span class="kw">忽略</span>不用。两个例子的结果 <span class="mono">66</span> 与 <span class="mono">-66</span> 都是正确的。</span>
+    </div>
+  </div>
+  <div class="page-no">26 / 32</div>
+</section>
+
+<!-- ======================================================== 27 加减运算中的溢出判定 -->
+<section class="slide" id="s27">
+  <div class="slide__head">
+    <h2 class="slide__title">加减运算中的溢出判定</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--slim" style="font-size:19px">
+      <span>着眼于<span class="kw">向最高位的进位</span>与<span class="kw">从最高位输出的进位</span></span>
+    </div>
+
+    <div class="row row--top mt16" style="gap:26px">
+      <div class="col grow">
+        <div class="code-label">① 正 ＋ 正</div>
+<pre class="code code--plain" style="font-size:17px;line-height:1.34">      00111111   63
+  <span class="hi">+</span>   00000011    3
+  ─────────────
+      001000010   66
+        <span class="red">00</span>
+        <span class="cmt">↑ 两个进位都为 0</span></pre>
+      </div>
+      <div class="col grow">
+        <div class="code-label">② 负 ＋ 负</div>
+<pre class="code code--plain" style="font-size:17px;line-height:1.34">      11000001  -63
+  <span class="hi">+</span>   11111101   -3
+  ─────────────
+  <span class="red">①  </span>110111110  -66
+          <span class="red">11</span>
+          <span class="cmt">↑ 两个进位都为 1</span></pre>
+      </div>
+    </div>
+
+    <div class="callout callout--blue mt16" style="font-size:18px">
+      <span class="callout__tag">看这里</span>
+      <span>上方红字的两位分别是「<span class="kw-blue">向最高位的进位</span>」与「<span class="kw-blue">从最高位输出的进位</span>」。两例中这一对取值<span class="kw-blue">相同</span>（<span class="mono">00</span> 与 <span class="mono">11</span>），因此<span class="kw-blue">没有溢出</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">27 / 32</div>
+</section>
+
+<!-- ======================================================== 28 加减运算中的溢出判定 -->
+<section class="slide" id="s28">
+  <div class="slide__head">
+    <h2 class="slide__title">加减运算中的溢出判定</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="callout callout--slim" style="font-size:19px">
+      <span>着眼于<span class="kw">向最高位的进位</span>与<span class="kw">从最高位输出的进位</span></span>
+    </div>
+
+    <div class="row row--top mt8" style="gap:26px">
+      <div class="col grow">
+        <div class="code-label">① 正 ＋ 正</div>
+<pre class="code code--plain" style="font-size:17px;line-height:1.34">      01111111  127
+  <span class="hi">+</span>   00000011    3
+  ─────────────
+      010000010 -126
+        <span class="red">01</span></pre>
+      </div>
+      <div class="col grow">
+        <div class="code-label">② 负 ＋ 负</div>
+<pre class="code code--plain" style="font-size:17px;line-height:1.34">      10000001 -127
+  <span class="hi">+</span>   11111101   -3
+  ─────────────
+      101111110  126
+        <span class="red">10</span></pre>
+      </div>
+    </div>
+
+    <div class="callout callout--red mt8" style="font-size:17px">
+      <span class="callout__tag">不相同即溢出</span>
+      <span>两例中「向最高位的进位」与「从最高位输出的进位」分别是 <span class="mono">01</span> 与 <span class="mono">10</span>，<span class="kw">不相同</span> → <span class="kw">发生溢出</span>。</span>
+    </div>
+
+    <div class="callout callout--blue mt8" style="font-size:17px">
+      <span class="callout__tag">判定方法</span>
+      <span>只要对这两个比特做<span class="kw-blue">比较</span>就能判定 → 可以使用 <span class="kw-blue">XOR 门</span>（异或门 / 排他的論理和）。</span>
+    </div>
+  </div>
+  <div class="page-no">28 / 32</div>
+</section>
+
+<!-- ======================================================== 29 MIPS 中的溢出应对 -->
+<section class="slide" id="s29">
+  <div class="slide__head">
+    <h2 class="slide__title">MIPS 中的溢出应对</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact" style="gap:8px">
+      <li>加法（<span class="mono">add</span>）、立即数加法（<span class="mono">addi</span>）、减法（<span class="mono">sub</span>）时，<span class="kw">发生溢出异常</span></li>
+      <li>无符号加法（<span class="mono">addu</span>）、无符号立即数加法（<span class="mono">addiu</span>）、无符号减法（<span class="mono">subu</span>）<span class="kw">即使发生溢出也不会成为异常</span>
+        <ul class="bullets bullets--sub" style="gap:6px">
+          <li>通常，无符号整数被用于<span class="kw-blue">存储器地址</span></li>
+        </ul>
+      </li>
+      <li>是否<span class="kw">识别</span>溢出<span class="kw-blue">视情况而定</span>
+        <ul class="bullets bullets--sub" style="gap:6px">
+          <li>根据情况<span class="kw-blue">选择指令</span>，以便识别溢出、或者忽略溢出</li>
+        </ul>
+      </li>
+      <li>发生异常的指令的地址被保存到<span class="kw">异常程序计数器</span>（EPC）中</li>
+    </ul>
+  </div>
+  <div class="page-no">29 / 32</div>
+</section>
+
+<!-- ======================================================== 30 确认问题 -->
+<section class="slide" id="s30">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="qbox" style="font-size:21px">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(1)</span>CPU 中存在的、进行各种算术运算的电路，称为
+      <span class="slot" style="min-width:150px">&nbsp;</span>。
+    </div>
+    <div class="qbox mt20" style="font-size:21px">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(2)</span>要判定加减运算中的溢出，只要观察
+      <span class="slot" style="min-width:200px">&nbsp;</span> 与
+      <span class="slot" style="min-width:200px">&nbsp;</span> 即可。
+    </div>
+  </div>
+  <div class="page-no">30 / 32</div>
+</section>
+
+<!-- ======================================================== 31 确认问题（原讲义未给出解答） -->
+<section class="slide" id="s31">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="abox abox--slim">
+      <span class="abox__tag">答案</span>原讲义此页未给出解答（問題回答無し ver.）。
+    </div>
+    <div class="panel mt16" style="height:380px">
+      <div class="panel__title">作答区</div>
+      <div class="note" style="font-size:16px">
+        承接前一页的确认问题：<br>
+        (1) CPU 中进行各种算术运算的电路叫什么？<br>
+        (2) 判定加减运算中的溢出，应当观察哪两个进位？
+      </div>
+    </div>
+  </div>
+  <div class="page-no">31 / 32</div>
+</section>
+
+<!-- ======================================================== 32 参考文献 -->
+<section class="slide" id="s32">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:22px">
+    <div class="refs">
+      <div class="refs__item">《计算机组成与设计：硬件 / 软件接口》上册 第 5 版
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span></div>
+      <div class="refs__item">David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社
+        <span class="refs__en">David A.Patterson, John L. Hennessy 著、成田光彰 訳、日経BP社</span></div>
+      <div class="refs__item">《计算机组成与设计：硬件 / 软件接口》下册 第 5 版
+        <span class="refs__en">コンピュータの構成と設計 下 第5版</span></div>
+      <div class="refs__item">山下茂《计算机组成原理 1》课程讲义
+        <span class="refs__en">山下茂 「計算機構成論１」講義資料</span></div>
+    </div>
+    <div class="callout mt24" style="font-size:18px">
+      <span class="callout__tag">本讲小结</span>
+      <span>本讲复习了二进制数的<span class="kw">加法</span>与<span class="kw">减法</span>：正＋正、负＋负可能<span class="kw">溢出</span>，而正＋负不会；减法可以借助<span class="kw">补码</span>化为加法。随后复习了 <span class="kw">AND/OR 运算</span>、<span class="kw">移位运算</span>（算术移位与逻辑移位）以及<span class="kw">符号扩展</span>。最后进入 <span class="kw">ALU</span>：用 AND 门、OR 门与<span class="kw">全加器</span>组合，再由 <span class="kw">MUX</span> 选择输出；把单元串联即可处理 <span class="kw">n 位</span>运算。减法器只需引入「取输入补码」的<span class="kw">控制信号</span>（各比特取反 ＋ 最低位加 1）。溢出的判定可归结为比较<span class="kw">向最高位的进位</span>与<span class="kw">从最高位输出的进位</span>，二者不同即溢出，可用 <span class="kw">XOR 门</span>实现；MIPS 中 <span class="mono">add/addi/sub</span> 会产生溢出异常并记录到 <span class="mono">EPC</span>，而 <span class="mono">addu/addiu/subu</span> 不会。</span>
+    </div>
+  </div>
+  <div class="page-no">32 / 32</div>
+</section>
+
+</div>
+</body>
+</html>

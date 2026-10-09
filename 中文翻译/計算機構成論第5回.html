@@ -26,6 +26,7 @@
     原讲义「計算機構成論 第5回 ―命令セットアーキテクチャ(2)―」<br>
     中文翻译版
   </div>
+  <div class="page-no" style="color:#8fb0cc">1 / 24</div>
 </section>
 
 <!-- ======================================================== 2 讲义内容 -->
@@ -590,50 +591,69 @@ addiu a, b, 4    <span class="cmt"># a = b+4</span></pre>
   <div class="page-no">10 / 24</div>
 </section>
 
-<!-- ======================================================== 11 确认问题（解答与小结） -->
+<!-- ======================================================== 11 确认问题（答案） -->
 <section class="slide" id="s11">
   <div class="slide__head">
-    <h2 class="slide__title">确认问题：解答与小结</h2>
+    <h2 class="slide__title">确认问题（答案）</h2>
     <div class="slide__rule"></div>
   </div>
   <div class="slide__body">
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th style="width:70px">题号</th>
-          <th style="width:230px">参考答案</th>
-          <th>理由</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="c">(1)</td>
-          <td class="c">R 格式：add<br>I 格式：addi、addiu、lw、sw</td>
-          <td>凡是需要 16bit 立即数／偏移量的指令都是 I 格式；<span class="mono">add</span> 的三个操作数全是寄存器，故为 R 格式。</td>
-        </tr>
-        <tr class="alt">
-          <td class="c">(2)</td>
-          <td class="c">Immediate（立即数）</td>
-          <td>I 格式的特征字段就是 16bit 的 <span class="mono">immediate</span>，所以 <span class="mono">I</span> 取自 <span class="mono">Immediate</span>。</td>
-        </tr>
-        <tr>
-          <td class="c">(3)</td>
-          <td class="c">3 个</td>
-          <td>由 <span class="mono">rs</span>（第 1 源）、<span class="mono">rt</span>（第 2 源）、<span class="mono">rd</span>（目的）三个操作数构成，另加 <span class="mono">op</span>、<span class="mono">shamt</span>、<span class="mono">funct</span> 三个控制字段。</td>
-        </tr>
-        <tr class="alt">
-          <td class="c">(4)</td>
-          <td class="c">16bit</td>
-          <td>立即数字段固定为 16bit；带符号解释时范围为 −32768～32767，无符号解释时为 0～65535。</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="qbox">
+      <span class="qbox__tag">问题</span>
+      <span>以下各指令分别属于 <span class="mono">R</span> 格式、<span class="mono">I</span> 格式中的哪一种？<br>
+        <span class="mono">add</span>　<span class="mono">addi</span>　<span class="mono">addiu</span>　<span class="mono">lw</span>　<span class="mono">sw</span><br>
+        <span class="qno">(2)</span><span class="mono">I</span> 格式的 <span class="mono">I</span> 表示什么？
+        <span class="qno">(3)</span><span class="mono">R</span> 格式的指令中存在几个操作数？
+        <span class="qno">(4)</span><span class="mono">I</span> 格式的指令能够保存的立即数位宽是多少？</span>
+    </div>
 
-    <div class="callout callout--blue mt20">
-      <span class="callout__tag">本节小结</span>
-      <span>指令格式决定了「一条 32 位指令里，哪些位用来表示什么」。<span class="mono">R</span> 格式面向<span class="kw">寄存器间运算</span>，
-        <span class="mono">I</span> 格式面向<span class="kw">立即数与访存</span>，<span class="mono">J</span> 格式面向<span class="kw">跳转</span>。记住字段的排列与宽度，
-        就能把汇编指令翻译成机器语言（二进制），也能反过来从二进制还原出指令。</span>
+    <div class="abox mt16">
+      <span class="abox__tag">答案</span>
+      原讲义以红字标出的判定如下：
+      <table class="tbl tbl--xs mt8">
+        <thead>
+          <tr>
+            <th style="width:130px">指令</th>
+            <th style="width:120px">格式</th>
+            <th>理由</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="c">add</td>
+            <td class="c red">R 格式</td>
+            <td>三个操作数全部是寄存器（<span class="mono">rs</span>、<span class="mono">rt</span>、<span class="mono">rd</span>），指令中没有 <span class="mono">immediate</span> 字段。</td>
+          </tr>
+          <tr class="alt">
+            <td class="c">addi</td>
+            <td class="c red">I 格式</td>
+            <td>带有 16bit 的 <span class="mono">immediate</span> 字段，用它直接书写常数。</td>
+          </tr>
+          <tr>
+            <td class="c">addiu</td>
+            <td class="c red">I 格式</td>
+            <td>同样带有 16bit 的 <span class="mono">immediate</span> 字段（按无符号整数解释）。</td>
+          </tr>
+          <tr class="alt">
+            <td class="c">lw</td>
+            <td class="c red">I 格式</td>
+            <td><span class="mono">immediate</span> 字段用作访存地址的偏移量。</td>
+          </tr>
+          <tr>
+            <td class="c">sw</td>
+            <td class="c red">I 格式</td>
+            <td>与 <span class="mono">lw</span> 相同，<span class="mono">immediate</span> 字段用作访存地址的偏移量。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="mt8" style="font-size:17px">
+        <span class="qno">(2)</span><span class="mono">I</span> 格式的 <span class="mono">I</span> 表示 <span class="red">immediate（立即数）</span>。<br>
+        <span class="qno">(3)</span><span class="mono">R</span> 格式的指令中存在 <span class="red">3</span> 个操作数（<span class="mono">rs</span>、<span class="mono">rt</span>、<span class="mono">rd</span>）。<br>
+        <span class="qno">(4)</span><span class="mono">I</span> 格式的指令能够保存的立即数位宽是 <span class="red">16bit</span>。
+      </div>
+
+      <div class="note mt8">说明：原讲义此页只以红字标出格式判定；上表「理由」一栏按各指令的字段构成（是否带有 <span class="mono">immediate</span> 字段）补充。</div>
     </div>
   </div>
   <div class="page-no">11 / 24</div>
@@ -1341,59 +1361,47 @@ sw  $t0, <span class="blank">(5)</span>(<span class="blank">(6)</span>)       <s
   <div class="page-no">22 / 24</div>
 </section>
 
-<!-- ======================================================== 23 确认问题（解答与小结） -->
+<!-- ======================================================== 23 确认问题（答案） -->
 <section class="slide" id="s23">
   <div class="slide__head">
-    <h2 class="slide__title">确认问题：解答与小结</h2>
+    <h2 class="slide__title">确认问题（答案）</h2>
     <div class="slide__rule"></div>
   </div>
-  <div class="slide__body">
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th style="width:80px">空栏</th>
-          <th style="width:250px">参考答案</th>
-          <th>说明</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="c red">(1)</td>
-          <td class="c">sll</td>
-          <td>用逻辑左移 2 位求出 <span class="mono">i×4</span>，即元素 <span class="mono">a[i]</span> 相对首地址的字节偏移。</td>
-        </tr>
-        <tr class="alt">
-          <td class="c red">(2)</td>
-          <td class="c">add</td>
-          <td>首地址 <span class="mono">$t1</span> 与偏移 <span class="mono">$t2</span> 相加，把 <span class="mono">a[i]</span> 的<span class="kw">实际地址</span>存入 <span class="mono">$t2</span>。</td>
-        </tr>
-        <tr>
-          <td class="c red">(3)</td>
-          <td class="c">lw</td>
-          <td>从该地址装入数据：<span class="mono">$t0 = a[i]</span>。</td>
-        </tr>
-        <tr class="alt">
-          <td class="c red">(4)</td>
-          <td class="c">sub</td>
-          <td>做减法：<span class="mono">$t0 = $s1 - $t0</span>，即 <span class="mono">b - a[i]</span>。</td>
-        </tr>
-        <tr>
-          <td class="c red">(5)</td>
-          <td class="c">200</td>
-          <td><span class="mono">a[50]</span> 的偏移是 <span class="mono">50 × 4 = 200</span>。</td>
-        </tr>
-        <tr class="alt">
-          <td class="c red">(6)</td>
-          <td class="c">$t1</td>
-          <td>基址寄存器（数组首地址）。完整写法：<span class="mono">sw $t0, 200($t1)</span>。</td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="row row--top" style="gap:20px">
+      <div class="col grow">
+        <div class="qbox" style="font-size:19px">
+          <span class="qbox__tag">问题</span>
+          <span>把下面的 C 语言语句翻译为汇编代码，补全 (1)～(6) 各空栏：<br>
+            <span class="mono" style="font-size:22px">a[50] = b - a[i]</span></span>
+        </div>
+      </div>
+      <div class="col shrink0" style="width:230px">
+        <div class="regmap" style="padding:8px 10px">
+          <div class="regmap__title" style="font-size:15px">寄存器分配</div>
+          <div class="regmap__grid regmap__grid--one" style="font-size:15px">
+            <div class="regmap__cell">a : $t1</div>
+            <div class="regmap__cell">b : $s1</div>
+            <div class="regmap__cell">i : $s2</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <div class="callout callout--blue mt16">
+    <div class="abox mt16">
+      <span class="abox__tag">答案</span>
+      补全后的汇编代码（红色部分即原讲义写出的答案）：
+<pre class="code code--ans mt8"><span class="ln ln--on"><span class="kw">sll</span> $t2, $s2, 2       <span class="cmt"># 计算 i 的 4 倍</span></span><span class="ln ln--on"><span class="kw">add</span> $t2, $t2, $t1     <span class="cmt"># 把 a[i] 的地址存入 $t2</span></span><span class="ln ln--on"><span class="kw">lw</span>  $t0, 0($t2)       <span class="cmt"># 把 a[i] 的值装入 $t0</span></span><span class="ln ln--on"><span class="kw">sub</span> $t0, $s1, $t0     <span class="cmt"># $t0 = $s1 - $t0（即 b - a[i]）</span></span><span class="ln ln--on">sw  $t0, <span class="kw">200($t1)</span>     <span class="cmt"># 把 $t0 的值存入 a[50]</span></span></pre>
+
+      <div class="note mt8">说明：最后一行的两个空栏 <span class="mono">(5)(6)</span> 填成 <span class="mono">200($t1)</span> ——
+        <span class="mono">a[50]</span> 的字节偏移为 <span class="mono">50 × 4 = 200</span>，基址寄存器是保存数组首地址的 <span class="mono">$t1</span>；
+        下标为变量的 <span class="mono">a[i]</span> 则先把偏移算进 <span class="mono">$t2</span>，再用 <span class="mono">0($t2)</span> 访存。</div>
+    </div>
+
+    <div class="callout callout--blue mt12">
       <span class="callout__tag">小结</span>
-      <span>数组访问的固定套路：<span class="kw">下标 ×4 → 加首地址 → 访存</span>。乘法用 <span class="mono">sll</span> 代替，
-        地址相加用 <span class="mono">add</span>，读写用 <span class="mono">lw</span>／<span class="mono">sw</span>，常数下标则直接写进偏移量。</span>
+      <span>数组访问的固定套路：<span class="kw">下标 ×4 → 加首地址 → 访存</span>。4 倍用 <span class="mono">sll</span> 计算，地址相加用 <span class="mono">add</span>，
+        读写用 <span class="mono">lw</span>／<span class="mono">sw</span>；常数下标直接写进 <span class="mono">I</span> 格式的偏移量（<span class="mono">200($t1)</span>），变量下标先进临时寄存器（<span class="mono">0($t2)</span>）。</span>
     </div>
   </div>
   <div class="page-no">23 / 24</div>

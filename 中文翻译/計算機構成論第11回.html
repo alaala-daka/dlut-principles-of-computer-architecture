@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第11讲 算术运算的执行（2）· 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="11">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 11 讲</div>
+    <h1 class="cover__title">算术运算的<em>执行</em>（2）</h1>
+    <p class="cover__sub">二进制乘法与除法</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    薛昕惟
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第11回 ―算術演算の実行(2)―」<br>
+    中文翻译版
+  </div>
+  <div class="page-no" style="color:#8fb0cc">1 / 33</div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">算术运算的执行</div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">二进制数的乘法<span class="toc__item--jp">2進数の乗算 — 二进制数的乘法</span></div>
+          <div class="toc__item">二进制数的除法<span class="toc__item--jp">2進数の除算 — 二进制数的除法</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">2 / 33</div>
+</section>
+
+<!-- ======================================================== 3 二进制数的乘法（正数×正数） -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的乘法</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li>正数 × 正数
+        <ul class="bullets bullets--sub">
+          <li>与十进制数一样可以做<span class="kw">竖式笔算</span>（日文：筆算 / longhand）。</li>
+          <li>位数是<span class="kw">乘数的位数</span>与<span class="kw">被乘数的位数</span>相加的结果。
+            <span class="note" style="margin-left:10px">2<sup>m</sup> 种 × 2<sup>n</sup> 种 → 2<sup>(m+n)</sup> 种</span></li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="row row--top mt16">
+      <div class="col shrink0" style="width:430px;padding-left:26px">
+<pre class="code code--plain code--sm">      0011          3₁₀  …被乘数
+   ×  0110          6₁₀  …乘数
+  ──────────
+      0000
+     0011
+    0011
+   0000
+  ──────────
+   00010010         18₁₀ …积</pre>
+      </div>
+      <div class="col grow" style="padding-top:16px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">竖式的读法</div>
+          <div class="note" style="font-size:16px">乘数从最低位开始逐位检查：该位为 <span class="mono">0</span> 就写一行 <span class="mono">0000</span>，该位为 <span class="mono">1</span>
+            就写一行被乘数 <span class="mono">0011</span>；每往左一位整体左移一位，最后把各行相加。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">3 / 33</div>
+</section>
+
+<!-- ======================================================== 4 二进制数的乘法（正数×负数） -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的乘法</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li>正数 × 负数
+        <ul class="bullets bullets--sub">
+          <li>把乘数和被乘数做<span class="kw">符号扩展</span>（日文：符号拡張 / sign extension）之后竖式笔算。</li>
+          <li>把<span class="kw">高位比特</span>截断。</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="row row--top mt12">
+      <div class="col shrink0" style="width:430px;padding-left:16px">
+<pre class="code code--plain code--sm">  <span class="hi">0000</span>0011          3₁₀
+× <span class="hi">1111</span>1010         -6₁₀
+──────────────
+  00000011
+   00000011
+    00000011
+     00000011
+      00000011
+       00000011
+──────────────
+<span class="hi">00000010</span>11101110  ← 截断
+                 -18₁₀</pre>
+      </div>
+      <div class="col shrink0" style="width:270px">
+        <div class="panel panel--tight">
+          <div class="panel__title">如果不带符号……</div>
+<pre class="code code--plain code--tight"> 0011    3₁₀
+×1010   10₁₀
+──────
+  0011
+ 0011
+──────
+00011110 30₁₀</pre>
+          <div class="note mt8">同样的比特串，按<span class="kw">无符号</span>解释就得到 30₁₀，与 -18₁₀ 完全不同。</div>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout callout--blue" style="font-size:17px">
+          <span class="callout__tag">说明</span>
+          <span>乘数的 <span class="mono">1111</span> 是符号扩展出来的部分，因此竖式中会出现若干行全 1 的部分积；相加后只保留低 8 位，高位的 <span class="mono">00000010</span> 被截断。<br>
+            验证：<span class="mono">11101110₂</span> 取补码即 <span class="mono">-18₁₀</span>。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">4 / 33</div>
+</section>
+
+<!-- ======================================================== 5 二进制数的乘法（负数×负数） -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的乘法</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li>负数 × 负数
+        <ul class="bullets bullets--sub">
+          <li>与<span class="kw">正数 × 负数</span>的处理完全相同。</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="row row--top mt12">
+      <div class="col shrink0" style="width:430px;padding-left:16px">
+<pre class="code code--plain code--sm">  <span class="hi">1111</span>1101         -3₁₀
+× <span class="hi">1111</span>1010         -6₁₀
+──────────────
+  11111101
+   11111101
+    11111101
+     11111101
+      11111101
+       11111101
+──────────────
+<span class="hi">00000000</span>00010010  ← 截断
+                  18₁₀</pre>
+      </div>
+      <div class="col shrink0" style="width:270px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">符号怎么看</div>
+          <div class="note" style="font-size:16px">两个操作数的最高位都是 <span class="mono">1</span>（都是负数），
+            相乘后符号自然为正：结果的低 8 位 <span class="mono">00010010₂ = 18₁₀</span>。</div>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout" style="font-size:17px">
+          <span class="callout__tag">要点</span>
+          <span>竖式笔算本身只关心<span class="kw">比特串</span>，符号由操作数的格式决定；
+            高位被截断后，剩下的低位比特恰好就是正确的补码结果。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">5 / 33</div>
+</section>
+
+<!-- ======================================================== 6 乘法器电路第 1 版（框图） -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">乘法器电路的实现 第 1 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <div class="row row--top" style="gap:18px">
+      <div class="col shrink0" style="width:250px;padding-top:26px">
+        <div class="callout" style="font-size:18px">
+          <span class="callout__tag">前提</span>
+          <span>这里暂时只考虑<span class="kw">正数</span>。负数的处理留到后面（见第 12 页）。</span>
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:860px;height:auto" role="img"
+             aria-label="乘法器电路第 1 版框图：被乘数 64 位左移、乘数 32 位右移、64 位 ALU、积 64 位写入、控制判定">
+          <defs>
+            <marker id="mk11a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+            <marker id="mk11b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+          </defs>
+
+          <!-- 被乘数 -->
+          <rect x="350" y="10" width="300" height="54" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="34" text-anchor="middle" font-size="22" fill="#10314f">被乘数（64bit）</text>
+          <text x="500" y="57" text-anchor="middle" font-size="20" fill="#10314f">左移</text>
+
+          <!-- 乘数 -->
+          <rect x="610" y="176" width="220" height="80" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="720" y="210" text-anchor="middle" font-size="22" fill="#10314f">乘数（32bit）</text>
+          <text x="720" y="238" text-anchor="middle" font-size="20" fill="#10314f">右移</text>
+
+          <!-- ALU 梯形 -->
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">64bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+
+          <!-- 积 -->
+          <rect x="280" y="262" width="310" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="435" y="294" text-anchor="middle" font-size="22" fill="#10314f">积（64bit）</text>
+          <text x="435" y="322" text-anchor="middle" font-size="20" fill="#10314f">写入</text>
+
+          <!-- 控制·判定 -->
+          <ellipse cx="700" cy="310" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="318" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+
+          <!-- 被乘数 → ALU（左） -->
+          <path d="M 400 64 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3"
+                marker-end="url(#mk11a)"></path>
+          <!-- 被乘数 → ALU（中） -->
+          <path d="M 465 64 L 465 120" fill="none" stroke="#10314f" stroke-width="3"
+                marker-end="url(#mk11a)"></path>
+          <!-- 被乘数左移回边 -->
+          <path d="M 650 37 L 748 37 L 748 190 L 684 190" fill="none" stroke="#10314f" stroke-width="3"
+                marker-end="url(#mk11a)"></path>
+
+          <!-- ALU → 积 -->
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3"
+                marker-end="url(#mk11a)"></path>
+          <!-- 积 → ALU（左回路） -->
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3"
+                marker-end="url(#mk11a)"></path>
+
+          <!-- 乘数 → ALU（下方细线环路） -->
+          <path d="M 610 242 L 590 242 L 590 226 L 470 226" fill="none" stroke="#10314f" stroke-width="1.6"
+                marker-end="url(#mk11b)"></path>
+          <!-- 乘数 → 控制判定 -->
+          <path d="M 720 256 L 720 276" fill="none" stroke="#10314f" stroke-width="1.6"
+                marker-end="url(#mk11b)"></path>
+          <!-- 乘数右移回边 -->
+          <path d="M 830 220 L 830 162 L 790 162 L 790 188" fill="none" stroke="#10314f" stroke-width="1.6"
+                marker-end="url(#mk11b)"></path>
+
+          <!-- 控制判定 → 积写入 -->
+          <path d="M 585 310 L 592 310" fill="none" stroke="#10314f" stroke-width="1.6"
+                marker-end="url(#mk11b)"></path>
+          <!-- 控制判定 → 积（回边） -->
+          <path d="M 700 344 L 700 332 L 250 332 L 250 320" fill="none" stroke="#10314f" stroke-width="3"
+                marker-end="url(#mk11a)"></path>
+        </svg>
+        <div class="figure-cap">图 1　乘法器电路（第 1 版）：被乘数左移、乘数右移、积单独存放</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">6 / 33</div>
+</section>
+
+<!-- ======================================================== 7 乘法器电路第 1 版（逐步演算） -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">乘法器电路的实现 第 1 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:500px;padding-top:4px">
+        <div class="mono" style="font-size:21px;font-weight:700;color:#10314f">3 * 6 = 18</div>
+        <div class="mono mt8" style="font-size:21px;font-weight:700;color:#10314f">0011 * 0110 = <span class="hi">0010 0010</span></div>
+        <div class="note mt8" style="font-size:15px">表中<span class="hi">红色</span>表示该步发生变化的比特。</div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:500px;height:auto" role="img" aria-label="乘法器电路第 1 版小框图">
+          <rect x="350" y="10" width="300" height="54" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="34" text-anchor="middle" font-size="22" fill="#10314f">被乘数（64bit）</text>
+          <text x="500" y="57" text-anchor="middle" font-size="20" fill="#10314f">左移</text>
+          <rect x="610" y="176" width="220" height="80" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="720" y="210" text-anchor="middle" font-size="22" fill="#10314f">乘数（32bit）</text>
+          <text x="720" y="238" text-anchor="middle" font-size="20" fill="#10314f">右移</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">64bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="280" y="262" width="310" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="435" y="294" text-anchor="middle" font-size="22" fill="#10314f">积（64bit）</text>
+          <text x="435" y="322" text-anchor="middle" font-size="20" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="310" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="318" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 64 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 64 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 37 L 748 37 L 748 190 L 684 190" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 610 242 L 590 242 L 590 226 L 470 226" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 720 256 L 720 276" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 830 220 L 830 162 L 790 162 L 790 188" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 585 310 L 592 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 700 344 L 700 332 L 250 332 L 250 320" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr>
+          <th style="width:300px">步骤</th>
+          <th style="width:210px">被乘数</th>
+          <th style="width:130px">乘数</th>
+          <th style="width:180px">积</th>
+          <th>本步变化的列</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c">0000 <span class="hi">0011</span></td><td class="c">0110</td><td class="c">0000 0000</td><td class="note">—（初值）</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c">0000 0011</td><td class="c">0110</td><td class="c">0000 0000</td><td class="note">无</td></tr>
+        <tr><td>移位操作</td><td class="c">0000 <span class="hi">0110</span></td><td class="c"><span class="hi">0011</span></td><td class="c">0000 0000</td><td class="note">被乘数（左移）、乘数（右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c">0000 0110</td><td class="c">0011</td><td class="c"><span class="hi">0000 0110</span></td><td class="note">积</td></tr>
+        <tr><td>移位操作</td><td class="c"><span class="hi">0000 1100</span></td><td class="c"><span class="hi">0001</span></td><td class="c">0000 0110</td><td class="note">被乘数（左移）、乘数（右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c">0000 1100</td><td class="c">0001</td><td class="c"><span class="hi">0001 0010</span></td><td class="note">积</td></tr>
+        <tr><td>移位操作</td><td class="c"><span class="hi">0001 1000</span></td><td class="c"><span class="hi">0000</span></td><td class="c">0001 0010</td><td class="note">被乘数（左移）、乘数（右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c">0001 1000</td><td class="c">0000</td><td class="c">0001 0010</td><td class="note">无</td></tr>
+        <tr><td>移位操作</td><td class="c"><span class="hi">0011 0000</span></td><td class="c">0000</td><td class="c">0001 0010</td><td class="note">被乘数（左移）</td></tr>
+        <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c">0011 0000</td><td class="c">0000</td><td class="c"><span class="hi">0001 0010</span></td><td class="note">积 = 18₁₀ ✔</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">7 / 33</div>
+</section>
+
+<!-- ======================================================== 8 乘法器电路第 2 版（框图） -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">乘法器电路的实现 第 2 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <ul class="bullets bullets--compact">
+      <li>把<span class="kw">被乘数</span>与 <span class="kw">ALU</span> 改成 <span class="kw-blue">32 位</span>。</li>
+    </ul>
+
+    <div class="row row--top mt10" style="gap:18px">
+      <div class="col shrink0" style="width:250px;padding-top:60px">
+        <div class="callout callout--blue" style="font-size:17px">
+          <span class="callout__tag">要点</span>
+          <span>第 1 版里被乘数要左移 32 次，宽度会一路涨到 64 位。这里改为让<span class="kw">积右移</span>，
+            于是被乘数与 ALU 都只需 32 位。</span>
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:830px;height:auto" role="img"
+             aria-label="乘法器电路第 2 版框图：被乘数 32 位、32 位 ALU、乘数 32 位右移、积 64 位右移写入">
+          <defs>
+            <marker id="mk11c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+            <marker id="mk11d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+          </defs>
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">被乘数（32bit）</text>
+          <rect x="610" y="176" width="220" height="80" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="720" y="210" text-anchor="middle" font-size="22" fill="#10314f">乘数（32bit）</text>
+          <text x="720" y="238" text-anchor="middle" font-size="20" fill="#10314f">右移</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="280" y="262" width="310" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="435" y="292" text-anchor="middle" font-size="22" fill="#10314f">积（64bit）右移</text>
+          <text x="435" y="322" text-anchor="middle" font-size="20" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="308" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="316" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11c)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11c)"></path>
+          <path d="M 650 31 L 748 31 L 748 190 L 684 190" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11c)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11c)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11c)"></path>
+          <path d="M 610 242 L 590 242 L 590 226 L 470 226" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11d)"></path>
+          <path d="M 720 256 L 720 274" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11d)"></path>
+          <path d="M 830 220 L 830 162 L 790 162 L 790 188" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11d)"></path>
+          <path d="M 585 308 L 592 308" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11d)"></path>
+          <path d="M 700 342 L 700 332 L 250 332 L 250 320" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11c)"></path>
+        </svg>
+        <div class="figure-cap">图 2　乘法器电路（第 2 版）：被乘数与 ALU 各 32 位，积改为右移</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">8 / 33</div>
+</section>
+
+<!-- ======================================================== 9 乘法器电路第 2 版（逐步演算） -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">乘法器电路的实现 第 2 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:320px;padding-top:6px">
+        <div class="mono" style="font-size:22px;font-weight:700;color:#10314f">3 * 6 = 18</div>
+        <div class="note mt8">32 位版中被乘数始终是 <span class="mono">0011</span>（不再左移），
+          变化的是<span class="kw">乘数</span>与<span class="kw">积</span>两个寄存器。</div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:560px;height:auto" role="img" aria-label="乘法器电路第 2 版小框图">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">被乘数（32bit）</text>
+          <rect x="610" y="176" width="220" height="80" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="720" y="210" text-anchor="middle" font-size="22" fill="#10314f">乘数（32bit）</text>
+          <text x="720" y="238" text-anchor="middle" font-size="20" fill="#10314f">右移</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="280" y="262" width="310" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="435" y="292" text-anchor="middle" font-size="22" fill="#10314f">积（64bit）右移</text>
+          <text x="435" y="322" text-anchor="middle" font-size="20" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="308" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="316" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 190 L 684 190" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 610 242 L 590 242 L 590 226 L 470 226" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 720 256 L 720 274" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 830 220 L 830 162 L 790 162 L 790 188" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 585 308 L 592 308" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 700 342 L 700 332 L 250 332 L 250 320" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr>
+          <th style="width:300px">步骤</th>
+          <th style="width:150px">被乘数</th>
+          <th style="width:150px">乘数</th>
+          <th style="width:190px">积</th>
+          <th>本步变化的列</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c">0011</td><td class="c">0110</td><td class="c">0000 0000</td><td class="note">—（初值）</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c">0011</td><td class="c"><span class="hi">0110</span></td><td class="c"><span class="hi">0000 0000</span></td><td class="note">无</td></tr>
+        <tr><td>移位操作</td><td class="c">0011</td><td class="c"><span class="hi">0011</span></td><td class="c">0000 0000</td><td class="note">乘数（右移）、积（右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c">0011</td><td class="c">0011</td><td class="c"><span class="hi">0011 0000</span></td><td class="note">积</td></tr>
+        <tr><td>移位操作</td><td class="c">0011</td><td class="c"><span class="hi">0001</span></td><td class="c"><span class="hi">0001 1000</span></td><td class="note">乘数（右移）、积（右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c">0011</td><td class="c">0001</td><td class="c"><span class="hi">0100 1000</span></td><td class="note">积</td></tr>
+        <tr><td>移位操作</td><td class="c">0011</td><td class="c"><span class="hi">0000</span></td><td class="c"><span class="hi">0010 0100</span></td><td class="note">乘数（右移）、积（右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c">0011</td><td class="c">0000</td><td class="c">0010 0100</td><td class="note">无</td></tr>
+        <tr><td>移位操作</td><td class="c">0011</td><td class="c">0000</td><td class="c"><span class="hi">0001 0010</span></td><td class="note">积（右移）</td></tr>
+        <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c">0011</td><td class="c">0000</td><td class="c"><span class="hi">0001 0010</span></td><td class="note">积 = 18₁₀ ✔</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">9 / 33</div>
+</section>
+
+<!-- ======================================================== 10 乘法器电路第 3 版（框图） -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">乘法器电路的实现 第 3 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <ul class="bullets bullets--compact">
+      <li>把<span class="kw">乘数</span>放进<span class="kw-blue">积寄存器的右半部分</span>。</li>
+    </ul>
+
+    <div class="row row--top mt10" style="gap:18px">
+      <div class="col shrink0" style="width:250px;padding-top:60px">
+        <div class="callout" style="font-size:17px">
+          <span class="callout__tag">要点</span>
+          <span>乘数每右移一次就空出一位，正好用来存放积移出来的低位。
+            于是<span class="kw">一个 64 位寄存器</span>同时承担积与乘数，省掉一个寄存器。</span>
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:830px;height:auto" role="img"
+             aria-label="乘法器电路第 3 版框图：积与乘数合并为一个 64 位寄存器，可右移并写入">
+          <defs>
+            <marker id="mk11c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+            <marker id="mk11d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+          </defs>
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">被乘数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="240" y="262" width="350" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="292" text-anchor="middle" font-size="22" fill="#10314f">积，乘数</text>
+          <text x="330" y="322" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="490" y="292" text-anchor="middle" font-size="21" fill="#10314f">右移</text>
+          <text x="490" y="322" text-anchor="middle" font-size="21" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="308" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="316" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 180 L 700 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 590 300 L 385 300" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 440 338 L 440 350 L 700 350 L 700 342" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+        </svg>
+        <div class="figure-cap">图 3　乘法器电路（第 3 版）：积与乘数共用一个 64 位寄存器</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">10 / 33</div>
+</section>
+
+<!-- ======================================================== 11 乘法器电路第 3 版（逐步演算） -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">乘法器电路的实现 第 3 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:320px;padding-top:6px">
+        <div class="mono" style="font-size:22px;font-weight:700;color:#10314f">3 * 6 = 18</div>
+        <div class="note mt8">右列的 8 位中，左边 4 位是<span class="kw">积</span>、右边 4 位是<span class="kw">乘数</span>；
+          乘数右移时，积的低位就顺势进入右侧。</div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:560px;height:auto" role="img" aria-label="乘法器电路第 3 版小框图">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">被乘数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="240" y="262" width="350" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="292" text-anchor="middle" font-size="22" fill="#10314f">积，乘数</text>
+          <text x="330" y="322" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="490" y="292" text-anchor="middle" font-size="21" fill="#10314f">右移</text>
+          <text x="490" y="322" text-anchor="middle" font-size="21" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="308" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="316" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 180 L 700 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 590 300 L 385 300" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 440 338 L 440 350 L 700 350 L 700 342" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr>
+          <th style="width:300px">步骤</th>
+          <th style="width:170px">被乘数</th>
+          <th style="width:230px">积，乘数</th>
+          <th>本步变化的列</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c">0011</td><td class="c">0000 <span class="hi">0110</span></td><td class="note">—（初值：左 4 位积 0000、右 4 位乘数 0110）</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c">0011</td><td class="c">0000 0110</td><td class="note">无</td></tr>
+        <tr><td>移位操作</td><td class="c">0011</td><td class="c">0000 <span class="hi">0011</span></td><td class="note">积，乘数（整体右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c">0011</td><td class="c"><span class="hi">0011</span> 0011</td><td class="note">积（高 4 位）</td></tr>
+        <tr><td>移位操作</td><td class="c">0011</td><td class="c"><span class="hi">0001 1001</span></td><td class="note">积，乘数（整体右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c">0011</td><td class="c"><span class="hi">0100</span> 1001</td><td class="note">积（高 4 位）</td></tr>
+        <tr><td>移位操作</td><td class="c">0011</td><td class="c"><span class="hi">0010 0100</span></td><td class="note">积，乘数（整体右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c">0011</td><td class="c">0010 <span class="hi">0100</span></td><td class="note">无</td></tr>
+        <tr><td>移位操作</td><td class="c">0011</td><td class="c"><span class="hi">0001 0010</span></td><td class="note">积，乘数（整体右移）</td></tr>
+        <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c">0011</td><td class="c"><span class="hi">0001 0010</span></td><td class="note">积 = 18₁₀ ✔</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">11 / 33</div>
+</section>
+
+<!-- ======================================================== 12 处理负数的乘法器电路 -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">处理负数的乘法器电路</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <ul class="bullets bullets--compact">
+      <li>因为乘数、被乘数都是<span class="kw">32 位表示</span>，所以在负数的情形下<span class="kw">无法正确地做符号扩展</span>。</li>
+    </ul>
+
+    <div class="row row--top mt12">
+      <div class="col shrink0" style="width:420px;padding-left:16px">
+<pre class="code code--plain code--sm">  <span class="hi">1111</span>1101         -3₁₀
+× <span class="hi">1111</span>1010         -6₁₀
+──────────────
+  11111101
+   11111101
+    11111101
+     11111101
+      11111101
+       11111101
+──────────────
+<span class="hi">00000000</span>00010010  ← 截断
+                  18₁₀</pre>
+      </div>
+      <div class="col shrink0" style="width:290px;padding-top:34px">
+        <div class="callout callout--red" style="font-size:17px">
+          <span class="callout__tag">问题</span>
+          <span>第 3 版的电路<span class="kw">做不到</span>与上面这个竖式相同的事情：<br>
+            电路里没有「按符号扩展出更多位」这一步，它只会老老实实地把 32 位乘 32 位算完。</span>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="panel panel--tight" style="padding-top:12px">
+          <div class="panel__title panel__title--teal">解决策</div>
+          <ul class="bullets bullets--compact" style="font-size:19px">
+            <li>把<span class="kw">负数转换为正数</span>；</li>
+            <li>在<span class="kw">积的计算结果上</span>，事后施加符号。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">12 / 33</div>
+</section>
+
+<!-- ======================================================== 13 确认问题（空表） -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>用乘法器电路（第 3 版）计算 <span class="mono">6 * 6 = 36</span>，按下表完成逐步演算。
+    </div>
+
+    <div class="row row--top mt10">
+      <div class="col shrink0" style="width:300px">
+        <div class="abox abox--slim" style="font-size:16px">
+          <span class="abox__tag">提示</span>被乘数 <span class="mono">6₁₀ = 0110₂</span>、乘数 <span class="mono">6₁₀ = 0110₂</span>，
+          与第 3 版 3*6 的演算步骤完全一致，只是数值不同。
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:380px;height:auto" role="img" aria-label="乘法器电路第 3 版小框图（供练习使用）">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">被乘数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="240" y="262" width="350" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="292" text-anchor="middle" font-size="22" fill="#10314f">积，乘数</text>
+          <text x="330" y="322" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="490" y="292" text-anchor="middle" font-size="21" fill="#10314f">右移</text>
+          <text x="490" y="322" text-anchor="middle" font-size="21" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="308" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="316" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 180 L 700 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 590 300 L 385 300" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 440 338 L 440 350 L 700 350 L 700 342" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:300px">步骤</th><th style="width:170px">被乘数</th><th style="width:230px">积，乘数</th><th>本步变化的列</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c"><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="note">　</td></tr>
+        <tr class="alt"><td><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="note">　</td></tr>
+        <tr><td><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="note">　</td></tr>
+        <tr class="alt"><td><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="note">　</td></tr>
+        <tr><td><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="note">　</td></tr>
+        <tr class="alt"><td><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="note">　</td></tr>
+        <tr><td><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="note">　</td></tr>
+        <tr class="alt"><td><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="note">　</td></tr>
+        <tr><td><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="c"><span class="blank">　</span></td><td class="note">　</td></tr>
+        <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">13 / 33</div>
+</section>
+
+<!-- ======================================================== 14 确认问题（带步骤提示） -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>用乘法器电路（第 3 版）计算 <span class="mono">6 * 6 = 36</span>，按表中给出的步骤完成逐步演算。
+    </div>
+
+    <div class="row row--top mt10">
+      <div class="col shrink0" style="width:300px">
+        <div class="abox abox--slim" style="font-size:16px">
+          <span class="abox__tag">提示</span>乘数的 LSB 依次为 <span class="mono">0, 1, 1, 0</span>，
+          对应「什么都不做 / 加被乘数 / 加被乘数 / 什么都不做」。
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:340px;height:auto" role="img" aria-label="乘法器电路第 3 版小框图（供练习使用）">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">被乘数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="240" y="262" width="350" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="292" text-anchor="middle" font-size="22" fill="#10314f">积，乘数</text>
+          <text x="330" y="322" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="490" y="292" text-anchor="middle" font-size="21" fill="#10314f">右移</text>
+          <text x="490" y="322" text-anchor="middle" font-size="21" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="308" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="316" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 180 L 700 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 590 300 L 385 300" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 440 338 L 440 350 L 700 350 L 700 342" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:300px">步骤</th><th style="width:170px">被乘数</th><th style="width:230px">积，乘数</th><th>本步变化的列</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+        <tr><td>移位操作</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+        <tr><td>移位操作</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+        <tr><td>移位操作</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+        <tr><td>移位操作</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+        <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c"></td><td class="c"></td><td class="note">　</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">14 / 33</div>
+</section>
+
+<!-- ======================================================== 15 确认问题（答案） -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（解答）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>用乘法器电路（第 3 版）计算 <span class="mono">6 * 6 = 36</span>，按下表完成逐步演算。
+    </div>
+
+    <div class="row row--top mt10">
+      <div class="col shrink0" style="width:420px">
+        <div class="abox abox--slim" style="font-size:16px">
+          <span class="abox__tag">答案</span>积，乘数 = <span class="mono">0010 0100₂</span>，其中高 4 位 <span class="mono">0010</span> 是积（2₁₀），
+          低 4 位 <span class="mono">0100</span> 是已经移空的乘数；把两者合起来读就是 <span class="mono">36₁₀</span>。
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:300px;height:auto" role="img" aria-label="乘法器电路第 3 版小框图（答案页）">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">被乘数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="240" y="262" width="350" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="292" text-anchor="middle" font-size="22" fill="#10314f">积，乘数</text>
+          <text x="330" y="322" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="490" y="292" text-anchor="middle" font-size="21" fill="#10314f">右移</text>
+          <text x="490" y="322" text-anchor="middle" font-size="21" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="308" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="316" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 180 L 700 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 590 300 L 385 300" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 440 338 L 440 350 L 700 350 L 700 342" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:300px">步骤</th><th style="width:170px">被乘数</th><th style="width:230px">积，乘数</th><th>本步变化的列</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c">0110</td><td class="c">0000 <span class="hi">0110</span></td><td class="note">—（初值）</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c">0110</td><td class="c">0000 0110</td><td class="note">无</td></tr>
+        <tr><td>移位操作</td><td class="c">0110</td><td class="c">0000 <span class="hi">0011</span></td><td class="note">积，乘数（整体右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c">0110</td><td class="c"><span class="hi">0110</span> 0011</td><td class="note">积（高 4 位）</td></tr>
+        <tr><td>移位操作</td><td class="c">0110</td><td class="c"><span class="hi">0011 0001</span></td><td class="note">积，乘数（整体右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=1 → 加被乘数</td><td class="c">0110</td><td class="c"><span class="hi">1001</span> 0001</td><td class="note">积（高 4 位）</td></tr>
+        <tr><td>移位操作</td><td class="c">0110</td><td class="c"><span class="hi">0100 1000</span></td><td class="note">积，乘数（整体右移）</td></tr>
+        <tr class="alt"><td>乘数 LSB=0 → 什么都不做</td><td class="c">0110</td><td class="c">0100 <span class="hi">1000</span></td><td class="note">无</td></tr>
+        <tr><td>移位操作</td><td class="c">0110</td><td class="c"><span class="hi">0010 0100</span></td><td class="note">积，乘数（整体右移）</td></tr>
+        <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c">0110</td><td class="c"><span class="hi">0010 0100</span></td><td class="note">积 = 36₁₀ ✔（6 × 6）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">15 / 33</div>
+</section>
+
+<!-- ======================================================== 16 讲义内容（除法） -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">算术运算的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">二进制数的乘法<span class="toc__item--jp">2進数の乗算 — 二进制数的乘法</span></div>
+          <div class="toc__item toc__item--active">二进制数的除法<span class="toc__item--jp">2進数の除算 — 二进制数的除法</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">16 / 33</div>
+</section>
+
+<!-- ======================================================== 17 二进制数的除法（正数／正数） -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的除法</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <ul class="bullets bullets--compact">
+      <li>正数 ／ 正数
+        <ul class="bullets bullets--sub">
+          <li>例）13₁₀ / 5₁₀ = 2 余 3 = 1101₂ / 0101₂</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="row row--top mt12">
+      <div class="col shrink0" style="width:420px;padding-left:24px">
+<pre class="code code--plain code--sm">        10
+    ┌───────
+101 ) 1101
+      101     … 1*101
+    ──────
+       11     … 110-101, 1</pre>
+        <div class="note mt8" style="text-align:center">商 <span class="mono">10₂ = 2₁₀</span>，余 <span class="mono">11₂ = 3₁₀</span></div>
+      </div>
+      <div class="col shrink0" style="width:330px">
+        <div class="panel panel--tight">
+          <div class="panel__title">（参考）十进制的情形</div>
+<pre class="code code--plain code--tight" style="font-size:15px;line-height:1.42">      2…
+   ┌───────
+ 5 ) 131
+     10      … 2*5
+   ──────
+      31     … 13-10, 1
+      …
+</pre>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout callout--blue" style="font-size:17px">
+          <span class="callout__tag">说明</span>
+          <span>竖式的做法与十进制完全一致：看被除数高 3 位 <span class="mono">110</span> 能不能容下除数 <span class="mono">101</span>，
+            容得下就在商的这一位上写 <span class="mono">1</span>，然后做减法、拉下下一位。<br>
+            蓝色的虚线箭头表示「这一位上的部分是 <span class="mono">1 × 除数</span>」。</span>
+        </div>
+      </div>
+    </div>
+
+    <ul class="bullets bullets--compact mt16">
+      <li>与十进制数一样可以做<span class="kw">竖式笔算</span>。</li>
+    </ul>
+  </div>
+  <div class="page-no">17 / 33</div>
+</section>
+
+<!-- ======================================================== 18 二进制数的除法（带符号除法） -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制数的除法</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <ul class="bullets bullets--compact">
+      <li>带符号除法
+        <ul class="bullets bullets--sub">
+          <li><span class="kw">被除数 = 商 × 除数 + 余数</span></li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="row row--top mt12">
+      <div class="col shrink0" style="width:600px;padding-left:30px">
+        <div class="steps steps--tight">
+          <div class="steps__item"><span class="steps__no">■</span>(+7) / (+2) = (+3) 余 (+1)</div>
+          <div class="steps__item"><span class="steps__no">■</span>(-7) / (-2) = (+3) 余 (-1)</div>
+          <div class="steps__item"><span class="steps__no">■</span>(-7) / (+2) = (-3) 余 (-1)</div>
+          <div class="steps__item"><span class="steps__no">■</span>(+7) / (-2) = (-3) 余 (+1)</div>
+          <div class="steps__item steps__item--on" style="margin-top:8px"><span class="steps__no">✕</span>(+7) / (-2) = (-4) 余 (-1)
+            <span class="note" style="margin-left:10px">← 被除数与余数的符号不一致，不成立</span></div>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">为什么不行？</div>
+          <div class="note" style="font-size:16px">代回公式检验：<span class="mono">(-4) × (-2) + (-1) = 8 - 1 = 7</span>，
+            数值上确实等于被除数——但余数的符号是负的，与被除数 <span class="mono">+7</span> 相反，
+            所以这一组结果不符合下面这条约定。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout--red mt16">
+      <span class="callout__tag">约定</span>
+      <span><span class="kw">被除数的符号与余数的符号必须相同。</span>（日文：被除数と剰余の符号は同じでなければならない）</span>
+    </div>
+  </div>
+  <div class="page-no">18 / 33</div>
+</section>
+
+<!-- ======================================================== 19 除法器电路第 1 版（框图） -->
+<section class="slide" id="s19">
+  <div class="slide__head">
+    <h2 class="slide__title">除法器电路的实现 第 1 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <div class="row row--top" style="gap:18px">
+      <div class="col shrink0" style="width:230px;padding-top:40px">
+        <div class="callout" style="font-size:17px">
+          <span class="callout__tag">对照</span>
+          <span>与乘法器电路对照着看：<span class="kw">除数右移</span>、<span class="kw">商左移</span>，
+            其余结构完全相同。</span>
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:830px;height:auto" role="img"
+             aria-label="除法器电路第 1 版框图：除数 64 位右移、商 32 位左移、64 位 ALU、剩余与被除数 64 位写入、控制判定">
+          <defs>
+            <marker id="mk11c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+            <marker id="mk11d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+          </defs>
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（64bit）</text>
+          <text x="672" y="40" text-anchor="middle" font-size="20" fill="#10314f">右移</text>
+          <rect x="610" y="176" width="220" height="80" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="720" y="210" text-anchor="middle" font-size="22" fill="#10314f">商（32bit）</text>
+          <text x="720" y="238" text-anchor="middle" font-size="20" fill="#10314f">左移</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">64bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="240" y="262" width="330" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="405" y="292" text-anchor="middle" font-size="21" fill="#10314f">余数，被除数（64bit）</text>
+          <text x="405" y="322" text-anchor="middle" font-size="20" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="310" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="318" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 650 31 L 748 31 L 748 190 L 684 190" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 610 242 L 590 242 L 590 226 L 470 226" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 720 256 L 720 278" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 830 220 L 830 162 L 790 162 L 790 188" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 310 L 572 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 700 344 L 700 332 L 215 332 L 215 320" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+        </svg>
+        <div class="figure-cap">图 4　除法器电路（第 1 版）：除数 64 位右移、商 32 位左移</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">19 / 33</div>
+</section>
+
+<!-- ======================================================== 20 除法器电路第 1 版（逐步演算 上） -->
+<section class="slide" id="s20">
+  <div class="slide__head">
+    <h2 class="slide__title">除法器电路的实现 第 1 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:330px;padding-top:6px">
+        <div class="mono" style="font-size:21px;font-weight:700;color:#10314f">(+7) / (+2) = (+3) 余 (+1)</div>
+        <div class="note mt8">表中<span class="hi">红色</span>表示该步发生变化的比特。</div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:440px;height:auto" role="img" aria-label="除法器电路第 1 版小框图">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（64bit）</text>
+          <text x="672" y="40" text-anchor="middle" font-size="20" fill="#10314f">右移</text>
+          <rect x="610" y="176" width="220" height="80" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="720" y="210" text-anchor="middle" font-size="22" fill="#10314f">商（32bit）</text>
+          <text x="720" y="238" text-anchor="middle" font-size="20" fill="#10314f">左移</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">64bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="240" y="262" width="330" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="405" y="292" text-anchor="middle" font-size="21" fill="#10314f">余数，被除数（64bit）</text>
+          <text x="405" y="322" text-anchor="middle" font-size="20" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="310" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="318" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 650 31 L 748 31 L 748 190 L 684 190" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 610 242 L 590 242 L 590 226 L 470 226" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 720 256 L 720 278" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 830 220 L 830 162 L 790 162 L 790 188" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 310 L 572 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 700 344 L 700 332 L 215 332 L 215 320" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:390px">步骤</th><th style="width:130px">商</th><th style="width:170px">除数</th><th style="width:170px">余数，被除数</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c">0000</td><td class="c"><span class="hi">0010 0000</span></td><td class="c">0000 0111</td></tr>
+        <tr class="alt"><td>被除数 − 除数</td><td class="c">0000</td><td class="c">0010 0000</td><td class="c"><span class="hi">1110 0111</span></td></tr>
+        <tr><td>被除数 MSB==1 → 被除数 += 除数, 商移位, 商 LSB=0</td><td class="c"><span class="hi">0000</span></td><td class="c">0010 0000</td><td class="c"><span class="hi">0000 0111</span></td></tr>
+        <tr class="alt"><td>除数移位</td><td class="c">0000</td><td class="c"><span class="hi">0001 0000</span></td><td class="c">0000 0111</td></tr>
+        <tr><td>被除数 − 除数</td><td class="c">0000</td><td class="c">0001 0000</td><td class="c"><span class="hi">1111 0111</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 → 被除数 += 除数, 商移位, 商 LSB=0</td><td class="c"><span class="hi">0000</span></td><td class="c">0001 0000</td><td class="c"><span class="hi">0000 0111</span></td></tr>
+        <tr><td>除数移位</td><td class="c">0000</td><td class="c"><span class="hi">0000 1000</span></td><td class="c">0000 0111</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">20 / 33</div>
+</section>
+
+<!-- ======================================================== 21 除法器电路第 1 版（逐步演算 中） -->
+<section class="slide" id="s21">
+  <div class="slide__head">
+    <h2 class="slide__title">除法器电路的实现 第 1 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:330px;padding-top:6px">
+        <div class="mono" style="font-size:21px;font-weight:700;color:#10314f">(+7) / (+2) = (+3) 余 (+1)</div>
+        <div class="note mt8">被除数的最高位（MSB）为 1 就表示「减多了」，要把除数加回去，并让商的这一位为 0。</div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:440px;height:auto" role="img" aria-label="除法器电路第 1 版小框图">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（64bit）</text>
+          <text x="672" y="40" text-anchor="middle" font-size="20" fill="#10314f">右移</text>
+          <rect x="610" y="176" width="220" height="80" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="720" y="210" text-anchor="middle" font-size="22" fill="#10314f">商（32bit）</text>
+          <text x="720" y="238" text-anchor="middle" font-size="20" fill="#10314f">左移</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">64bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="240" y="262" width="330" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="405" y="292" text-anchor="middle" font-size="21" fill="#10314f">余数，被除数（64bit）</text>
+          <text x="405" y="322" text-anchor="middle" font-size="20" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="310" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="318" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 650 31 L 748 31 L 748 190 L 684 190" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 610 242 L 590 242 L 590 226 L 470 226" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 720 256 L 720 278" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 830 220 L 830 162 L 790 162 L 790 188" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 310 L 572 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 700 344 L 700 332 L 215 332 L 215 320" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:390px">步骤</th><th style="width:130px">商</th><th style="width:170px">除数</th><th style="width:170px">余数，被除数</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>被除数 − 除数</td><td class="c">0000</td><td class="c">0000 1000</td><td class="c"><span class="hi">1111 1111</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 → 被除数 += 除数, 商移位, 商 LSB=0</td><td class="c"><span class="hi">0000</span></td><td class="c">0000 1000</td><td class="c"><span class="hi">0000 0111</span></td></tr>
+        <tr><td>除数移位</td><td class="c">0000</td><td class="c"><span class="hi">0000 0100</span></td><td class="c">0000 0111</td></tr>
+        <tr class="alt"><td>被除数 − 除数</td><td class="c">0000</td><td class="c">0000 0100</td><td class="c"><span class="hi">0000 0011</span></td></tr>
+        <tr><td>被除数 MSB==0 → 商移位, 商 LSB=1</td><td class="c"><span class="hi">0001</span></td><td class="c">0000 0100</td><td class="c">0000 0011</td></tr>
+        <tr class="alt"><td>除数移位</td><td class="c">0001</td><td class="c"><span class="hi">0000 0010</span></td><td class="c">0000 0011</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">21 / 33</div>
+</section>
+
+<!-- ======================================================== 22 除法器电路第 1 版（逐步演算 下） -->
+<section class="slide" id="s22">
+  <div class="slide__head">
+    <h2 class="slide__title">除法器电路的实现 第 1 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:330px;padding-top:6px">
+        <div class="mono" style="font-size:21px;font-weight:700;color:#10314f">(+7) / (+2) = (+3) 余 (+1)</div>
+        <div class="abox abox--slim mt10" style="font-size:16px">
+          <span class="abox__tag">答案</span>商 <span class="mono">0011₂ = +3</span>，余 <span class="mono">0000 0001₂ = +1</span>，与 <span class="mono">(+7)/(+2)</span> 相符。
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:440px;height:auto" role="img" aria-label="除法器电路第 1 版小框图">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（64bit）</text>
+          <text x="672" y="40" text-anchor="middle" font-size="20" fill="#10314f">右移</text>
+          <rect x="610" y="176" width="220" height="80" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="720" y="210" text-anchor="middle" font-size="22" fill="#10314f">商（32bit）</text>
+          <text x="720" y="238" text-anchor="middle" font-size="20" fill="#10314f">左移</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">64bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="240" y="262" width="330" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="405" y="292" text-anchor="middle" font-size="21" fill="#10314f">余数，被除数（64bit）</text>
+          <text x="405" y="322" text-anchor="middle" font-size="20" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="310" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="318" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 650 31 L 748 31 L 748 190 L 684 190" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 300 306 L 78 306 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 610 242 L 590 242 L 590 226 L 470 226" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 720 256 L 720 278" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 830 220 L 830 162 L 790 162 L 790 188" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 310 L 572 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 700 344 L 700 332 L 215 332 L 215 320" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:390px">步骤</th><th style="width:130px">商</th><th style="width:170px">除数</th><th style="width:170px">余数，被除数</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>被除数 − 除数</td><td class="c"><span class="hi">0001</span></td><td class="c">0000 0010</td><td class="c"><span class="hi">0000 0001</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==0 → 商移位, 商 LSB=1</td><td class="c"><span class="hi">0011</span></td><td class="c">0000 0010</td><td class="c">0000 0001</td></tr>
+        <tr><td>除数移位</td><td class="c">0011</td><td class="c"><span class="hi">0000 0001</span></td><td class="c">0000 0001</td></tr>
+        <tr class="alt"><td>商已重复 5 个比特，结束</td><td class="c">0011</td><td class="c">0000 0001</td><td class="c">0000 0001</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">22 / 33</div>
+</section>
+
+<!-- ======================================================== 23 除法器电路的改进 -->
+<section class="slide" id="s23">
+  <div class="slide__head">
+    <h2 class="slide__title">除法器电路的改进</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <ul class="bullets bullets--compact" style="font-size:18px;gap:6px">
+      <li>第 1 次的减法<span class="kw">是浪费的</span>；没有用到「余数，被除数」的<span class="kw">左半部分</span>。</li>
+      <li>「除数」中有 <span class="kw">4 个比特</span>始终不被使用；「除数」右移 ＝ 「余数，被除数」左移。</li>
+    </ul>
+
+    <div class="row row--top mt10">
+      <div class="col shrink0" style="width:576px">
+        <table class="tbl tbl--xs" style="font-size:12px">
+          <thead>
+            <tr><th style="width:250px">步骤</th><th style="width:80px">商</th><th style="width:110px">除数</th><th>余数，被除数</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>初始状态</td><td class="c">0000</td><td class="c">0010 0000</td><td class="c">0000 0111</td></tr>
+            <tr class="alt"><td>被除数 − 除数</td><td class="c">0000</td><td class="c">0010 0000</td><td class="c">1110 0111</td></tr>
+            <tr><td>被除数 MSB==1 → 被除数 += 除数, 商移位, 商 LSB=0</td><td class="c">0000</td><td class="c">0010 0000</td><td class="c">0000 0111</td></tr>
+            <tr class="alt"><td>除数移位</td><td class="c">0000</td><td class="c">0001 0000</td><td class="c">0000 0111</td></tr>
+            <tr><td>被除数 − 除数</td><td class="c">0000</td><td class="c">0001 0000</td><td class="c">1111 0111</td></tr>
+            <tr class="alt"><td>被除数 MSB==1 → 被除数 += 除数, 商移位, 商 LSB=0</td><td class="c">0000</td><td class="c">0001 0000</td><td class="c">0000 0111</td></tr>
+            <tr><td>除数移位</td><td class="c">0000</td><td class="c">0000 1000</td><td class="c">0000 0111</td></tr>
+            <tr class="alt"><td>被除数 − 除数</td><td class="c">0000</td><td class="c">0000 1000</td><td class="c">1111 1111</td></tr>
+            <tr><td>被除数 MSB==1 → 被除数 += 除数, 商移位, 商 LSB=0</td><td class="c">0000</td><td class="c">0000 1000</td><td class="c">0000 0111</td></tr>
+            <tr class="alt"><td>除数移位</td><td class="c">0000</td><td class="c">0000 0100</td><td class="c">0000 0111</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col shrink0" style="width:576px">
+        <table class="tbl tbl--xs" style="font-size:12px">
+          <thead>
+            <tr><th style="width:250px">步骤（续）</th><th style="width:80px">商</th><th style="width:110px">除数</th><th>余数，被除数</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>被除数 − 除数</td><td class="c">0000</td><td class="c">0000 0100</td><td class="c">0000 0011</td></tr>
+            <tr class="alt"><td>被除数 MSB==0 → 商移位, 商 LSB=1</td><td class="c">0001</td><td class="c">0000 0100</td><td class="c">0000 0011</td></tr>
+            <tr><td>除数移位</td><td class="c">0001</td><td class="c">0000 0010</td><td class="c">0000 0011</td></tr>
+            <tr class="alt"><td>被除数 − 除数</td><td class="c">0001</td><td class="c">0000 0010</td><td class="c">0000 0001</td></tr>
+            <tr><td>被除数 MSB==0 → 商移位, 商 LSB=1</td><td class="c">0011</td><td class="c">0000 0010</td><td class="c">0000 0001</td></tr>
+            <tr class="alt"><td>除数移位</td><td class="c">0011</td><td class="c">0000 0001</td><td class="c">0000 0001</td></tr>
+            <tr><td>商已重复 5 个比特，结束</td><td class="c">0011</td><td class="c">0000 0001</td><td class="c">0000 0001</td></tr>
+            <tr class="alt"><td colspan="4" class="note">商 = 0011₂ = 3₁₀，余数 = 0000 0001₂ = 1₁₀</td></tr>
+            <tr><td colspan="4" class="note">与 (+7) / (+2) = (+3) 余 (+1) 一致。</td></tr>
+            <tr class="alt"><td colspan="4" class="note">改进要点见右侧。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">23 / 33</div>
+</section>
+
+<!-- ======================================================== 24 除法器电路第 2 版（框图） -->
+<section class="slide" id="s24">
+  <div class="slide__head">
+    <h2 class="slide__title">除法器电路的实现 第 2 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <div class="row row--top" style="gap:18px">
+      <div class="col shrink0" style="width:245px;padding-top:40px">
+        <div class="callout callout--blue" style="font-size:17px">
+          <span class="callout__tag">改进点</span>
+          <span>把「除数右移」改成「<span class="kw">余数／被除数左移</span>」，
+            于是除数只需 32 位，余数与被除数、商合用<span class="kw">一个 64 位寄存器</span>。</span>
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:820px;height:auto" role="img"
+             aria-label="除法器电路第 2 版框图：除数 32 位、32 位 ALU、余数与被除数商 64 位寄存器可左移右移并写入">
+          <defs>
+            <marker id="mk11c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+            <marker id="mk11d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#10314f"></path>
+            </marker>
+          </defs>
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="180" y="258" width="400" height="82" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="286" text-anchor="middle" font-size="22" fill="#10314f">余数/被除数，商</text>
+          <text x="330" y="316" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="510" y="282" text-anchor="middle" font-size="19" fill="#10314f">右移</text>
+          <text x="510" y="306" text-anchor="middle" font-size="19" fill="#10314f">左移</text>
+          <text x="510" y="330" text-anchor="middle" font-size="19" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="316" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="324" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 140 L 720 140 L 720 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 258" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 200 299 L 78 299 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 585 285 L 612 285" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 585 310 L 612 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 585 333 L 612 333" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 720 282 L 812 282 L 812 56 L 668 56" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+        </svg>
+        <div class="figure-cap">图 5　除法器电路（第 2 版）：64 位寄存器兼作余数／被除数与商</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">24 / 33</div>
+</section>
+
+<!-- ======================================================== 25 除法器电路第 2 版（逐步演算 上） -->
+<section class="slide" id="s25">
+  <div class="slide__head">
+    <h2 class="slide__title">除法器电路的实现 第 2 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:330px;padding-top:6px">
+        <div class="mono" style="font-size:21px;font-weight:700;color:#10314f">(+7) / (+2) = (+3) 余 (+1)</div>
+        <div class="note mt8">最左侧的<span class="kw">1 位</span>是被除数，左侧移出去就是商的比特，
+          所以最后还要把被除数的上半部分右移回来。</div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:440px;height:auto" role="img" aria-label="除法器电路第 2 版小框图">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="180" y="258" width="400" height="82" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="286" text-anchor="middle" font-size="22" fill="#10314f">余数/被除数，商</text>
+          <text x="330" y="316" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="510" y="282" text-anchor="middle" font-size="19" fill="#10314f">右移</text>
+          <text x="510" y="306" text-anchor="middle" font-size="19" fill="#10314f">左移</text>
+          <text x="510" y="330" text-anchor="middle" font-size="19" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="316" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="324" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 140 L 720 140 L 720 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 258" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 200 299 L 78 299 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 585 285 L 612 285" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 585 310 L 612 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 585 333 L 612 333" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:370px">步骤</th><th style="width:130px">除数</th><th style="width:220px">余数/被除数，商</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c">0010</td><td class="c">0000 <span class="hi">0111</span></td></tr>
+        <tr class="alt"><td>被除数移位</td><td class="c">0010</td><td class="c">0000 <span class="hi">1110</span></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c">0010</td><td class="c"><span class="hi">1110 1110</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 → 被除数 += 除数, 被除数移位, 商 LSB=0</td><td class="c">0010</td><td class="c"><span class="hi">0001 1100</span></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c">0010</td><td class="c"><span class="hi">1111 1100</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 → 被除数 += 除数, 被除数移位, 商 LSB=0</td><td class="c">0010</td><td class="c"><span class="hi">0011 1000</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">25 / 33</div>
+</section>
+
+<!-- ======================================================== 26 除法器电路第 2 版（逐步演算 下） -->
+<section class="slide" id="s26">
+  <div class="slide__head">
+    <h2 class="slide__title">除法器电路的实现 第 2 版</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:330px;padding-top:6px">
+        <div class="mono" style="font-size:21px;font-weight:700;color:#10314f">(+7) / (+2) = (+3) 余 (+1)</div>
+        <div class="abox abox--slim mt10" style="font-size:16px">
+          <span class="abox__tag">答案</span>左半 <span class="mono">0001</span> 是余数（+1），右半 <span class="mono">0011</span> 是商（+3）。
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:440px;height:auto" role="img" aria-label="除法器电路第 2 版小框图">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="180" y="258" width="400" height="82" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="286" text-anchor="middle" font-size="22" fill="#10314f">余数/被除数，商</text>
+          <text x="330" y="316" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="510" y="282" text-anchor="middle" font-size="19" fill="#10314f">右移</text>
+          <text x="510" y="306" text-anchor="middle" font-size="19" fill="#10314f">左移</text>
+          <text x="510" y="330" text-anchor="middle" font-size="19" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="316" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="324" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 140 L 720 140 L 720 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 258" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 200 299 L 78 299 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 585 285 L 612 285" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 585 310 L 612 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 585 333 L 612 333" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:370px">步骤</th><th style="width:130px">除数</th><th style="width:220px">余数/被除数，商</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>被除数 − 除数</td><td class="c">0010</td><td class="c"><span class="hi">0001</span> 1000</td></tr>
+        <tr class="alt"><td>被除数 MSB==0 → 被除数移位, 商 LSB=1</td><td class="c">0010</td><td class="c">0011 <span class="hi">0001</span></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c">0010</td><td class="c">0001 <span class="hi">0001</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==0 → 被除数移位, 商 LSB=1</td><td class="c">0010</td><td class="c">0010 <span class="hi">0011</span></td></tr>
+        <tr><td>把被除数的上半部分右移</td><td class="c">0010</td><td class="c"><span class="hi">0001</span> 0011</td></tr>
+        <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c">0010</td><td class="c">0001 0011</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">26 / 33</div>
+</section>
+
+<!-- ======================================================== 27 确认问题（空表） -->
+<section class="slide" id="s27">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:6px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>用除法器电路（第 2 版）计算 <span class="mono">(+6) / (+4) = (+1) 余 (+2)</span>，按下表完成逐步演算。
+    </div>
+
+    <div class="row row--top mt8">
+      <div class="col shrink0" style="width:300px">
+        <div class="abox abox--slim" style="font-size:16px">
+          <span class="abox__tag">提示</span>被除数 <span class="mono">6₁₀ = 0110₂</span> 放进 64 位寄存器的右半；
+          除数 <span class="mono">4₁₀ = 0100₂</span> 固定不动。
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:360px;height:auto" role="img" aria-label="除法器电路第 2 版小框图（供练习使用）">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="180" y="258" width="400" height="82" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="286" text-anchor="middle" font-size="22" fill="#10314f">余数/被除数，商</text>
+          <text x="330" y="316" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="510" y="282" text-anchor="middle" font-size="19" fill="#10314f">右移</text>
+          <text x="510" y="306" text-anchor="middle" font-size="19" fill="#10314f">左移</text>
+          <text x="510" y="330" text-anchor="middle" font-size="19" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="316" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="324" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 650 31 L 748 31 L 748 140 L 720 140 L 720 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 435 242 L 435 258" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 200 299 L 78 299 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 585 285 L 612 285" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 310 L 612 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 333 L 612 333" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <div class="row row--top mt8">
+      <div class="col shrink0" style="width:576px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th style="width:300px">步骤</th><th style="width:110px">除数</th><th>余数/被除数，商</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>初始状态</td><td class="c"></td><td class="c"></td></tr>
+            <tr class="alt"><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+            <tr><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+            <tr class="alt"><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+            <tr><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+            <tr class="alt"><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col shrink0" style="width:576px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th style="width:300px">步骤（续）</th><th style="width:110px">除数</th><th>余数/被除数，商</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+            <tr class="alt"><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+            <tr><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+            <tr class="alt"><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+            <tr><td><span class="blank">　</span></td><td class="c"></td><td class="c"></td></tr>
+            <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c"></td><td class="c"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">27 / 33</div>
+</section>
+
+<!-- ======================================================== 28 确认问题（带步骤提示） -->
+<section class="slide" id="s28">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>用除法器电路（第 2 版）计算 <span class="mono">(+6) / (+4) = (+1) 余 (+2)</span>，按表中给出的步骤完成逐步演算。
+    </div>
+
+    <div class="row row--top mt10">
+      <div class="col shrink0" style="width:300px">
+        <div class="abox abox--slim" style="font-size:16px">
+          <span class="abox__tag">提示</span>看被除数的 MSB：为 <span class="mono">1</span> 就加回除数、左移、商 LSB 置 <span class="mono">0</span>；
+          为 <span class="mono">0</span> 就直接左移、商 LSB 置 <span class="mono">1</span>。
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:320px;height:auto" role="img" aria-label="除法器电路第 2 版小框图（供练习使用）">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="180" y="258" width="400" height="82" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="286" text-anchor="middle" font-size="22" fill="#10314f">余数/被除数，商</text>
+          <text x="330" y="316" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="510" y="282" text-anchor="middle" font-size="19" fill="#10314f">右移</text>
+          <text x="510" y="306" text-anchor="middle" font-size="19" fill="#10314f">左移</text>
+          <text x="510" y="330" text-anchor="middle" font-size="19" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="316" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="324" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 650 31 L 748 31 L 748 140 L 720 140 L 720 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 435 242 L 435 258" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 200 299 L 78 299 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 585 285 L 612 285" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 310 L 612 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 333 L 612 333" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:370px">步骤</th><th style="width:130px">除数</th><th style="width:220px">余数/被除数，商</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c"></td><td class="c"></td></tr>
+        <tr class="alt"><td>被除数移位</td><td class="c"></td><td class="c"></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c"></td><td class="c"></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 所以……</td><td class="c"></td><td class="c"></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c"></td><td class="c"></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 所以……</td><td class="c"></td><td class="c"></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c"></td><td class="c"></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 所以……</td><td class="c"></td><td class="c"></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c"></td><td class="c"></td></tr>
+        <tr class="alt"><td>被除数 MSB==0 所以……</td><td class="c"></td><td class="c"></td></tr>
+        <tr><td>把被除数的上半部分右移</td><td class="c"></td><td class="c"></td></tr>
+        <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c"></td><td class="c"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">28 / 33</div>
+</section>
+
+<!-- ======================================================== 29 确认问题（答案） -->
+<section class="slide" id="s29">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（解答）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>用除法器电路（第 2 版）计算 <span class="mono">(+6) / (+4) = (+1) 余 (+2)</span>，按下表完成逐步演算。
+    </div>
+
+    <div class="row row--top mt10">
+      <div class="col shrink0" style="width:460px">
+        <div class="abox abox--slim" style="font-size:16px">
+          <span class="abox__tag">答案</span>余数 <span class="mono">0010₂ = +2</span>，商 <span class="mono">0001₂ = +1</span>。
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 340" style="width:280px;height:auto" role="img" aria-label="除法器电路第 2 版小框图（答案页）">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="180" y="258" width="400" height="82" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="330" y="286" text-anchor="middle" font-size="22" fill="#10314f">余数/被除数，商</text>
+          <text x="330" y="316" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="510" y="282" text-anchor="middle" font-size="19" fill="#10314f">右移</text>
+          <text x="510" y="306" text-anchor="middle" font-size="19" fill="#10314f">左移</text>
+          <text x="510" y="330" text-anchor="middle" font-size="19" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="316" rx="115" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="324" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 650 31 L 748 31 L 748 140 L 720 140 L 720 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 435 242 L 435 258" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 200 299 L 78 299 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk21a)"></path>
+          <path d="M 585 285 L 612 285" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 310 L 612 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+          <path d="M 585 333 L 612 333" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk21b)"></path>
+        </svg>
+      </div>
+    </div>
+
+    <table class="tbl tbl--xs mt8">
+      <thead>
+        <tr><th style="width:370px">步骤</th><th style="width:130px">除数</th><th style="width:220px">余数/被除数，商</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>初始状态</td><td class="c">0100</td><td class="c">0000 <span class="hi">0110</span></td></tr>
+        <tr class="alt"><td>被除数移位</td><td class="c">0100</td><td class="c">0000 <span class="hi">1100</span></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c">0100</td><td class="c"><span class="hi">1100 1100</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 所以……（加回除数，左移，商 LSB=0）</td><td class="c">0100</td><td class="c"><span class="hi">0001 1000</span></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c">0100</td><td class="c"><span class="hi">1101 1000</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 所以……（加回除数，左移，商 LSB=0）</td><td class="c">0100</td><td class="c"><span class="hi">0011 0000</span></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c">0100</td><td class="c"><span class="hi">1111 0000</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==1 所以……（加回除数，左移，商 LSB=0）</td><td class="c">0100</td><td class="c"><span class="hi">0110 0000</span></td></tr>
+        <tr><td>被除数 − 除数</td><td class="c">0100</td><td class="c"><span class="hi">0010 0000</span></td></tr>
+        <tr class="alt"><td>被除数 MSB==0 所以……（左移，商 LSB=1）</td><td class="c">0100</td><td class="c"><span class="hi">0100 0001</span></td></tr>
+        <tr><td>把被除数的上半部分右移</td><td class="c">0100</td><td class="c"><span class="hi">0010</span> 0001</td></tr>
+        <tr class="alt"><td>已重复 4 个比特，结束</td><td class="c">0100</td><td class="c">0010 0001</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">29 / 33</div>
+</section>
+
+<!-- ======================================================== 30 处理负数的除法器电路 -->
+<section class="slide" id="s30">
+  <div class="slide__head">
+    <h2 class="slide__title">处理负数的除法器电路</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <ul class="bullets bullets--compact">
+      <li>把<span class="kw">被除数</span>与<span class="kw">除数</span>的符号记下来，事后施加符号。</li>
+    </ul>
+
+    <div class="row row--top mt16" style="gap:24px">
+      <div class="col shrink0" style="width:620px">
+        <div class="panel panel--tight" style="padding-top:12px">
+          <div class="panel__title">回顾（二进制数的除法：带符号除法）</div>
+          <div class="note" style="font-size:15px;margin-left:26px">被除数 = 商 × 除数 + 余数</div>
+          <div class="steps steps--tight mt8" style="margin-left:26px">
+            <div class="steps__item"><span class="steps__no">■</span>(+7) / (+2) = (+3) 余 (+1)</div>
+            <div class="steps__item"><span class="steps__no">■</span>(-7) / (-2) = (+3) 余 (-1)</div>
+            <div class="steps__item"><span class="steps__no">■</span>(-7) / (+2) = (-3) 余 (-1)</div>
+            <div class="steps__item"><span class="steps__no">■</span>(+7) / (-2) = (-3) 余 (+1)</div>
+            <div class="steps__item steps__item--on mt8"><span class="steps__no">✕</span>(+7) / (-2) = (-4) 余 (-1)
+              <span class="note" style="margin-left:8px">← 余数符号与被除数不一致，不成立</span></div>
+          </div>
+          <div class="callout callout--red mt12" style="font-size:16px">
+            <span class="callout__tag">约定</span>
+            <span>被除数的符号与余数的符号必须相同。</span>
+          </div>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="panel panel--tight" style="padding-top:14px">
+          <div class="panel__title panel__title--red">符号的施加规则</div>
+          <div class="abox abox--slim" style="font-size:17px">
+            <span class="abox__tag">(i)</span>被除数与除数的符号<span class="kw">不同</span>时，把商取为<span class="kw">负</span>；
+          </div>
+          <div class="abox abox--slim mt10" style="font-size:17px">
+            <span class="abox__tag">(ii)</span>把被除数与余数的符号<span class="kw">对齐</span>。
+          </div>
+          <div class="callout callout--blue mt12" style="font-size:16px">
+            <span class="callout__tag">说明</span>
+            <span>除法电路内部只做无符号的「移位—减法」循环，正负号只是进入电路前与离开电路后各处理一次。</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">30 / 33</div>
+</section>
+
+<!-- ======================================================== 31 MIPS 中的乘法・除法电路 -->
+<section class="slide" id="s31">
+  <div class="slide__head">
+    <h2 class="slide__title">MIPS 中的乘法・除法电路</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <ul class="bullets bullets--compact">
+      <li>可以<span class="kw">复用同一套硬件</span>。</li>
+      <li>为了处理 64 位，使用<span class="kw">两个一组的寄存器（Hi, Lo）</span>。</li>
+    </ul>
+
+    <div class="row row--top mt10" style="gap:20px">
+      <div class="col shrink0" style="width:574px">
+        <svg viewBox="0 0 840 400" style="width:574px;height:auto" role="img"
+             aria-label="MIPS 乘法电路：被乘数 32 位、32 位 ALU、积与乘数合用一个 64 位寄存器">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">被乘数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="230" y="262" width="360" height="76" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="340" y="292" text-anchor="middle" font-size="21" fill="#10314f">积，乘数</text>
+          <text x="340" y="320" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="500" y="292" text-anchor="middle" font-size="20" fill="#10314f">右移</text>
+          <text x="500" y="320" text-anchor="middle" font-size="20" fill="#10314f">写入</text>
+          <ellipse cx="700" cy="320" rx="118" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="700" y="328" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 180 L 700 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 262" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 260 300 L 78 300 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 590 300 L 600 300" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 700 354 L 700 372 L 900 372" fill="none" stroke="#10314f" stroke-width="1.6"></path>
+        </svg>
+        <div class="figure-cap" style="font-size:18px;font-weight:700;color:#10314f">乘　法</div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 840 400" style="width:574px;height:auto" role="img"
+             aria-label="MIPS 除法电路：除数 32 位、32 位 ALU、余数与商合用一个 64 位寄存器">
+          <rect x="350" y="6" width="300" height="50" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="500" y="40" text-anchor="middle" font-size="22" fill="#10314f">除数（32bit）</text>
+          <polygon points="260,120 610,120 470,242 400,242" fill="#fff" stroke="#10314f" stroke-width="1.6"></polygon>
+          <text x="435" y="174" text-anchor="middle" font-size="21" fill="#10314f">32bit</text>
+          <text x="435" y="200" text-anchor="middle" font-size="21" fill="#10314f">ALU</text>
+          <rect x="200" y="258" width="390" height="84" fill="#fff" stroke="#10314f" stroke-width="1.6"></rect>
+          <text x="340" y="288" text-anchor="middle" font-size="21" fill="#10314f">余数/被除数，商</text>
+          <text x="340" y="322" text-anchor="middle" font-size="20" fill="#10314f">（64bit）</text>
+          <text x="510" y="282" text-anchor="middle" font-size="19" fill="#10314f">右移</text>
+          <text x="510" y="306" text-anchor="middle" font-size="19" fill="#10314f">左移</text>
+          <text x="510" y="330" text-anchor="middle" font-size="19" fill="#10314f">写入</text>
+          <ellipse cx="710" cy="320" rx="118" ry="34" fill="#fff" stroke="#10314f" stroke-width="1.6"></ellipse>
+          <text x="710" y="328" text-anchor="middle" font-size="21" fill="#10314f">控制·判定</text>
+          <path d="M 400 56 L 400 74 L 355 74 L 355 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 465 56 L 465 120" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 650 31 L 748 31 L 748 180 L 710 180" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 435 242 L 435 258" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 230 300 L 78 300 L 78 100 L 272 100" fill="none" stroke="#10314f" stroke-width="3" marker-end="url(#mk11a)"></path>
+          <path d="M 592 285 L 604 285" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 592 310 L 604 310" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+          <path d="M 592 335 L 604 335" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#mk11b)"></path>
+        </svg>
+        <div class="figure-cap" style="font-size:18px;font-weight:700;color:#10314f">除　法</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">31 / 33</div>
+</section>
+
+<!-- ======================================================== 32 乘法・除法指令 -->
+<section class="slide" id="s32">
+  <div class="slide__head">
+    <h2 class="slide__title">乘法・除法指令</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <div class="row row--top">
+      <div class="col grow">
+        <pre class="code code--plain mt8">mult $s2, $s3       <span class="cmt"># 有符号乘法</span>
+
+multu $s2, $s3      <span class="cmt"># 无符号乘法</span>
+    Hi, Lo = $s2 × $s3
+
+div $s2, $s3        <span class="cmt"># 有符号除法</span>
+    Lo = $s2 / $s3,  Hi = $s2 % $s3
+
+divu $s2, $s3       <span class="cmt"># 无符号除法</span>
+    Lo = $s2 / $s3,  Hi = $s2 % $s3
+
+mvhi $s1            <span class="cmt"># move from hi</span>
+    $s1 = Hi
+
+mvlo $s1            <span class="cmt"># move from lo</span>
+    $s1 = Lo</pre>
+      </div>
+      <div class="col shrink0" style="width:420px;padding-top:16px">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">指令与寄存器的对应</div>
+          <div class="note" style="font-size:16px">
+            乘法的 64 位积放在 <span class="mono">Hi</span>、<span class="mono">Lo</span> 这一对寄存器里；
+            除法的<span class="kw">商放在 Lo</span>、<span class="kw">余数放在 Hi</span>。
+            要用普通指令访问这两个值，就再用 <span class="mono">mvhi</span> / <span class="mono">mvlo</span> 搬到通用寄存器。
+          </div>
+        </div>
+        <div class="callout callout--blue mt12" style="font-size:16px">
+          <span class="callout__tag">说明</span>
+          <span><span class="mono">mvhi</span> / <span class="mono">mvlo</span> 与第 6 讲的 <span class="mono">move</span> 不同，
+            后者是汇编器的伪指令；而 <span class="mono">mvhi</span> / <span class="mono">mvlo</span> 是访问
+            <span class="mono">Hi</span>、<span class="mono">Lo</span> 的专门指令。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">32 / 33</div>
+</section>
+
+<!-- ======================================================== 33 参考文献 -->
+<section class="slide" id="s33">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:26px">
+    <div class="refs">
+      <div class="refs__item">
+        《计算机组成与设计:硬件 / 软件接口》第 5 版（上）
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span>
+      </div>
+      <div class="refs__item">
+        David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社
+      </div>
+      <div class="refs__item">
+        山下茂《计算机组成原理 1》课程讲义
+        <span class="refs__en">山下茂「計算機構成論１」講義資料</span>
+      </div>
+    </div>
+
+    <div class="callout mt24" style="font-size:18px">
+      <span class="callout__tag">本讲小结</span>
+      <span>二进制乘法与十进制一样可以<span class="kw">竖式笔算</span>；硬件上反复做「看乘数的最低位 → 加被乘数 / 什么都不做 → 移位」，
+        乘法器电路由<span class="kw">第 1 版</span>（被乘数左移、积单独存放）经<span class="kw">第 2 版</span>（积右移、ALU 缩到 32 位）
+        演进到<span class="kw">第 3 版</span>（积与乘数共用一个 64 位寄存器）。除法做「<span class="kw">移位 — 减法</span>」并看被除数的 MSB 决定商的这一位，
+        第 2 版把除数右移改为余数／被除数左移。有符号数则先<span class="kw">记下符号</span>、把负数转正，最后再施加符号——
+        被除数的符号与余数的符号必须一致。MIPS 用 <span class="mono">Hi</span>、<span class="kw-blue">Lo</span> 一对寄存器复用同一套乘除硬件。</span>
+    </div>
+  </div>
+  <div class="page-no">33 / 33</div>
+</section>
+
+</div>
+</body>
+</html>

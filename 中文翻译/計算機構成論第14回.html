@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第14讲 流水线处理 · 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="14">
+
+<!-- 数据通路重绘用的 SVG 图形定义（内联，不引入外部资源） -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#10314f"/></marker>
+<marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#12805f"/></marker>
+<marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1660a8"/></marker>
+
+<!-- ============ MIPS 指令实现方式概念图（p5 / p8 用） ============ -->
+<g id="dp-concept">
+  <polygon points="250,150 340,150 382,215 340,280 250,280 280,215" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="326" y="222" font-size="15" fill="#10314f" text-anchor="middle">加法</text>
+  <polygon points="620,150 710,150 752,215 710,280 620,280 650,215" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="696" y="222" font-size="15" fill="#10314f" text-anchor="middle">加法</text>
+  <text x="226" y="196" font-size="15" fill="#10314f" text-anchor="end">4</text>
+  <line x1="232" y1="190" x2="266" y2="190" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="160" y1="245" x2="266" y2="245" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="160,385 160,245" fill="none" stroke="#10314f" stroke-width="1.6"/>
+  <polyline points="382,215 430,215 430,70 86,70 86,330" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="430,215 560,215 560,190 638,190" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="752,215 790,215 790,70 430,70" fill="none" stroke="#10314f" stroke-width="1.6"/>
+  <rect x="30" y="330" width="112" height="110" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+  <text x="86" y="392" font-size="24" fill="#10314f" text-anchor="middle">PC</text>
+  <line x1="142" y1="385" x2="200" y2="385" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="200" y="320" width="232" height="130" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="238" y="350" font-size="16" fill="#10314f">地址</text>
+  <text x="352" y="350" font-size="16" fill="#10314f">指令</text>
+  <text x="316" y="432" font-size="18" fill="#10314f" text-anchor="middle">指令存储器</text>
+  <line x1="432" y1="400" x2="505" y2="400" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="505" y1="330" x2="505" y2="400" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="505" y1="330" x2="520" y2="330" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="505" y1="365" x2="520" y2="365" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="505" y1="400" x2="520" y2="400" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="470,400 470,245 636,245" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="520" y="260" width="232" height="180" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="530" y="336" font-size="15" fill="#10314f">rs</text>
+  <text x="530" y="371" font-size="15" fill="#10314f">rt</text>
+  <text x="530" y="406" font-size="15" fill="#10314f">rd</text>
+  <text x="690" y="356" font-size="18" fill="#10314f" text-anchor="middle">寄存器</text>
+  <text x="620" y="424" font-size="13" fill="#10314f" text-anchor="middle">写入数据</text>
+  <polygon points="800,280 890,280 932,360 890,440 800,440 830,360" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="868" y="367" font-size="16" fill="#10314f" text-anchor="middle">ALU</text>
+  <line x1="752" y1="320" x2="815" y2="320" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="752" y1="400" x2="815" y2="400" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="932" y1="360" x2="956" y2="360" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="956" y1="360" x2="980" y2="360" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="956" y1="360" x2="956" y2="430" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="980" y1="430" x2="956" y2="430" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="956" y1="430" x2="956" y2="492" stroke="#10314f" stroke-width="1.6"/>
+  <polyline points="956,492 620,492 620,440" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="980" y="300" width="132" height="170" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="992" y="356" font-size="16" fill="#10314f">地址</text>
+  <text x="992" y="436" font-size="16" fill="#10314f">数据</text>
+  <text x="1046" y="400" font-size="16" fill="#10314f" text-anchor="middle">数据存储器</text>
+</g>
+
+<!-- ============ 概念图 + 多路选择器（p6 用） ============ -->
+<g id="dp-concept-mux">
+  <polygon points="250,150 340,150 382,215 340,280 250,280 280,215" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="326" y="222" font-size="15" fill="#10314f" text-anchor="middle">加法</text>
+  <polygon points="620,150 710,150 752,215 710,280 620,280 650,215" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="696" y="222" font-size="15" fill="#10314f" text-anchor="middle">加法</text>
+  <text x="226" y="196" font-size="15" fill="#10314f" text-anchor="end">4</text>
+  <line x1="232" y1="190" x2="266" y2="190" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="160" y1="245" x2="266" y2="245" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="160,385 160,245" fill="none" stroke="#10314f" stroke-width="1.6"/>
+  <polyline points="382,215 430,215 430,70 800,70" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="430,215 560,215 560,190 638,190" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="752,215 790,215 790,120 800,120" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="792" y="64" font-size="14" fill="#10314f" text-anchor="end">A</text>
+  <text x="792" y="114" font-size="14" fill="#10314f" text-anchor="end">B</text>
+  <text x="900" y="88" font-size="14" fill="#10314f">X</text>
+  <polygon points="800,30 890,55 890,135 800,160" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="826" y="101" font-size="13" fill="#10314f" text-anchor="middle">MUX</text>
+  <text x="845" y="12" font-size="14" fill="#10314f" text-anchor="middle">MUX 控制</text>
+  <line x1="845" y1="18" x2="845" y2="42" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="890,95 925,95 925,20 86,20 86,330" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="30" y="330" width="112" height="110" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+  <text x="86" y="392" font-size="24" fill="#10314f" text-anchor="middle">PC</text>
+  <line x1="142" y1="385" x2="200" y2="385" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="200" y="320" width="232" height="130" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="238" y="350" font-size="16" fill="#10314f">地址</text>
+  <text x="352" y="350" font-size="16" fill="#10314f">指令</text>
+  <text x="316" y="432" font-size="18" fill="#10314f" text-anchor="middle">指令存储器</text>
+  <line x1="432" y1="400" x2="505" y2="400" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="505" y1="330" x2="505" y2="400" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="505" y1="330" x2="520" y2="330" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="505" y1="365" x2="520" y2="365" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="505" y1="400" x2="520" y2="400" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="470,400 470,245 636,245" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="520" y="260" width="232" height="180" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="530" y="336" font-size="15" fill="#10314f">rs</text>
+  <text x="530" y="371" font-size="15" fill="#10314f">rt</text>
+  <text x="530" y="406" font-size="15" fill="#10314f">rd</text>
+  <text x="690" y="356" font-size="18" fill="#10314f" text-anchor="middle">寄存器</text>
+  <text x="620" y="424" font-size="13" fill="#10314f" text-anchor="middle">写入数据</text>
+  <polygon points="800,280 890,280 932,360 890,440 800,440 830,360" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="868" y="367" font-size="16" fill="#10314f" text-anchor="middle">ALU</text>
+  <line x1="752" y1="320" x2="815" y2="320" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="752" y1="400" x2="815" y2="400" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="932" y1="360" x2="956" y2="360" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="956" y1="360" x2="980" y2="360" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="956" y1="360" x2="956" y2="430" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="980" y1="430" x2="956" y2="430" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="956" y1="430" x2="956" y2="492" stroke="#10314f" stroke-width="1.6"/>
+  <polyline points="956,492 620,492 620,440" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="980" y="300" width="132" height="170" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="992" y="356" font-size="16" fill="#10314f">地址</text>
+  <text x="992" y="436" font-size="16" fill="#10314f">数据</text>
+  <text x="1046" y="400" font-size="16" fill="#10314f" text-anchor="middle">数据存储器</text>
+</g>
+
+<!-- ============ 取指部分的数据通路（p12 用） ============ -->
+<g id="dp-fetch">
+  <rect x="40" y="240" width="110" height="72" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+  <text x="95" y="286" font-size="20" fill="#10314f" text-anchor="middle">PC</text>
+  <polygon points="180,80 260,80 302,135 260,190 180,190" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="216" y="142" font-size="14" fill="#10314f" text-anchor="middle">加法</text>
+  <text x="164" y="121" font-size="15" fill="#10314f" text-anchor="end">4</text>
+  <line x1="170" y1="115" x2="180" y2="115" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="165" y1="160" x2="180" y2="160" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="165,275 165,160" fill="none" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="150" y1="275" x2="200" y2="275" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="200" y="230" width="220" height="120" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="208" y="250" font-size="13" fill="#10314f">地址</text>
+  <text x="330" y="250" font-size="13" fill="#10314f">指令</text>
+  <text x="310" y="336" font-size="16" fill="#10314f" text-anchor="middle">指令存储器</text>
+  <line x1="420" y1="275" x2="470" y2="275" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="302,135 350,135 350,40 95,40 95,240" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+</g>
+
+<!-- ============ R 格式指令执行的数据通路（p13 用） ============ -->
+<g id="dp-rtype">
+  <rect x="60" y="120" width="220" height="220" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="170" y="240" font-size="18" fill="#10314f" text-anchor="middle">寄存器</text>
+  <text x="70" y="146" font-size="13" fill="#10314f">数据</text>
+  <text x="70" y="196" font-size="13" fill="#10314f">rs</text>
+  <text x="70" y="231" font-size="13" fill="#10314f">rt</text>
+  <text x="70" y="266" font-size="13" fill="#10314f">rd</text>
+  <text x="52" y="134" font-size="12" fill="#10314f" text-anchor="end">32bit</text>
+  <line x1="8" y1="140" x2="58" y2="140" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="52" y="184" font-size="12" fill="#10314f" text-anchor="end">5bit</text>
+  <line x1="8" y1="190" x2="58" y2="190" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="52" y="219" font-size="12" fill="#10314f" text-anchor="end">5bit</text>
+  <text x="52" y="254" font-size="12" fill="#10314f" text-anchor="end">5bit</text>
+  <line x1="20" y1="190" x2="20" y2="260" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="20" y1="225" x2="58" y2="225" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="20" y1="260" x2="58" y2="260" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="150" y="60" font-size="15" fill="#12805f" text-anchor="middle">RegWrite</text>
+  <line x1="170" y1="68" x2="170" y2="118" stroke="#12805f" stroke-width="1.5" marker-end="url(#arg)"/>
+  <text x="176" y="100" font-size="12" fill="#12805f">1bit</text>
+  <polygon points="450,150 530,150 572,210 530,270 450,270" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="486" y="216" font-size="16" fill="#10314f" text-anchor="middle">ALU</text>
+  <text x="500" y="110" font-size="15" fill="#12805f" text-anchor="middle">ALU 操作</text>
+  <line x1="500" y1="118" x2="500" y2="148" stroke="#12805f" stroke-width="1.5" marker-end="url(#arg)"/>
+  <text x="506" y="136" font-size="12" fill="#12805f">4bit</text>
+  <text x="272" y="192" font-size="13" fill="#10314f" text-anchor="end">rs 数据</text>
+  <text x="272" y="247" font-size="13" fill="#10314f" text-anchor="end">rt 数据</text>
+  <line x1="280" y1="185" x2="448" y2="185" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="280" y1="240" x2="448" y2="240" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="310" y="178" font-size="12" fill="#10314f">32bit</text>
+  <text x="310" y="258" font-size="12" fill="#10314f">32bit</text>
+  <line x1="572" y1="210" x2="640" y2="210" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="648" y="228" font-size="14" fill="#10314f">零判定</text>
+  <polyline points="600,210 600,40 30,40 30,140 58,140" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="614" y="90" font-size="15" fill="#10314f">ALU 结果</text>
+</g>
+
+<!-- ============ lw/sw 指令执行的数据通路（p14 用） ============ -->
+<g id="dp-lwsw">
+  <ellipse cx="110" cy="248" rx="62" ry="44" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+  <text x="110" y="254" font-size="15" fill="#10314f" text-anchor="middle">符号扩展</text>
+  <text x="36" y="240" font-size="12" fill="#10314f" text-anchor="end">16bit</text>
+  <line x1="6" y1="248" x2="46" y2="248" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="186" y="238" font-size="12" fill="#10314f">32bit</text>
+  <polygon points="250,130 330,130 372,190 330,250 250,250" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="286" y="196" font-size="16" fill="#10314f" text-anchor="middle">ALU</text>
+  <text x="228" y="157" font-size="12" fill="#10314f" text-anchor="end">32bit</text>
+  <line x1="180" y1="163" x2="248" y2="163" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="172,248 215,248 215,220 248,220" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="372,190 430,190 430,100 490,100" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="440" y="182" font-size="12" fill="#10314f">32bit</text>
+  <line x1="450" y1="270" x2="490" y2="270" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="428" y="262" font-size="12" fill="#10314f" text-anchor="end">32bit</text>
+  <rect x="490" y="80" width="210" height="220" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="498" y="100" font-size="13" fill="#10314f">地址</text>
+  <text x="498" y="266" font-size="13" fill="#10314f">写入数据</text>
+  <text x="692" y="140" font-size="13" fill="#10314f" text-anchor="end">读出数据</text>
+  <text x="595" y="286" font-size="16" fill="#10314f" text-anchor="middle">数据存储器</text>
+  <line x1="700" y1="130" x2="740" y2="130" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="704" y="120" font-size="12" fill="#10314f">32bit</text>
+  <text x="600" y="45" font-size="15" fill="#12805f" text-anchor="middle">MemWrite</text>
+  <line x1="600" y1="52" x2="600" y2="78" stroke="#12805f" stroke-width="1.5" marker-end="url(#arg)"/>
+  <text x="606" y="70" font-size="12" fill="#12805f">1bit</text>
+  <text x="600" y="374" font-size="15" fill="#12805f" text-anchor="middle">MemRead</text>
+  <line x1="600" y1="352" x2="600" y2="302" stroke="#12805f" stroke-width="1.5" marker-end="url(#arg)"/>
+  <text x="606" y="340" font-size="12" fill="#12805f">1bit</text>
+</g>
+
+<!-- ============ 分支指令执行的数据通路（p15 用） ============ -->
+<g id="dp-branch">
+  <rect x="60" y="140" width="190" height="200" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="155" y="240" font-size="16" fill="#10314f" text-anchor="middle">寄存器</text>
+  <text x="70" y="166" font-size="12" fill="#10314f">数据</text>
+  <text x="70" y="211" font-size="12" fill="#10314f">rs</text>
+  <text x="70" y="246" font-size="12" fill="#10314f">rt</text>
+  <text x="70" y="281" font-size="12" fill="#10314f">rd</text>
+  <text x="52" y="154" font-size="12" fill="#10314f" text-anchor="end">32bit</text>
+  <line x1="8" y1="160" x2="58" y2="160" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="52" y="199" font-size="12" fill="#10314f" text-anchor="end">5bit</text>
+  <line x1="8" y1="205" x2="58" y2="205" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="52" y="234" font-size="12" fill="#10314f" text-anchor="end">5bit</text>
+  <text x="52" y="269" font-size="12" fill="#10314f" text-anchor="end">5bit</text>
+  <line x1="20" y1="205" x2="20" y2="275" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="20" y1="240" x2="58" y2="240" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="20" y1="275" x2="58" y2="275" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="150" y="80" font-size="14" fill="#12805f" text-anchor="middle">RegWrite</text>
+  <line x1="165" y1="88" x2="165" y2="138" stroke="#12805f" stroke-width="1.5" marker-end="url(#arg)"/>
+  <text x="171" y="118" font-size="12" fill="#12805f">1bit</text>
+  <polygon points="340,160 410,160 452,225 410,290 340,290" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="376" y="231" font-size="15" fill="#10314f" text-anchor="middle">ALU</text>
+  <text x="420" y="120" font-size="14" fill="#12805f" text-anchor="middle">ALU 操作</text>
+  <line x1="420" y1="128" x2="420" y2="158" stroke="#12805f" stroke-width="1.5" marker-end="url(#arg)"/>
+  <text x="426" y="146" font-size="12" fill="#12805f">4bit</text>
+  <line x1="250" y1="205" x2="338" y2="205" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="250" y1="265" x2="338" y2="265" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="270" y="198" font-size="12" fill="#10314f">32bit</text>
+  <text x="270" y="288" font-size="12" fill="#10314f">32bit</text>
+  <line x1="452" y1="225" x2="520" y2="225" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="526" y="258" font-size="14" fill="#10314f">零判定</text>
+  <ellipse cx="250" cy="400" rx="60" ry="42" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+  <text x="250" y="406" font-size="14" fill="#10314f" text-anchor="middle">符号扩展</text>
+  <text x="178" y="392" font-size="12" fill="#10314f" text-anchor="end">16bit</text>
+  <line x1="150" y1="398" x2="188" y2="398" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="318" y="390" font-size="12" fill="#10314f">32bit</text>
+  <polyline points="310,400 545,400 545,120 558,120" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <ellipse cx="605" cy="120" rx="46" ry="30" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+  <text x="605" y="125" font-size="12" fill="#10314f" text-anchor="middle">2 位左移</text>
+  <text x="556" y="66" font-size="14" fill="#10314f" text-anchor="end">PC+4</text>
+  <line x1="562" y1="60" x2="898" y2="60" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="660,60 660,110 678,110" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polygon points="680,80 750,80 792,135 750,190 680,190" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="712" y="142" font-size="14" fill="#10314f" text-anchor="middle">加法</text>
+  <polyline points="650,120 665,120 665,155 678,155" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="792,135 830,135 830,100 898,100" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="860" y="176" font-size="13" fill="#10314f" text-anchor="middle">分支目标地址</text>
+  <polygon points="900,30 970,52 970,108 900,130" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="922" y="86" font-size="13" fill="#10314f" text-anchor="middle">MUX</text>
+  <text x="884" y="54" font-size="13" fill="#10314f" text-anchor="end">0</text>
+  <text x="884" y="94" font-size="13" fill="#10314f" text-anchor="end">1</text>
+  <text x="935" y="18" font-size="14" fill="#12805f" text-anchor="middle">PcSrc</text>
+  <line x1="935" y1="24" x2="935" y2="40" stroke="#12805f" stroke-width="1.5" marker-end="url(#arg)"/>
+  <text x="941" y="34" font-size="11" fill="#12805f">1bit</text>
+  <line x1="970" y1="80" x2="1000" y2="80" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="1006" y="86" font-size="14" fill="#10314f">→ PC</text>
+</g>
+
+<!-- ============ 统合后的完整数据通路（p16 / p17 / p18 用） ============ -->
+<g id="dp-full">
+  <rect x="56" y="300" width="64" height="64" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+  <text x="88" y="338" font-size="15" fill="#10314f" text-anchor="middle">PC</text>
+  <line x1="120" y1="310" x2="170" y2="310" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="145,310 145,175 240,175" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polygon points="240,120 320,120 362,175 320,230 240,230" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="268" y="182" font-size="14" fill="#10314f" text-anchor="middle">加法</text>
+  <text x="212" y="170" font-size="14" fill="#10314f" text-anchor="end">4</text>
+  <line x1="216" y1="163" x2="240" y2="163" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="362,175 400,175 400,50 1000,50 1000,100 1030,100" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="400" y1="115" x2="820" y2="115" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <ellipse cx="740" cy="150" rx="40" ry="30" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+  <text x="740" y="155" font-size="12" fill="#10314f" text-anchor="middle">2 位左移</text>
+  <polygon points="820,80 900,80 942,135 900,190 820,190" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="845" y="142" font-size="14" fill="#10314f" text-anchor="middle">加法</text>
+  <text x="900" y="214" font-size="12" fill="#7c3aed" text-anchor="middle">ALU 结果</text>
+  <line x1="780" y1="150" x2="820" y2="150" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="942,135 970,135 970,150 1030,150" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polygon points="1030,80 1100,102 1100,148 1030,170" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="1050" y="132" font-size="12" fill="#10314f" text-anchor="middle">MUX</text>
+  <text x="1065" y="64" font-size="12" fill="#12805f" text-anchor="middle">PCSrc</text>
+  <line x1="1065" y1="68" x2="1065" y2="89" stroke="#12805f" stroke-width="1.4" marker-end="url(#arg)"/>
+  <polyline points="1100,125 1130,125 1130,30 88,30 88,300" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="170" y="290" width="160" height="140" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="178" y="306" font-size="13" fill="#10314f">读出地址</text>
+  <text x="322" y="394" font-size="13" fill="#10314f" text-anchor="end">指令 [31-0]</text>
+  <text x="250" y="424" font-size="15" fill="#10314f" text-anchor="middle">指令存储器</text>
+  <line x1="330" y1="400" x2="400" y2="400" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="400" y1="240" x2="400" y2="480" stroke="#10314f" stroke-width="1.6"/>
+  <line x1="400" y1="240" x2="420" y2="240" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="400" y1="275" x2="420" y2="275" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="400" y1="310" x2="420" y2="310" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="400,440 620,440 620,150 700,150" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="400" y1="480" x2="460" y2="480" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="438" y="472" font-size="12" fill="#10314f">16</text>
+  <rect x="420" y="210" width="190" height="220" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="428" y="244" font-size="13" fill="#10314f">读出寄存器1</text>
+  <text x="428" y="279" font-size="13" fill="#10314f">读出寄存器2</text>
+  <text x="428" y="314" font-size="13" fill="#10314f">写入寄存器</text>
+  <text x="428" y="384" font-size="13" fill="#10314f">写入数据</text>
+  <text x="602" y="264" font-size="13" fill="#10314f" text-anchor="end">读出数据1</text>
+  <text x="602" y="349" font-size="13" fill="#10314f" text-anchor="end">读出数据2</text>
+  <text x="515" y="418" font-size="14" fill="#10314f" text-anchor="middle">寄存器</text>
+  <text x="520" y="186" font-size="12" fill="#12805f" text-anchor="middle">RegWrite</text>
+  <line x1="520" y1="190" x2="520" y2="208" stroke="#12805f" stroke-width="1.4" marker-end="url(#arg)"/>
+  <line x1="610" y1="260" x2="690" y2="260" stroke="#10314f" stroke-width="1.6"/>
+  <polyline points="690,260 690,300 750,300" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="610" y1="345" x2="650" y2="345" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="645,345 645,200 1000,200 1000,290" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polygon points="650,330 710,352 710,388 650,410" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="672" y="377" font-size="12" fill="#10314f" text-anchor="middle">MUX</text>
+  <text x="680" y="318" font-size="12" fill="#12805f" text-anchor="middle">ALUSrc</text>
+  <line x1="680" y1="322" x2="680" y2="340" stroke="#12805f" stroke-width="1.4" marker-end="url(#arg)"/>
+  <line x1="710" y1="370" x2="750" y2="370" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <ellipse cx="510" cy="480" rx="50" ry="30" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+  <text x="510" y="485" font-size="13" fill="#10314f" text-anchor="middle">符号扩展</text>
+  <polyline points="560,480 630,480 630,385 650,385" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="578" y="472" font-size="12" fill="#10314f">32</text>
+  <polygon points="750,270 830,270 872,330 830,390 750,390" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="782" y="338" font-size="15" fill="#10314f" text-anchor="middle">ALU</text>
+  <text x="790" y="242" font-size="12" fill="#12805f" text-anchor="middle">ALU 操作</text>
+  <line x1="790" y1="246" x2="790" y2="268" stroke="#12805f" stroke-width="1.4" marker-end="url(#arg)"/>
+  <line x1="790" y1="390" x2="790" y2="412" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="798" y="418" font-size="13" fill="#10314f">零判定</text>
+  <line x1="872" y1="330" x2="960" y2="330" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polyline points="900,330 900,505 640,505" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="960" y="290" width="160" height="170" fill="#fff" stroke="#10314f" stroke-width="1.6"/>
+  <text x="968" y="324" font-size="13" fill="#10314f">地址</text>
+  <text x="1000" y="308" font-size="12" fill="#10314f" text-anchor="middle">写入数据</text>
+  <text x="1040" y="432" font-size="15" fill="#10314f" text-anchor="middle">数据存储器</text>
+  <text x="1112" y="374" font-size="13" fill="#10314f" text-anchor="end">读出数据</text>
+  <text x="1046" y="272" font-size="12" fill="#12805f" text-anchor="middle">MemWrite</text>
+  <line x1="1046" y1="276" x2="1046" y2="288" stroke="#12805f" stroke-width="1.4" marker-end="url(#arg)"/>
+  <text x="1046" y="482" font-size="12" fill="#12805f" text-anchor="middle">MemRead</text>
+  <line x1="1046" y1="478" x2="1046" y2="462" stroke="#12805f" stroke-width="1.4" marker-end="url(#arg)"/>
+  <polyline points="1120,380 1160,380 1160,535 640,535" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+  <polygon points="640,490 570,508 570,532 640,550" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+  <text x="600" y="524" font-size="12" fill="#10314f" text-anchor="middle">MUX</text>
+  <text x="605" y="482" font-size="12" fill="#12805f" text-anchor="middle">MemtoReg</text>
+  <line x1="605" y1="486" x2="605" y2="498" stroke="#12805f" stroke-width="1.4" marker-end="url(#arg)"/>
+  <polyline points="570,520 380,520 380,390 420,390" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+</g>
+</defs>
+</svg>
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 14 讲</div>
+    <h1 class="cover__title"><em>流水线</em>处理</h1>
+    <p class="cover__sub">数据通路 · 流水线执行 · 流水线冒险</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    薛昕惟
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第14回 ―パイプライン処理―」<br>
+    中文翻译版
+  </div>
+  <div class="page-no" style="color:#8fb0cc">1 / 29</div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">流水线处理</div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">概述<span class="toc__item--jp">概説 — 概述</span></div>
+          <div class="toc__item">数据通路的构建<span class="toc__item--jp">データパスの構築 — 数据通路的构建</span></div>
+          <div class="toc__item">流水线处理的执行<span class="toc__item--jp">パイプライン処理の実行 — 流水线处理的执行</span></div>
+          <div class="toc__item">流水线处理的问题点<span class="toc__item--jp">パイプライン処理の問題点 — 流水线处理的问题点</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">内容</span>
+      <span>本讲讨论<span class="kw">流水线处理</span>（日文：パイプライン処理 / pipelining）。
+        先说明为什么要流水线，再一步步搭出 MIPS 的<span class="kw-blue">数据通路</span>（日文：データパス / datapath），
+        然后插入<span class="kw-blue">流水线寄存器</span>得到流水线数据通路，
+        最后讨论流水线的三类<span class="kw">冒险</span>（日文：ハザード / hazard）及其对策。</span>
+    </div>
+  </div>
+  <div class="page-no">2 / 29</div>
+</section>
+
+<!-- ======================================================== 3 进一步提高性能 -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">进一步提高性能</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:610px">
+        <ul class="bullets bullets--compact">
+          <li>决定计算器<span class="kw">性能</span>的因素
+            <ul class="bullets bullets--sub">
+              <li>1. 单位时间内的执行指令数（日文：単位時間あたりの実行命令数）</li>
+              <li>2. 时钟周期时间（日文：クロック・サイクル時間）</li>
+              <li>3. CPI（每指令时钟周期数）</li>
+            </ul>
+          </li>
+          <li>难道不能增加<span class="kw">单位时间内的执行指令数</span>吗？</li>
+        </ul>
+        <div class="panel panel--tight mt16">
+          <div class="panel__title panel__title--red">流水线处理（日文：パイプライン処理）</div>
+          <div class="note">把多条指令在时间上<span class="kw">错开</span>、并行地执行。右图中指令 A、B、C 的三个阶段
+            <span class="mono">指令读取 → 寄存器 → 计算执行</span> 依次错开一段，重叠着向前推进。</div>
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 690 232" width="520" height="175" style="display:block;margin:0 auto">
+          <text x="62" y="62" font-size="15" fill="#17212b" text-anchor="end">指令 A</text>
+          <text x="62" y="122" font-size="15" fill="#17212b" text-anchor="end">指令 B</text>
+          <text x="62" y="182" font-size="15" fill="#17212b" text-anchor="end">指令 C</text>
+          <rect x="70" y="32" width="120" height="48" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="190" y="32" width="120" height="48" fill="#fdfbe9" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="310" y="32" width="120" height="48" fill="#eef7ee" stroke="#10314f" stroke-width="1.5"/>
+          <text x="130" y="62" font-size="15" fill="#10314f" text-anchor="middle">指令读取</text>
+          <text x="250" y="62" font-size="15" fill="#10314f" text-anchor="middle">寄存器</text>
+          <text x="370" y="62" font-size="15" fill="#10314f" text-anchor="middle">计算执行</text>
+          <rect x="190" y="92" width="120" height="48" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="310" y="92" width="120" height="48" fill="#fdfbe9" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="430" y="92" width="120" height="48" fill="#eef7ee" stroke="#10314f" stroke-width="1.5"/>
+          <text x="250" y="122" font-size="15" fill="#10314f" text-anchor="middle">指令读取</text>
+          <text x="370" y="122" font-size="15" fill="#10314f" text-anchor="middle">寄存器</text>
+          <text x="490" y="122" font-size="15" fill="#10314f" text-anchor="middle">计算执行</text>
+          <rect x="310" y="152" width="120" height="48" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="430" y="152" width="120" height="48" fill="#fdfbe9" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="550" y="152" width="120" height="48" fill="#eef7ee" stroke="#10314f" stroke-width="1.5"/>
+          <text x="370" y="182" font-size="15" fill="#10314f" text-anchor="middle">指令读取</text>
+          <text x="490" y="182" font-size="15" fill="#10314f" text-anchor="middle">寄存器</text>
+          <text x="610" y="182" font-size="15" fill="#10314f" text-anchor="middle">计算执行</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">3 / 29</div>
+</section>
+
+<!-- ======================================================== 4 指令的执行 -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">指令的执行</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li>指令的<span class="kw">执行阶段</span>
+        <ul class="bullets bullets--sub">
+          <li>从存储器中取出指令 ＝ <span class="kw-blue">取指</span>（fetch）
+            <ul class="bullets bullets--deep">
+              <li>把指令的内容传送到寄存器</li>
+              <li>把 PC（程序计数器）加 4</li>
+            </ul>
+          </li>
+          <li>读出<span class="kw-blue">操作数</span>所在寄存器的值</li>
+        </ul>
+      </li>
+      <li>之后进入<span class="kw">各指令不同的处理</span>
+        <ul class="bullets bullets--sub">
+          <li>但处理内容其实<span class="kw-blue">相当相似</span>
+            <ul class="bullets bullets--deep">
+              <li>算术逻辑运算的执行 ＝ 使用 ALU</li>
+              <li><span class="mono">lw</span>、<span class="mono">sw</span> → 地址值相加 ＝ 使用 ALU</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="callout callout--blue mt16">
+      <span class="callout__tag">要点</span>
+      <span>正因为各指令都要经过「取指 → 读寄存器 → 用 ALU 计算」，才可能把不同指令的<span class="kw">不同阶段重叠</span>起来执行 —— 这正是流水线处理的基础。</span>
+    </div>
+  </div>
+  <div class="page-no">4 / 29</div>
+</section>
+
+<!-- ======================================================== 5 MIPS 指令实现方式的概念图 -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">MIPS 指令实现方式的概念图</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <svg viewBox="0 0 1120 520" width="1080" height="501" style="display:block;margin:0 auto">
+      <use href="#dp-concept"/>
+    </svg>
+    <div class="note center mt8" style="font-size:15px">这里只考虑 <span class="mono">lw</span>、<span class="mono">sw</span>、<span class="mono">add</span>、<span class="mono">sub</span>、
+      <span class="mono">and</span>、<span class="mono">or</span>、<span class="mono">slt</span>、<span class="mono">beq</span> 指令</div>
+  </div>
+  <div class="page-no">5 / 29</div>
+</section>
+
+<!-- ======================================================== 6 概念图（含多路选择器） -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">MIPS 指令实现方式的概念图</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <svg viewBox="0 0 1120 520" width="990" height="460" style="display:block;margin:0 auto">
+      <use href="#dp-concept-mux"/>
+    </svg>
+    <div class="callout mt10" style="font-size:18px">
+      <span class="callout__tag">多路选择器（选择器）</span>
+      <span>日文：マルチプレクサ（セレクタ）/ MUX。由 <span class="kw">MUX 控制</span>信号从多个输入 A、B 中选出一个送到输出 X。
+        在本图中，它用来选择「把 PC+4 还是把分支目标地址写回 PC」，即用<span class="kw">控制线</span>决定是读出还是写入。</span>
+    </div>
+  </div>
+  <div class="page-no">6 / 29</div>
+</section>
+
+<!-- ======================================================== 7 逻辑设计与时钟方式 -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">逻辑设计与时钟方式</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:640px">
+        <ul class="bullets bullets--compact">
+          <li>设计计算器时，必须决定<span class="kw">时钟的「刻度」方式</span>
+            <ul class="bullets bullets--sub">
+              <li><span class="kw-blue">组合逻辑元件</span>（日文：組み合わせ論理要素）：<span class="kw">没有内部状态</span>（如 ALU 等）</li>
+              <li><span class="kw-blue">状态逻辑元件</span>（日文：状態論理要素）：<span class="kw">具有内部状态</span>（如寄存器、存储器等），每个时钟脉冲推进一次状态</li>
+            </ul>
+          </li>
+          <li><span class="kw">边沿触发时钟方式</span>（日文：エッジ・トリガ・クロック方式）
+            <ul class="bullets bullets--sub">
+              <li>在时钟脉冲的<span class="kw">高低电平切换</span>时推进状态</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 460 220" width="430" height="205" style="display:block;margin:0 auto">
+          <rect x="20" y="60" width="170" height="80" fill="#e4f0f7" stroke="#10314f" stroke-width="1.6"/>
+          <text x="105" y="106" font-size="16" fill="#10314f" text-anchor="middle">状态逻辑元件</text>
+          <ellipse cx="330" cy="100" rx="82" ry="40" fill="#fdfbe9" stroke="#10314f" stroke-width="1.6"/>
+          <text x="330" y="106" font-size="16" fill="#10314f" text-anchor="middle">组合逻辑电路</text>
+          <line x1="190" y1="90" x2="244" y2="90" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+          <polyline points="330,140 330,185 105,185 105,145" fill="none" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+          <text x="105" y="45" font-size="13" fill="#6b7c8d" text-anchor="middle">内部状态</text>
+          <text x="330" y="45" font-size="13" fill="#6b7c8d" text-anchor="middle">无内部状态</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">7 / 29</div>
+</section>
+
+<!-- ======================================================== 8 概念图（含时钟与执行示意） -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">MIPS 指令实现方式的概念图</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <svg viewBox="0 0 1120 520" width="1060" height="492" style="display:block;margin:0 auto">
+      <use href="#dp-concept"/>
+      <polyline points="800,120 800,100 830,100 830,120 860,120 860,100 890,100 890,120 920,120 920,100 950,100 950,120 980,120 980,100 1010,100 1010,120 1040,120 1040,100 1070,100 1070,120 1096,120"
+                fill="none" stroke="#10314f" stroke-width="1.8"/>
+      <rect x="786" y="152" width="320" height="92" fill="#fff" stroke="#15803d" stroke-width="1.5"/>
+      <text x="781" y="176" font-size="12" fill="#10314f" text-anchor="end">指令 A</text>
+      <text x="781" y="202" font-size="12" fill="#10314f" text-anchor="end">指令 B</text>
+      <text x="781" y="228" font-size="12" fill="#10314f" text-anchor="end">指令 C</text>
+      <g stroke="#10314f" stroke-width="1.1" fill="#fbfcfe">
+        <rect x="786" y="158" width="64" height="26"/><rect x="850" y="158" width="64" height="26"/><rect x="914" y="158" width="64" height="26"/>
+        <rect x="850" y="184" width="64" height="26"/><rect x="914" y="184" width="64" height="26"/><rect x="978" y="184" width="64" height="26"/>
+        <rect x="914" y="210" width="64" height="26"/><rect x="978" y="210" width="64" height="26"/><rect x="1042" y="210" width="64" height="26"/>
+      </g>
+      <g font-size="10" fill="#10314f" text-anchor="middle">
+        <text x="818" y="175">指令读取</text><text x="882" y="175">寄存器</text><text x="946" y="175">计算执行</text>
+        <text x="882" y="201">指令读取</text><text x="946" y="201">寄存器</text><text x="1010" y="201">计算执行</text>
+        <text x="946" y="227">指令读取</text><text x="1010" y="227">寄存器</text><text x="1074" y="227">计算执行</text>
+      </g>
+    </svg>
+    <div class="note center mt8">左上为时钟脉冲（高低电平切换即推进状态）；右上为指令 A・B・C 在时间上错开的执行示意</div>
+  </div>
+  <div class="page-no">8 / 29</div>
+</section>
+
+<!-- ======================================================== 9 确认问题 -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="qbox">
+      <span class="qbox__tag">问题</span>
+      <span>请答出与下列各说明相对应的术语。</span>
+    </div>
+    <ul class="bullets mt20">
+      <li>把多条指令在<span class="kw">时间上错开</span>、并行地执行的处理方式</li>
+      <li>从存储器中取出指令</li>
+      <li>在时钟脉冲的高低电平切换时，推进状态逻辑元件状态的方式</li>
+      <li>由控制信号从多个输入中选出 1 个并输出的机构</li>
+    </ul>
+    <div class="note mt24">原讲义此页为确认问题（問題回答無し ver.），页面上未印出解答。</div>
+  </div>
+  <div class="page-no">9 / 29</div>
+</section>
+
+<!-- ======================================================== 10 确认问题（答案页） -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="qbox">
+      <span class="qbox__tag">问题</span>
+      <span>请答出与下列各说明相对应的术语。</span>
+    </div>
+    <div class="abox mt12">
+      <span class="abox__tag">答案</span>
+      <span>
+        <span class="qno">(1)</span>把多条指令在时间上错开、并行地执行的处理方式 →
+        <span class="kw">流水线处理</span>（パイプライン処理 / pipelining）<br>
+        <span class="qno">(2)</span>从存储器中取出指令 → <span class="kw">取指</span>（フェッチ / fetch）<br>
+        <span class="qno">(3)</span>在时钟脉冲的高低电平切换时推进状态逻辑元件状态的方式 →
+        <span class="kw">边沿触发时钟方式</span>（エッジ・トリガ・クロック方式）<br>
+        <span class="qno">(4)</span>由控制信号从多个输入中选出 1 个并输出的机构 →
+        <span class="kw">多路选择器（选择器）</span>（マルチプレクサ（セレクタ）/ MUX）
+      </span>
+    </div>
+    <div class="abox abox--slim mt10">
+      <span class="abox__tag">说明</span>原讲义为「問題回答無し ver.」，此页只重印题面、未印解答；上表按本讲内容补出其对应术语。
+    </div>
+  </div>
+  <div class="page-no">10 / 29</div>
+</section>
+
+<!-- ======================================================== 11 讲义内容 -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">流水线处理</div>
+        <div class="toc__items">
+          <div class="toc__item">概述<span class="toc__item--jp">概説 — 概述</span></div>
+          <div class="toc__item toc__item--active">数据通路的构建<span class="toc__item--jp">データパスの構築 — 数据通路的构建</span></div>
+          <div class="toc__item">流水线处理的执行<span class="toc__item--jp">パイプライン処理の実行 — 流水线处理的执行</span></div>
+          <div class="toc__item">流水线处理的问题点<span class="toc__item--jp">パイプライン処理の問題点 — 流水线处理的问题点</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本节</span>
+      <span>接下来按「取指 → R 格式指令执行 → <span class="mono">lw</span>/<span class="mono">sw</span> 指令执行 → 分支指令执行 → 各部分统合 → 进一步详细化」
+        的顺序，把 MIPS 的<span class="kw">数据通路</span>一步步搭出来，最后插入<span class="kw-blue">流水线寄存器</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">11 / 29</div>
+</section>
+
+<!-- ======================================================== 12 数据通路的构建 指令的取指 -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">数据通路的构建：指令的取指</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:410px">
+        <ul class="bullets bullets--compact">
+          <li><span class="kw">数据通路</span>（日文：データパス / datapath）：数据的路径</li>
+          <li>这里给出<span class="kw-blue">取指</span>并推进 PC 的那一部分数据通路</li>
+        </ul>
+        <div class="callout callout--slim mt16">
+          <span class="callout__tag">图中</span>
+          <span>PC 送出的地址进入指令存储器，读出 32 位指令；同时 PC 与常数 4 相加，
+            结果写回 PC（即 PC ← PC+4）。</span>
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 520 380" width="700" height="512" style="display:block;margin:0 auto">
+          <use href="#dp-fetch"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">12 / 29</div>
+</section>
+
+<!-- ======================================================== 13 数据通路的构建 R 格式的指令执行 -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">数据通路的构建：R 格式的指令执行</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <svg viewBox="0 0 700 400" width="820" height="469" style="display:block;margin:0 auto">
+      <use href="#dp-rtype"/>
+    </svg>
+    <div class="callout callout--slim mt10">
+      <span class="callout__tag">寄存器堆</span>
+      <span>日文：レジスタ・ファイル。由 <span class="kw">32 个通用寄存器</span>构成；
+        用 5 位的 <span class="mono">rs</span>、<span class="mono">rt</span>、<span class="mono">rd</span> 选择寄存器，
+        读出的两个操作数与 ALU 结果都是 32 位；写回由 <span class="mono">RegWrite</span>（1 位）控制。</span>
+    </div>
+  </div>
+  <div class="page-no">13 / 29</div>
+</section>
+
+<!-- ======================================================== 14 数据通路的构建 lw/sw 指令的执行 -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">数据通路的构建：lw/sw 指令的执行</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <svg viewBox="0 0 760 390" width="880" height="452" style="display:block;margin:0 auto">
+      <use href="#dp-lwsw"/>
+    </svg>
+    <div class="callout callout--slim mt10">
+      <span class="callout__tag">lw / sw</span>
+      <span>先把 16 位立即数<span class="kw">符号扩展</span>为 32 位，由 ALU 与基址寄存器的值相加得到地址，
+        再按 <span class="mono">MemRead</span> / <span class="mono">MemWrite</span> 控制数据存储器的读出与写入
+        （<span class="mono">lw</span> 读出、<span class="mono">sw</span> 写入）。</span>
+    </div>
+  </div>
+  <div class="page-no">14 / 29</div>
+</section>
+
+<!-- ======================================================== 15 数据通路的构建 分支指令的执行 -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">数据通路的构建：分支指令的执行</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <svg viewBox="0 0 1060 470" width="1000" height="443" style="display:block;margin:0 auto">
+      <use href="#dp-branch"/>
+    </svg>
+    <div class="callout callout--slim mt10">
+      <span class="callout__tag">beq</span>
+      <span>ALU 做减法并输出<span class="kw">零判定</span>结果；分支目标地址＝(PC+4)＋（立即数左移 2 位）。
+        由 <span class="mono">PcSrc</span> 控制多路选择器，选择把 PC+4 还是把分支目标地址写回 PC。</span>
+    </div>
+  </div>
+  <div class="page-no">15 / 29</div>
+</section>
+
+<!-- ======================================================== 16 数据通路的构建 各部分的统合 -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">数据通路的构建：各部分的统合</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <svg viewBox="0 0 1240 570" width="1070" height="492" style="display:block;margin:0 auto">
+      <use href="#dp-full"/>
+    </svg>
+    <div class="note center mt8">把取指、R 格式、<span class="mono">lw</span>/<span class="mono">sw</span>、分支四部分统合为一条完整的数据通路
+      （绿色为控制信号，橙色为多路选择器）</div>
+  </div>
+  <div class="page-no">16 / 29</div>
+</section>
+
+<!-- ======================================================== 17 数据通路的构建 进一步详细化 -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">数据通路的构建：进一步详细化</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:6px">
+    <svg viewBox="0 0 1240 570" width="1000" height="460" style="display:block;margin:0 auto">
+      <use href="#dp-full"/>
+      <ellipse cx="285" cy="490" rx="72" ry="45" fill="#eef5fd" stroke="#1660a8" stroke-width="1.6"/>
+      <text x="285" y="484" font-size="14" fill="#1660a8" text-anchor="middle">控制</text>
+      <text x="285" y="504" font-size="14" fill="#1660a8" text-anchor="middle">单元</text>
+      <line x1="400" y1="470" x2="355" y2="470" stroke="#1660a8" stroke-width="1.5" marker-end="url(#arb)"/>
+      <text x="404" y="462" font-size="11" fill="#1660a8">命令 [31-26]</text>
+      <text x="40" y="438" font-size="11" font-weight="700" fill="#1660a8">控制信号</text>
+      <text x="40" y="452" font-size="11" fill="#1660a8">RegDst</text>
+      <text x="40" y="466" font-size="11" fill="#1660a8">Branch</text>
+      <text x="40" y="480" font-size="11" fill="#1660a8">MemRead</text>
+      <text x="40" y="494" font-size="11" fill="#1660a8">MemtoReg</text>
+      <text x="40" y="508" font-size="11" fill="#1660a8">ALUOp</text>
+      <text x="40" y="522" font-size="11" fill="#1660a8">MemWrite</text>
+      <text x="40" y="536" font-size="11" fill="#1660a8">ALUSrc</text>
+      <text x="40" y="550" font-size="11" fill="#1660a8">RegWrite</text>
+      <line x1="200" y1="446" x2="200" y2="554" stroke="#1660a8" stroke-width="1.5"/>
+      <line x1="213" y1="490" x2="200" y2="490" stroke="#1660a8" stroke-width="1.5"/>
+      <text x="396" y="234" font-size="11" fill="#1660a8" text-anchor="end">命令 [25-21]</text>
+      <text x="396" y="269" font-size="11" fill="#1660a8" text-anchor="end">命令 [20-16]</text>
+      <text x="396" y="304" font-size="11" fill="#1660a8" text-anchor="end">命令 [15-11]</text>
+      <text x="396" y="432" font-size="11" fill="#1660a8" text-anchor="end">命令 [15-0]</text>
+      <text x="786" y="234" font-size="11" fill="#1660a8" text-anchor="end">命令 [5-0]</text>
+    </svg>
+    <div class="callout callout--slim mt8">
+      <span class="callout__tag">控制单元</span>
+      <span>日文：制御。控制单元根据 <span class="mono">命令[31-26]</span> 译码产生 8 个控制信号
+        （RegDst / Branch / MemRead / MemtoReg / ALUOp / MemWrite / ALUSrc / RegWrite）；
+        其中 ALUOp 与 <span class="mono">命令[5-0]</span> 一起送入 <span class="kw">ALU 控制</span>，产生 4 位的 ALU 操作信号。</span>
+    </div>
+  </div>
+  <div class="page-no">17 / 29</div>
+</section>
+
+<!-- ======================================================== 18 数据通路（含流水线寄存器） -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">数据通路（含流水线寄存器）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <svg viewBox="0 0 1240 570" width="900" height="414" style="display:block;margin:0 auto">
+      <use href="#dp-full"/>
+      <rect x="390" y="36" width="16" height="470" fill="#cfe0ef" fill-opacity="0.6" stroke="#7d93a8" stroke-width="1.4" stroke-dasharray="5 3"/>
+      <rect x="626" y="36" width="16" height="470" fill="#cfe0ef" fill-opacity="0.6" stroke="#7d93a8" stroke-width="1.4" stroke-dasharray="5 3"/>
+      <rect x="896" y="36" width="16" height="470" fill="#cfe0ef" fill-opacity="0.6" stroke="#7d93a8" stroke-width="1.4" stroke-dasharray="5 3"/>
+      <rect x="1170" y="36" width="16" height="470" fill="#cfe0ef" fill-opacity="0.6" stroke="#7d93a8" stroke-width="1.4" stroke-dasharray="5 3"/>
+      <text x="398" y="26" font-size="13" fill="#1660a8" text-anchor="middle" font-weight="700">IF/ID</text>
+      <text x="634" y="26" font-size="13" fill="#1660a8" text-anchor="middle" font-weight="700">ID/EX</text>
+      <text x="904" y="26" font-size="13" fill="#1660a8" text-anchor="middle" font-weight="700">EX/MEM</text>
+      <text x="1178" y="26" font-size="13" fill="#1660a8" text-anchor="middle" font-weight="700">MEM/WB</text>
+    </svg>
+    <div class="row row--top mt12">
+      <div class="col shrink0" style="width:520px">
+        <div class="steps steps--tight">
+          <div class="steps__item"><span class="steps__no">IF:</span>取指令（日文：命令フェッチ）</div>
+          <div class="steps__item"><span class="steps__no">ID:</span>指令译码与取寄存器（日文：命令デコードとレジスタフェッチ）</div>
+          <div class="steps__item"><span class="steps__no">EX:</span>指令执行／地址生成（日文：命令実行／アドレス生成）</div>
+          <div class="steps__item"><span class="steps__no">MEM:</span>数据存储器访问（日文：データメモリアクセス）</div>
+          <div class="steps__item"><span class="steps__no">WB:</span>写回（日文：書き込み）</div>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout callout--slim">
+          <span class="callout__tag">流水线寄存器</span>
+          <span>日文：パイプライン・レジスタ。<span class="kw">每个流水线级（阶段）之间都设置流水线寄存器</span>，
+            用来保存上一级产生的数据与控制信号，供下一级使用。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">18 / 29</div>
+</section>
+
+<!-- ======================================================== 19 讲义内容 -->
+<section class="slide" id="s19">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">流水线处理</div>
+        <div class="toc__items">
+          <div class="toc__item">概述<span class="toc__item--jp">概説 — 概述</span></div>
+          <div class="toc__item">数据通路的构建<span class="toc__item--jp">データパスの構築 — 数据通路的构建</span></div>
+          <div class="toc__item toc__item--active">流水线处理的执行<span class="toc__item--jp">パイプライン処理の実行 — 流水线处理的执行</span></div>
+          <div class="toc__item">流水线处理的问题点<span class="toc__item--jp">パイプライン処理の問題点 — 流水线处理的问题点</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本节</span>
+      <span>有了带流水线寄存器的数据通路，下面用<span class="kw">时空图</span>来看流水线到底怎样执行指令，
+        并明确流水线缩短的是什么、不缩短的又是什么。</span>
+    </div>
+  </div>
+  <div class="page-no">19 / 29</div>
+</section>
+
+<!-- ======================================================== 20 进一步提高性能（再掲） -->
+<section class="slide" id="s20">
+  <div class="slide__head">
+    <h2 class="slide__title">进一步提高性能 <span class="kw-blue" style="font-size:24px">再掲</span></h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:610px">
+        <ul class="bullets bullets--compact">
+          <li>决定计算器<span class="kw">性能</span>的因素
+            <ul class="bullets bullets--sub">
+              <li>1. 单位时间内的执行指令数</li>
+              <li>2. 时钟周期时间</li>
+              <li>3. CPI（每指令时钟周期数）</li>
+            </ul>
+          </li>
+          <li>难道不能增加<span class="kw">单位时间内的执行指令数</span>吗？</li>
+        </ul>
+        <div class="panel panel--tight mt16">
+          <div class="panel__title panel__title--red">流水线处理（再掲）</div>
+          <div class="note">与第 3 页相同的示意图：指令 A、B、C 的三个阶段依次错开一段、重叠着向前推进。</div>
+        </div>
+      </div>
+      <div class="col grow">
+        <svg viewBox="0 0 690 232" width="520" height="175" style="display:block;margin:0 auto">
+          <text x="62" y="62" font-size="15" fill="#17212b" text-anchor="end">指令 A</text>
+          <text x="62" y="122" font-size="15" fill="#17212b" text-anchor="end">指令 B</text>
+          <text x="62" y="182" font-size="15" fill="#17212b" text-anchor="end">指令 C</text>
+          <rect x="70" y="32" width="120" height="48" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="190" y="32" width="120" height="48" fill="#fdfbe9" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="310" y="32" width="120" height="48" fill="#eef7ee" stroke="#10314f" stroke-width="1.5"/>
+          <text x="130" y="62" font-size="15" fill="#10314f" text-anchor="middle">指令读取</text>
+          <text x="250" y="62" font-size="15" fill="#10314f" text-anchor="middle">寄存器</text>
+          <text x="370" y="62" font-size="15" fill="#10314f" text-anchor="middle">计算执行</text>
+          <rect x="190" y="92" width="120" height="48" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="310" y="92" width="120" height="48" fill="#fdfbe9" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="430" y="92" width="120" height="48" fill="#eef7ee" stroke="#10314f" stroke-width="1.5"/>
+          <text x="250" y="122" font-size="15" fill="#10314f" text-anchor="middle">指令读取</text>
+          <text x="370" y="122" font-size="15" fill="#10314f" text-anchor="middle">寄存器</text>
+          <text x="490" y="122" font-size="15" fill="#10314f" text-anchor="middle">计算执行</text>
+          <rect x="310" y="152" width="120" height="48" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="430" y="152" width="120" height="48" fill="#fdfbe9" stroke="#10314f" stroke-width="1.5"/>
+          <rect x="550" y="152" width="120" height="48" fill="#eef7ee" stroke="#10314f" stroke-width="1.5"/>
+          <text x="370" y="182" font-size="15" fill="#10314f" text-anchor="middle">指令读取</text>
+          <text x="490" y="182" font-size="15" fill="#10314f" text-anchor="middle">寄存器</text>
+          <text x="610" y="182" font-size="15" fill="#10314f" text-anchor="middle">计算执行</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">20 / 29</div>
+</section>
+
+<!-- ======================================================== 21 流水线处理的执行示意 -->
+<section class="slide" id="s21">
+  <div class="slide__head">
+    <h2 class="slide__title">流水线处理的执行示意</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <svg viewBox="0 0 1290 400" width="1150" height="357" style="display:block;margin:0 auto">
+      <line x1="110" y1="48" x2="962" y2="48" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+      <g stroke="#10314f" stroke-width="1.4">
+        <line x1="110" y1="43" x2="110" y2="53"/><line x1="215" y1="43" x2="215" y2="53"/>
+        <line x1="320" y1="43" x2="320" y2="53"/><line x1="425" y1="43" x2="425" y2="53"/>
+        <line x1="530" y1="43" x2="530" y2="53"/><line x1="635" y1="43" x2="635" y2="53"/>
+        <line x1="740" y1="43" x2="740" y2="53"/><line x1="845" y1="43" x2="845" y2="53"/>
+        <line x1="950" y1="43" x2="950" y2="53"/>
+      </g>
+      <g font-size="12" fill="#41505f" text-anchor="middle">
+        <text x="110" y="36">0</text><text x="215" y="36">200</text><text x="320" y="36">400</text>
+        <text x="425" y="36">600</text><text x="530" y="36">800</text><text x="635" y="36">1000</text>
+        <text x="740" y="36">1200</text><text x="845" y="36">1400</text><text x="950" y="36">1600</text>
+      </g>
+      <text x="970" y="36" font-size="12" fill="#41505f">时间</text>
+      <text x="100" y="88" font-size="13" fill="#17212b" text-anchor="end">命令1</text>
+      <text x="100" y="140" font-size="13" fill="#17212b" text-anchor="end">命令2</text>
+      <g stroke="#10314f" stroke-width="1.2">
+        <rect x="110" y="62" width="105" height="44" fill="#e4f0f7"/><rect x="215" y="62" width="105" height="44" fill="#fdfbe9"/>
+        <rect x="320" y="62" width="105" height="44" fill="#eef7ee"/><rect x="425" y="62" width="105" height="44" fill="#fdeff1"/>
+        <rect x="530" y="62" width="105" height="44" fill="#f2f4f7"/>
+        <rect x="635" y="114" width="105" height="44" fill="#e4f0f7"/><rect x="740" y="114" width="105" height="44" fill="#fdfbe9"/>
+        <rect x="845" y="114" width="105" height="44" fill="#eef7ee"/>
+        <rect x="950" y="114" width="105" height="44" fill="#fff" stroke-dasharray="4 3"/>
+        <rect x="1055" y="114" width="105" height="44" fill="#fff" stroke-dasharray="4 3"/>
+      </g>
+      <g font-size="12" fill="#10314f" text-anchor="middle">
+        <text x="162" y="89">取指</text><text x="267" y="89">译码</text><text x="372" y="89">执行</text>
+        <text x="477" y="89">访存</text><text x="582" y="89">写回</text>
+        <text x="687" y="141">取指</text><text x="792" y="141">译码</text><text x="897" y="141">执行</text>
+        <text x="1002" y="141">访存</text><text x="1107" y="141">写回</text>
+      </g>
+      <text x="1168" y="141" font-size="11" fill="#6b7c8d">超出坐标轴 →</text>
+
+      <line x1="110" y1="232" x2="962" y2="232" stroke="#10314f" stroke-width="1.6" marker-end="url(#ar)"/>
+      <g stroke="#10314f" stroke-width="1.4">
+        <line x1="110" y1="227" x2="110" y2="237"/><line x1="215" y1="227" x2="215" y2="237"/>
+        <line x1="320" y1="227" x2="320" y2="237"/><line x1="425" y1="227" x2="425" y2="237"/>
+        <line x1="530" y1="227" x2="530" y2="237"/><line x1="635" y1="227" x2="635" y2="237"/>
+        <line x1="740" y1="227" x2="740" y2="237"/><line x1="845" y1="227" x2="845" y2="237"/>
+        <line x1="950" y1="227" x2="950" y2="237"/>
+      </g>
+      <g font-size="12" fill="#41505f" text-anchor="middle">
+        <text x="110" y="220">0</text><text x="215" y="220">200</text><text x="320" y="220">400</text>
+        <text x="425" y="220">600</text><text x="530" y="220">800</text><text x="635" y="220">1000</text>
+        <text x="740" y="220">1200</text><text x="845" y="220">1400</text><text x="950" y="220">1600</text>
+      </g>
+      <text x="970" y="220" font-size="12" fill="#41505f">时间</text>
+      <text x="100" y="272" font-size="13" fill="#17212b" text-anchor="end">命令1</text>
+      <text x="100" y="324" font-size="13" fill="#17212b" text-anchor="end">命令2</text>
+      <text x="100" y="376" font-size="13" fill="#17212b" text-anchor="end">命令3</text>
+      <g stroke="#10314f" stroke-width="1.2">
+        <rect x="110" y="246" width="105" height="44" fill="#e4f0f7"/><rect x="215" y="246" width="105" height="44" fill="#fdfbe9"/>
+        <rect x="320" y="246" width="105" height="44" fill="#eef7ee"/><rect x="425" y="246" width="105" height="44" fill="#fdeff1"/>
+        <rect x="530" y="246" width="105" height="44" fill="#f2f4f7"/>
+        <rect x="215" y="298" width="105" height="44" fill="#e4f0f7"/><rect x="320" y="298" width="105" height="44" fill="#fdfbe9"/>
+        <rect x="425" y="298" width="105" height="44" fill="#eef7ee"/><rect x="530" y="298" width="105" height="44" fill="#fdeff1"/>
+        <rect x="635" y="298" width="105" height="44" fill="#f2f4f7"/>
+        <rect x="320" y="350" width="105" height="44" fill="#e4f0f7"/><rect x="425" y="350" width="105" height="44" fill="#fdfbe9"/>
+        <rect x="530" y="350" width="105" height="44" fill="#eef7ee"/><rect x="635" y="350" width="105" height="44" fill="#fdeff1"/>
+        <rect x="740" y="350" width="105" height="44" fill="#f2f4f7"/>
+      </g>
+      <g font-size="12" fill="#10314f" text-anchor="middle">
+        <text x="162" y="273">取指</text><text x="267" y="273">译码</text><text x="372" y="273">执行</text>
+        <text x="477" y="273">访存</text><text x="582" y="273">写回</text>
+        <text x="267" y="325">取指</text><text x="372" y="325">译码</text><text x="477" y="325">执行</text>
+        <text x="582" y="325">访存</text><text x="687" y="325">写回</text>
+        <text x="372" y="377">取指</text><text x="477" y="377">译码</text><text x="582" y="377">执行</text>
+        <text x="687" y="377">访存</text><text x="792" y="377">写回</text>
+      </g>
+    </svg>
+    <div class="note center mt8">上图：不流水线时，命令1 与命令2 依次占满时间轴（命令2 的后两段已超出坐标轴）；<br>
+      下图：流水线时，命令1、2、3 每一级错开一个时钟周期，重叠执行</div>
+  </div>
+  <div class="page-no">21 / 29</div>
+</section>
+
+<!-- ======================================================== 22 讲义内容 -->
+<section class="slide" id="s22">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">流水线处理</div>
+        <div class="toc__items">
+          <div class="toc__item">概述<span class="toc__item--jp">概説 — 概述</span></div>
+          <div class="toc__item">数据通路的构建<span class="toc__item--jp">データパスの構築 — 数据通路的构建</span></div>
+          <div class="toc__item">流水线处理的执行<span class="toc__item--jp">パイプライン処理の実行 — 流水线处理的执行</span></div>
+          <div class="toc__item toc__item--active">流水线处理的问题点<span class="toc__item--jp">パイプライン処理の問題点 — 流水线处理的问题点</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">本节</span>
+      <span>流水线并非没有问题。接下来依次讨论<span class="kw">数据冒险</span>、<span class="kw">结构冒险</span>、
+        <span class="kw">控制冒险</span>三类冒险，以及各自的对策。</span>
+    </div>
+  </div>
+  <div class="page-no">22 / 29</div>
+</section>
+
+<!-- ======================================================== 23 数据冒险 -->
+<section class="slide" id="s23">
+  <div class="slide__head">
+    <h2 class="slide__title">流水线处理的问题点：数据冒险</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li><span class="kw">数据冒险</span>（日文：データ・ハザード / data hazards）：指令执行所需的数据
+        尚未可利用，因此无法执行预定的指令。</li>
+    </ul>
+    <div class="code-label mt12">例</div>
+    <pre class="code code--sm">add $s0, $t0, $t1
+sub $t2, <span class="hi">$s0</span>, $t3</pre>
+    <div class="panel panel--tight mt12">
+      <div class="panel__title panel__title--red">对策</div>
+      <ul class="bullets bullets--sub">
+        <li><span class="kw-blue">前递（旁路）</span>（日文：フォワーディング（バイパシング）/ forwarding (bypassing)）：
+          让计算结果立刻就能使用。</li>
+        <li><span class="kw-blue">代码重排</span>：改变代码的执行顺序来回避停顿。</li>
+        <li><span class="kw-blue">流水线停顿</span>：日文 stall[V/N]，即停滞。等待执行、等计算结果到来
+          （引入 <span class="mono">NOP</span> 指令（空操作指令））→ 会使执行变慢，因此尽可能避免。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-no">23 / 29</div>
+</section>
+
+<!-- ======================================================== 24 结构冒险 -->
+<section class="slide" id="s24">
+  <div class="slide__head">
+    <h2 class="slide__title">流水线处理的问题点：结构冒险</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li><span class="kw">结构冒险</span>（日文：構造ハザード / structural hazards）：在流水线处理中，
+        指令执行所需的<span class="kw">硬件发生冲突</span>，因此无法执行预定的指令。</li>
+      <li>例：多条指令同时读写存储器</li>
+      <li>通过<span class="kw-blue">让发生冲突的指令延迟</span>等办法来处理。</li>
+    </ul>
+    <div class="callout callout--blue mt20">
+      <span class="callout__tag">说明</span>
+      <span>本讲的数据通路把指令存储器与数据存储器分开设置，因此取指（IF）与访存（MEM）不会争用同一个存储器；
+        若两者共用同一个存储器，就会出现结构冒险。</span>
+    </div>
+  </div>
+  <div class="page-no">24 / 29</div>
+</section>
+
+<!-- ======================================================== 25 控制冒险 -->
+<section class="slide" id="s25">
+  <div class="slide__head">
+    <h2 class="slide__title">流水线处理的问题点：控制冒险</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li><span class="kw">控制冒险</span>（日文：制御ハザード / control hazards）：由于存在条件分支，
+        无法判断指令到底应不应该执行，因此<span class="kw">无法在规定的时钟周期内</span>执行指令。</li>
+      <li>也称为<span class="kw-blue">分支冒险</span>（日文：分岐ハザード）。</li>
+    </ul>
+    <div class="panel panel--tight mt20">
+      <div class="panel__title panel__title--teal">预测（日文：予測 / prediction）</div>
+      <ul class="bullets bullets--sub">
+        <li>预测分支的结果（例如<span class="kw-blue">总是预测条件不成立</span>），并据此继续推进指令的执行。</li>
+        <li>若预测正确，流水线就不必停顿；若预测错误，则要丢弃已经取入的指令、重新从正确位置取指。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-no">25 / 29</div>
+</section>
+
+<!-- ======================================================== 26 确认问题（○×） -->
+<section class="slide" id="s26">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="qbox">
+      <span class="qbox__tag">问题</span>
+      <span>判断下列各句是否正确，用 ○ 或 × 回答。</span>
+    </div>
+    <ul class="bullets bullets--compact mt16">
+      <li><span class="qno">(1)</span>在流水线处理中，指令是一条一条、<span class="mono">直列地</span>串行执行的。</li>
+      <li><span class="qno">(2)</span>通过流水线处理，可以减少各条指令执行所需要的时间。</li>
+      <li><span class="qno">(3)</span>流水线处理的目标是提高吞吐量。</li>
+      <li><span class="qno">(4)</span>在流水线处理中，因所需数据尚未可利用而无法执行指令，
+        这种情况称为<span class="kw">分支冒险</span>。</li>
+    </ul>
+    <div class="note mt20">原讲义此页为确认问题（問題回答無し ver.），页面上未印出 ○／× 的解答。</div>
+  </div>
+  <div class="page-no">26 / 29</div>
+</section>
+
+<!-- ======================================================== 27 确认问题（○×・答案页） -->
+<section class="slide" id="s27">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="qbox">
+      <span class="qbox__tag">问题</span>
+      <span>判断下列各句是否正确，用 ○ 或 × 回答。</span>
+    </div>
+    <div class="abox mt12">
+      <span class="abox__tag">答案</span>
+      <span>
+        <span class="qno">(1)</span>在流水线处理中，指令是一条一条、直列地串行执行的 → <span class="red">×</span>
+        （流水线让多条指令在时间上错开、<span class="kw">并行（重叠）</span>执行）<br>
+        <span class="qno">(2)</span>通过流水线处理，可以减少各条指令执行所需要的时间 → <span class="red">×</span>
+        （流水线缩短的是<span class="kw">吞吐量</span>对应的间隔，并不缩短单条指令的延迟）<br>
+        <span class="qno">(3)</span>流水线处理的目标是提高吞吐量 → <span class="kw">○</span><br>
+        <span class="qno">(4)</span>在流水线处理中，因所需数据尚未可利用而无法执行指令，这种情况称为控制冒险 → <span class="red">×</span>
+        （这是<span class="kw">数据冒险</span>；<span class="kw-blue">控制冒险</span>指因条件分支而无法判断指令是否应执行）
+      </span>
+    </div>
+    <div class="abox abox--slim mt10">
+      <span class="abox__tag">说明</span>原讲义为「問題回答無し ver.」，答案页只重印题面、未印 ○／×；上表按本讲内容补出其判定。
+      另：原讲义第 4 题在题目页写作「分岐ハザード」，答案页改作「制御ハザード」，此处照原文保留该差异。
+    </div>
+  </div>
+  <div class="page-no">27 / 29</div>
+</section>
+
+<!-- ======================================================== 28 进一步学习 -->
+<section class="slide" id="s28">
+  <div class="slide__head">
+    <h2 class="slide__title">进一步学习</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li>对于<span class="kw">执行耗时的指令</span>（如乘除法等），要如何用流水线来处理？
+        <ul class="bullets bullets--sub">
+          <li>与通常的流水线<span class="kw-blue">分开处理</span>　等</li>
+        </ul>
+      </li>
+      <li><span class="kw">高速缓存的利用</span>
+        <ul class="bullets bullets--sub">
+          <li>存储层次（日文：記憶階層）的实现</li>
+          <li>虚拟存储（把二级存储当作高速缓存使用）</li>
+        </ul>
+      </li>
+      <li><span class="kw">并行处理</span>
+        <ul class="bullets bullets--sub">
+          <li>超标量（日文：スーパースカラ / superscalar）</li>
+          <li>硬件多线程（日文：ハードウェア・マルチスレッディング）</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="page-no">28 / 29</div>
+</section>
+
+<!-- ======================================================== 29 参考文献 -->
+<section class="slide" id="s29">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:24px">
+    <div class="refs">
+      <div class="refs__item">《计算机组成与设计：硬件 / 软件接口》第 5 版（上）
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span></div>
+      <div class="refs__item">David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社</div>
+      <div class="refs__item">《计算机组成与设计：硬件 / 软件接口》第 5 版（下）
+        <span class="refs__en">コンピュータの構成と設計 下 第5版</span></div>
+      <div class="refs__item">David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社</div>
+      <div class="refs__item" style="font-size:19px;color:#6b7c8d">本页图片为教科书扫描件，禁止转载与分发。
+        <span class="refs__en">画像は教科書からのスキャンです。転載・頒布を禁止します。</span></div>
+    </div>
+    <div class="callout mt20" style="font-size:18px">
+      <span class="callout__tag">本讲小结</span>
+      <span>流水线处理把指令的执行划分为 <span class="mono">IF / ID / EX / MEM / WB</span> 五个阶段，
+        让多条指令在时间上错开、<span class="kw">重叠执行</span>，从而提高<span class="kw">吞吐量</span>；
+        它并不缩短单条指令的<span class="kw-blue">延迟</span>。实现时要按阶段搭好数据通路、在各级之间插入
+        <span class="kw-blue">流水线寄存器</span>，并处理<span class="kw">数据冒险</span>、
+        <span class="kw">结构冒险</span>、<span class="kw">控制冒险</span>三类问题。</span>
+    </div>
+  </div>
+  <div class="page-no">29 / 29</div>
+</section>
+
+</div>
+</body>
+</html>
+</div>
+</body>
+</html>

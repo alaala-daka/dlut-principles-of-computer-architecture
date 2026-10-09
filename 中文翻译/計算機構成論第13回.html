@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第13讲 性能评价 · 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="13">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 13 讲</div>
+    <h1 class="cover__title"><em>性能评价</em></h1>
+    <p class="cover__sub">吞吐量 · 响应时间 · CPI · 基准测试 · 阿姆达尔定律</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    薛昕惟
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第13回 ―性能評価―」<br>
+    中文翻译版
+  </div>
+  <div class="page-no" style="color:#8fb0cc">1 / 27</div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">性能评价</div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">吞吐量、响应时间、CPU 执行时间<span class="toc__item--jp">スループット、応答時間、CPU実行時間</span></div>
+          <div class="toc__item">时钟周期与 CPI<span class="toc__item--jp">クロック・サイクルとCPI</span></div>
+          <div class="toc__item">MIPS<span class="toc__item--jp">MIPS</span></div>
+          <div class="toc__item">基准测试程序<span class="toc__item--jp">ベンチマーク</span></div>
+          <div class="toc__item">阿姆达尔定律<span class="toc__item--jp">アムダールの法則</span></div>
+          <div class="toc__item">摩尔定律<span class="toc__item--jp">ムーアの法則</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">2 / 27</div>
+</section>
+
+<!-- ======================================================== 3 吞吐量与响应时间 -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">吞吐量与响应时间</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li><span class="kw">吞吐量</span>（日文：スループット / throughput）
+        <ul class="bullets bullets--sub">
+          <li>单位时间内<strong>完成的工作量</strong>。</li>
+        </ul>
+      </li>
+      <li><span class="kw">响应时间</span>（日文：応答時間 / response time）
+        <ul class="bullets bullets--sub">
+          <li>计算机<strong>完成一项任务</strong>所需的<strong>时间</strong>。
+            <ul class="bullets bullets--deep">
+              <li>包含磁盘访问、存储器访问、输入输出操作、OS 的开销、CPU 执行时间等。</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="qbox mt12" style="font-size:17px">
+      <span class="qbox__tag">问题</span>
+      <span>在以下情况下，<span class="kw">吞吐量</span>与<span class="kw">响应时间</span>中的哪一个（或者两者同时）会改善？</span>
+      <div class="mt8">
+        <div><span class="qno">1.</span>把处理器更换为更高速的处理器。</div>
+        <div><span class="qno">2.</span>在把任务分担给多个处理器来处理的系统中，<strong>增加</strong>处理器。</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">3 / 27</div>
+</section>
+
+<!-- ======================================================== 4 执行时间的构成 -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">执行时间的构成</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="row row--top" style="gap:12px">
+      <div class="col shrink0" style="width:300px">
+        <div class="panel panel--tight">
+          <div class="panel__title">关于某台计算机 X，以下关系成立</div>
+          <div class="center" style="font-size:21px;line-height:1.5">
+            性能<sub>X</sub> =
+            <span class="nowrap" style="display:inline-block;vertical-align:middle">
+              <span class="mono" style="display:block;border-bottom:2px solid var(--ink);padding:0 10px">1</span>
+              <span class="mono" style="display:block;padding:0 10px">执行时间<sub>X</sub></span>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout callout--blue callout--slim">
+          <span class="callout__tag">等价关系</span>
+          <span>执行时间<strong>减半</strong> ⇔ 性能变为 <strong>2 倍</strong>。</span>
+        </div>
+        <div class="note mt10" style="font-size:15px">※ 这里的「性能」指的是<strong>时间意义上的性能</strong>。</div>
+      </div>
+    </div>
+
+    <ul class="bullets bullets--compact mt12">
+      <li><span class="kw">执行时间</span> ＝ <span class="kw">响应时间</span> ＝ <span class="kw">经过时间</span>（日文：経過時間 / elapsed time）
+        <ul class="bullets bullets--sub">
+          <li>包含磁盘访问、存储器访问、输入输出操作、CPU 执行时间等。</li>
+        </ul>
+      </li>
+      <li>CPU（执行）时间 ＝ 系统 CPU 时间 ＋ 用户 CPU 时间
+        <ul class="bullets bullets--sub">
+          <li><span class="kw-teal">用户 CPU 时间</span>：CPU 针对某个用户程序<strong>实际进行处理</strong>的时间。</li>
+          <li><span class="kw-teal">系统 CPU 时间</span>：OS 的<strong>开销</strong>所占用的作业时间。</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="page-no">4 / 27</div>
+</section>
+
+<!-- ======================================================== 5 CPU 执行时间 -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">CPU 执行时间</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="panel panel--tight">
+      <div class="panel__title panel__title--red">某个程序的 CPU 执行时间</div>
+      <div class="center">
+        <div style="display:inline-block;border:1.6px solid #10314f;border-radius:6px;background:#fbfcfe;padding:12px 34px">
+          <div style="font-size:24px;line-height:1.6">
+            某个程序的 CPU 执行时间 ＝ 该程序执行所需的<br>
+            <span class="kw">CPU 时钟周期数</span> × <span class="kw">时钟周期时间</span>
+          </div>
+          <div class="mt12" style="font-size:24px;line-height:1.5">
+            时钟周期时间（秒） ＝
+            <span class="nowrap" style="display:inline-block;vertical-align:middle">
+              <span class="mono" style="display:block;border-bottom:2px solid var(--ink);padding:0 12px">1</span>
+              <span class="mono" style="display:block;padding:0 12px">时钟频率（Hz）</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row row--center mt12" style="gap:26px">
+      <div class="col shrink0">
+        <svg width="330" height="150" viewBox="0 0 330 150" role="img" aria-label="CLK 时钟方波波形（中文重绘）">
+          <text x="6" y="86" font-size="17" font-family="monospace" fill="#10314f">CLK</text>
+          <text x="62" y="42" font-size="15" font-family="monospace" fill="#10314f">H</text>
+          <text x="62" y="132" font-size="15" font-family="monospace" fill="#10314f">L</text>
+          <polyline points="84,120 84,36 110,36 110,120 136,120 136,36 162,36 162,120 188,120 188,36 214,36 214,120 240,120 240,36 266,36 266,120 292,120 292,36 318,36"
+                    fill="none" stroke="#10314f" stroke-width="2.2"/>
+        </svg>
+      </div>
+      <div class="col shrink0">
+        <svg width="300" height="150" viewBox="0 0 300 150" role="img" aria-label="JK-FF（JK 触发器）框图（中文重绘）">
+          <rect x="6" y="26" width="230" height="98" fill="#fbfcfe" stroke="#10314f" stroke-width="1.8" rx="3"/>
+          <text x="26" y="46" font-size="13" font-family="monospace" fill="#10314f">J</text>
+          <line x1="0" y1="42" x2="6" y2="42" stroke="#10314f" stroke-width="1.6"/>
+          <text x="26" y="112" font-size="13" font-family="monospace" fill="#10314f">K</text>
+          <line x1="0" y1="108" x2="6" y2="108" stroke="#10314f" stroke-width="1.6"/>
+          <text x="6" y="78" font-size="12" font-family="monospace" fill="#10314f">Clk</text>
+          <text x="120" y="82" font-size="14" fill="#41505f">JK 触发器</text>
+          <text x="238" y="42" font-size="13" font-family="monospace" fill="#10314f">Q</text>
+          <line x1="236" y1="36" x2="264" y2="36" stroke="#10314f" stroke-width="1.6"/>
+          <text x="238" y="108" font-size="13" font-family="monospace" fill="#10314f">Q̅</text>
+          <line x1="236" y1="102" x2="264" y2="102" stroke="#10314f" stroke-width="1.6"/>
+          <text x="88" y="18" font-size="12" fill="#6b7c8d">Set</text>
+          <text x="88" y="144" font-size="12" fill="#6b7c8d">Reset</text>
+        </svg>
+        <div class="center mono" style="font-size:15px;color:#10314f">JK-FF</div>
+      </div>
+      <div class="col grow">
+        <div class="callout callout--blue callout--slim">
+          <span class="callout__tag">说明</span>
+          <span>时钟以 <span class="mono">H</span>／<span class="mono">L</span> 两个电平反复切换，一个 <span class="mono">H</span> 加一个 <span class="mono">L</span> 构成<span class="kw-blue">一个时钟周期</span>；时钟周期时间就是它的长度，其倒数即为时钟频率。原讲义右侧的 <span class="mono">JK-FF</span> 图给出用 JK 触发器实现时钟同步状态的电路，此处按原图重绘为中文框图。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">5 / 27</div>
+</section>
+
+<!-- ======================================================== 6 确认问题（填空） -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="qbox" style="font-size:20px;line-height:1.9">
+      <span class="qbox__tag">问题</span>
+      <span>请在下面各题的空白处填入合适的用语或数值。</span>
+      <div class="mt10">
+        <div><span class="qno">(1)</span>单位时间内完成的工作量称为 <span class="slot">&nbsp;</span>。</div>
+        <div><span class="qno">(2)(3)</span>CPU 执行时间 ＝ <span class="slot">&nbsp;</span> CPU 时间 ＋ <span class="slot">&nbsp;</span> CPU 时间。</div>
+        <div><span class="qno">(4)</span>程序 X 的执行所需的 CPU 时钟周期数为 <span class="mono">10000</span>，时钟周期时间为 <span class="mono">0.3</span> 纳秒时，程序 X 结束为止的 CPU 执行时间为 <span class="slot">&nbsp;</span> 微秒。</div>
+        <div><span class="qno">(5)</span>时钟周期时间为 <span class="mono">0.25</span> 纳秒时，时钟频率为 <span class="slot">&nbsp;</span> GHz。</div>
+      </div>
+    </div>
+
+    <div class="note mt10">（红字部分为原讲义标出的填空位置，答案见下一页。）</div>
+  </div>
+  <div class="page-no">6 / 27</div>
+</section>
+
+<!-- ======================================================== 7 确认问题（原讲义未给解答） -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <div class="abox abox--slim">
+      <span class="abox__tag">答案</span>
+      原讲义此页未给出解答（問題回答無し ver.）。
+    </div>
+
+    <div class="panel mt16" style="height:400px">
+      <div class="panel__title panel__title--red">作答区</div>
+      <div class="note">(1)</div>
+      <div class="note mt24">(2)</div>
+      <div class="note mt24">(3)</div>
+      <div class="note mt24">(4)</div>
+      <div class="note mt24">(5)</div>
+    </div>
+  </div>
+  <div class="page-no">7 / 27</div>
+</section>
+
+<!-- ======================================================== 8 讲义内容 -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">性能评价</div>
+        <div class="toc__items">
+          <div class="toc__item">吞吐量、响应时间、CPU 执行时间</div>
+          <div class="toc__item toc__item--active">时钟周期与 CPI</div>
+          <div class="toc__item">MIPS</div>
+          <div class="toc__item">基准测试程序</div>
+          <div class="toc__item">阿姆达尔定律</div>
+          <div class="toc__item">摩尔定律</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">8 / 27</div>
+</section>
+
+<!-- ======================================================== 9 指令执行所需的时钟周期数 -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">指令执行所需的时钟周期数</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li>复杂的指令（乘法、除法等）需要<span class="kw">多个时钟周期</span>。</li>
+      <li>使用流水线处理等时，所需的 CPU 时钟周期数会<span class="kw">随情况而变化</span>。</li>
+    </ul>
+
+    <div class="panel panel--tight mt16">
+      <div class="panel__title">CPI（clock cycles per instruction）</div>
+      <ul class="bullets bullets--compact">
+        <li><span class="kw">每指令平均时钟周期数</span>。</li>
+        <li>通常取<span class="kw-blue">整个程序</span>的平均值。</li>
+      </ul>
+      <div class="callout callout--blue callout--slim mt10">
+        <span class="callout__tag">关系式</span>
+        <span>某个程序的执行所需的 CPU 时钟周期数 ＝ <span class="kw">指令数</span> × <span class="kw">CPI</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">9 / 27</div>
+</section>
+
+<!-- ======================================================== 10 确认问题（两台计算机谁更快） -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="qbox">
+      <span class="qbox__tag">问题</span>
+      <span>假设有两台实现了<strong>同一指令集体系结构</strong>的计算机，如下所示。</span>
+    </div>
+
+    <table class="tbl mt12" style="width:640px">
+      <thead>
+        <tr>
+          <th style="width:200px"></th>
+          <th style="width:220px">时钟周期时间</th>
+          <th style="width:220px">某程序 X 下的 CPI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>计算机 A</td><td class="c">250 ps</td><td class="c">2.0</td></tr>
+        <tr class="alt"><td>计算机 B</td><td class="c">500 ps</td><td class="c">1.2</td></tr>
+      </tbody>
+    </table>
+
+    <div class="qbox mt12" style="font-size:19px">
+      <span class="qbox__tag">问</span>
+      <span>哪一台计算机更快？快多少倍？</span>
+      <div class="mt8">请按「<span class="slot">&nbsp;</span>更快，快 <span class="slot">&nbsp;</span> 倍」的形式作答。</div>
+    </div>
+
+    <div class="callout callout--blue callout--slim mt12">
+      <span class="callout__tag">提示</span>
+      <span>要比较速度，应先求出<span class="kw-blue">每条指令所需的平均时间</span>（＝ CPI × 时钟周期时间）。</span>
+    </div>
+  </div>
+  <div class="page-no">10 / 27</div>
+</section>
+
+<!-- ======================================================== 11 确认问题（解答骨架） -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="qbox" style="font-size:17px">
+      <span class="qbox__tag">问题</span>
+      <span>假设有两台实现了同一指令集体系结构的计算机：A 为 250 ps、CPI 2.0；B 为 500 ps、CPI 1.2。哪一台更快？快多少倍？</span>
+    </div>
+
+    <table class="tbl tbl--sm mt10" style="width:600px">
+      <thead>
+        <tr>
+          <th style="width:190px"></th>
+          <th style="width:205px">时钟周期时间</th>
+          <th style="width:205px">某程序 X 下的 CPI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>计算机 A</td><td class="c">250 ps</td><td class="c">2.0</td></tr>
+        <tr class="alt"><td>计算机 B</td><td class="c">500 ps</td><td class="c">1.2</td></tr>
+      </tbody>
+    </table>
+
+    <div class="abox mt10">
+      <span class="abox__tag">答案</span>
+      <div class="mt8">每条指令所需的时间为：</div>
+      <div style="margin-top:6px">计算机 A：<span class="mono">250</span> × <span class="slot">&nbsp;</span> ＝ <span class="slot">&nbsp;</span> ps</div>
+      <div style="margin-top:6px">计算机 B：<span class="mono">500</span> × <span class="slot">&nbsp;</span> ＝ <span class="slot">&nbsp;</span> ps</div>
+      <div class="mt10">因此，<span class="slot" style="min-width:280px">&nbsp;</span>。</div>
+    </div>
+
+    <div class="note mt10" style="font-size:14px">（原讲义此处只给出解题骨架，具体数值留空，故照原样保留空格。）</div>
+  </div>
+  <div class="page-no">11 / 27</div>
+</section>
+
+<!-- ======================================================== 12 确认问题（两个代码序列的 CPI） -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="qbox" style="font-size:17.5px">
+      <span class="qbox__tag">问题</span>
+      <span>有<span class="kw">两个代码序列</span>。由同一个程序生成的代码的指令数，在各序列中如下所示（不同）。</span>
+    </div>
+
+    <table class="tbl tbl--sm mt10" style="width:660px">
+      <thead>
+        <tr>
+          <th rowspan="2" style="width:170px;vertical-align:middle">代码序列</th>
+          <th colspan="3" class="center">按指令类别划分的执行指令数</th>
+        </tr>
+        <tr>
+          <th class="center" style="width:163px">A</th>
+          <th class="center" style="width:163px">B</th>
+          <th class="center" style="width:163px">C</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="c">1</td><td class="c center">2</td><td class="c center">1</td><td class="c center">2</td></tr>
+        <tr class="alt"><td class="c">2</td><td class="c center">4</td><td class="c center">1</td><td class="c center">1</td></tr>
+      </tbody>
+    </table>
+
+    <div class="qbox mt10" style="font-size:17.5px">
+      <span class="qbox__tag">问</span>
+      <span>当各类别的 CPI 如下所示时，哪一个代码序列的执行速度更快？另外，各自的 CPI 是多少？</span>
+    </div>
+
+    <table class="tbl tbl--sm mt10" style="width:660px">
+      <thead>
+        <tr>
+          <th style="width:170px"></th>
+          <th colspan="3" class="center">按指令类别划分的 CPI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="c">CPI</td><td class="c center">A：1</td><td class="c center">B：2</td><td class="c center">C：3</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-no">12 / 27</div>
+</section>
+
+<!-- ======================================================== 13 确认问题（解答骨架） -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="qbox" style="font-size:16.5px">
+      <span class="qbox__tag">问题</span>
+      <span>两个代码序列：序列 1 的各类别执行指令数为 A:2、B:1、C:2；序列 2 为 A:4、B:1、C:1。各类别的 CPI 为 A:1、B:2、C:3 时，哪个序列更快？各自的 CPI 是多少？</span>
+    </div>
+
+    <div class="row row--top mt10" style="gap:16px">
+      <div class="col shrink0" style="width:620px">
+        <div class="tbl-stack">
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr>
+                <th rowspan="2" style="width:120px;vertical-align:middle">代码序列</th>
+                <th colspan="3" class="center">执行指令数</th>
+              </tr>
+              <tr><th class="center" style="width:166px">A</th><th class="center" style="width:166px">B</th><th class="center" style="width:166px">C</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="c">1</td><td class="c center">2</td><td class="c center">1</td><td class="c center">2</td></tr>
+              <tr class="alt"><td class="c">2</td><td class="c center">4</td><td class="c center">1</td><td class="c center">1</td></tr>
+            </tbody>
+          </table>
+          <table class="tbl tbl--xs">
+            <thead>
+              <tr><th style="width:120px"></th><th colspan="3" class="center">按指令类别划分的 CPI</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="c">CPI</td><td class="c center">A：1</td><td class="c center">B：2</td><td class="c center">C：3</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="callout callout--blue callout--slim">
+          <span class="callout__tag">思路</span>
+          <span>按代码序列分别计算「<span class="kw-blue">每指令平均时钟数（平均 CPI）</span>」，再比较。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="abox mt10">
+      <span class="abox__tag">答案</span>
+      <div class="mt8">按代码序列分别计算每指令平均时钟数（平均 CPI）。</div>
+      <div style="margin-top:8px">代码序列 1　平均 CPI ＝ <span class="slot" style="min-width:260px">&nbsp;</span></div>
+      <div style="margin-top:8px">代码序列 2　平均 CPI ＝ <span class="slot" style="min-width:260px">&nbsp;</span></div>
+    </div>
+
+    <div class="callout callout--red mt10" style="font-size:19px">
+      <span class="callout__tag">结论</span>
+      <span><span class="kw">指令数少的并不一定就更快。</span></span>
+    </div>
+  </div>
+  <div class="page-no">13 / 27</div>
+</section>
+
+<!-- ======================================================== 14 讲义内容 -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">性能评价</div>
+        <div class="toc__items">
+          <div class="toc__item">吞吐量、响应时间、CPU 执行时间</div>
+          <div class="toc__item">时钟周期与 CPI</div>
+          <div class="toc__item toc__item--active">MIPS</div>
+          <div class="toc__item">基准测试程序</div>
+          <div class="toc__item">阿姆达尔定律</div>
+          <div class="toc__item">摩尔定律</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">14 / 27</div>
+</section>
+
+<!-- ======================================================== 15 MIPS -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">MIPS</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>并非指 <span class="mono">MIPS architecture</span>（MIPS 体系结构）。</li>
+      <li><span class="mono">million instructions per second</span>（每秒百万条指令）。</li>
+    </ul>
+
+    <div class="center mt10">
+      <div style="display:inline-block;border:1.6px solid #10314f;border-radius:4px;padding:8px 26px">
+        <span style="font-size:26px">MIPS ＝ </span>
+        <span class="nowrap" style="display:inline-block;vertical-align:middle">
+          <span style="display:block;border-bottom:2px solid var(--ink);padding:0 12px;font-size:20px">执行的指令数</span>
+          <span style="display:block;padding:0 12px;font-size:20px">执行时间 × 10<sup>6</sup></span>
+        </span>
+      </div>
+    </div>
+
+    <div class="row row--top mt12" style="gap:18px">
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--teal">优点</div>
+          <ul class="bullets bullets--compact" style="font-size:19px">
+            <li>与单位时间内执行的指令数成正比，因此<span class="kw-teal">直观易懂</span>。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="col grow">
+        <div class="panel panel--tight">
+          <div class="panel__title panel__title--red">缺点</div>
+          <ul class="bullets bullets--compact" style="font-size:19px">
+            <li>没有考虑指令的<span class="kw">具体内容</span>。
+              <ul class="bullets bullets--sub">
+                <li>→ 无法在不同指令集之间进行比较。</li>
+              </ul>
+            </li>
+            <li>即使是同一台计算机，<span class="kw">程序不同</span>，执行的指令数也会不同。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">15 / 27</div>
+</section>
+
+<!-- ======================================================== 16 确认问题（4 GHz CPU 的 MIPS 值） -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="qbox" style="font-size:18px">
+      <span class="qbox__tag">问题</span>
+      <span>在时钟频率为 <span class="mono">4 GHz</span> 的 CPU 中，当按指令类别划分的 CPI 与出现频率如下所示时，MIPS 值是多少？</span>
+    </div>
+
+    <table class="tbl tbl--sm mt10" style="width:700px">
+      <thead>
+        <tr>
+          <th style="width:150px"></th>
+          <th colspan="3" class="center">指令类别</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td></td><td class="c center">A</td><td class="c center">B</td><td class="c center">C</td></tr>
+        <tr class="alt"><td>CPI</td><td class="c center">1</td><td class="c center">2</td><td class="c center">3</td></tr>
+        <tr><td>出现频率</td><td class="c center">70%</td><td class="c center">20%</td><td class="c center">10%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt12" style="font-size:18px">
+      <span class="callout__tag">条件</span>
+      <span>按<span class="kw">有效位 3 位</span>进行计算。</span>
+    </div>
+  </div>
+  <div class="page-no">16 / 27</div>
+</section>
+
+<!-- ======================================================== 17 确认问题（解答骨架） -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="qbox" style="font-size:16.5px">
+      <span class="qbox__tag">问题</span>
+      <span>时钟频率 <span class="mono">4 GHz</span> 的 CPU，A/B/C 的 CPI 为 1/2/3、出现频率为 70%/20%/10% 时，MIPS 值是多少？（按有效位 3 位计算）</span>
+    </div>
+
+    <div class="row row--top mt10" style="gap:16px">
+      <div class="col shrink0" style="width:570px">
+        <table class="tbl tbl--xs">
+          <thead>
+            <tr><th style="width:120px"></th><th colspan="3" class="center">指令类别</th></tr>
+          </thead>
+          <tbody>
+            <tr><td></td><td class="c center">A</td><td class="c center">B</td><td class="c center">C</td></tr>
+            <tr class="alt"><td>CPI</td><td class="c center">1</td><td class="c center">2</td><td class="c center">3</td></tr>
+            <tr><td>出现频率</td><td class="c center">70%</td><td class="c center">20%</td><td class="c center">10%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col grow">
+        <div class="center" style="border:1.6px solid #10314f;border-radius:4px;padding:6px 14px">
+          <span style="font-size:19px">MIPS ＝ </span>
+          <span class="nowrap" style="display:inline-block;vertical-align:middle">
+            <span style="display:block;border-bottom:2px solid var(--ink);padding:0 10px;font-size:16px">执行的指令数</span>
+            <span style="display:block;padding:0 10px;font-size:16px">执行时间 × 10<sup>6</sup></span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="abox mt10">
+      <span class="abox__tag">答案</span>
+      <div class="mt8">每条指令的平均时钟数：</div>
+      <div class="mono" style="margin-top:6px;font-size:17px">(1*70+2*20+3*10)/100 ＝ 1.4</div>
+      <div style="margin-top:8px">每秒执行的指令数：</div>
+      <div style="margin-top:6px"><span class="slot">&nbsp;</span> / <span class="slot">&nbsp;</span>　≒ <span class="slot">&nbsp;</span> 条指令/秒</div>
+      <div style="margin-top:8px">MIPS 值为 <span class="slot" style="min-width:150px">&nbsp;</span></div>
+    </div>
+
+    <div class="note mt10" style="font-size:14px">（原讲义此处只给出求解过程的前两步，除法与 MIPS 值留空，故照原样保留空格。）</div>
+  </div>
+  <div class="page-no">17 / 27</div>
+</section>
+
+<!-- ======================================================== 18 讲义内容 -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">性能评价</div>
+        <div class="toc__items">
+          <div class="toc__item">吞吐量、响应时间、CPU 执行时间</div>
+          <div class="toc__item">时钟周期与 CPI</div>
+          <div class="toc__item">MIPS</div>
+          <div class="toc__item toc__item--active">基准测试程序</div>
+          <div class="toc__item">阿姆达尔定律</div>
+          <div class="toc__item">摩尔定律</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">18 / 27</div>
+</section>
+
+<!-- ======================================================== 19 基准测试程序 -->
+<section class="slide" id="s19">
+  <div class="slide__head">
+    <h2 class="slide__title">基准测试程序</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <ul class="bullets bullets--compact" style="gap:6px">
+      <li>哪一个更好？
+        <ul class="bullets bullets--sub" style="gap:5px">
+          <li>计算机 A：程序 1 用 <span class="mono">1</span> 秒，程序 2 用 <span class="mono">1000</span> 秒。</li>
+          <li>计算机 B：程序 1 用 <span class="mono">10</span> 秒，程序 2 用 <span class="mono">100</span> 秒。</li>
+        </ul>
+      </li>
+      <li>用<span class="kw">许多程序</span>来考察并取平均即可。
+        <ul class="bullets bullets--sub" style="gap:5px">
+          <li>→ 那么应当针对<span class="kw">什么样的程序</span>来评价？</li>
+        </ul>
+      </li>
+      <li><span class="kw">基准测试程序</span>（日文：ベンチマーク / benchmark）：
+        为评价计算机性能而<span class="kw">选定的一组程序</span>。</li>
+    </ul>
+
+    <div class="panel panel--tight mt10">
+      <div class="panel__title panel__title--red">SPEC（Standard Performance Evaluation Corporation）</div>
+      <ul class="bullets bullets--compact" style="font-size:19px;gap:5px">
+        <li>制定基准测试程序的<span class="kw">组织</span>。</li>
+        <li>把<span class="kw-blue">实际常用的应用程序</span>采纳为基准测试程序。</li>
+        <li>最新版为 <span class="mono">SPEC CPU2017</span>。</li>
+        <li><span class="kw">SPEC ratio</span>（SPEC 比值）
+          <ul class="bullets bullets--sub" style="gap:5px">
+            <li><span class="mono">基准处理器上的执行时间 ／ 被测对象上的执行时间</span> ＝ 相当于基准的多少倍快。</li>
+            <li>在两台计算机之间进行比较时，取 SPEC ratio 的<span class="kw-blue">几何平均</span>（日文：幾何平均）。</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-no">19 / 27</div>
+</section>
+
+<!-- ======================================================== 20 （例）Intel Core i7 的基准测试 -->
+<section class="slide" id="s20">
+  <div class="slide__head">
+    <h2 class="slide__title">（例）Intel Core i7 的基准测试</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <table class="tbl" style="font-size:15px">
+      <thead>
+        <tr>
+          <th style="width:212px">说明</th>
+          <th style="width:118px">名称</th>
+          <th style="width:112px" class="center">指令数<br>（×10<sup>9</sup>）</th>
+          <th style="width:78px" class="center">CPI</th>
+          <th style="width:150px" class="center">时钟周期时间<br>（纳秒）</th>
+          <th style="width:110px" class="center">执行时间<br>（秒）</th>
+          <th style="width:120px" class="center">基准时间<br>（秒）</th>
+          <th class="center">SPECratio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>有效的字符串处理</td><td class="c">perl</td><td class="c center">2,252</td><td class="c center">0.60</td><td class="c center">0.376</td><td class="c center">508</td><td class="c center">9,770</td><td class="c center">19.2</td></tr>
+        <tr class="alt"><td>块排序压缩</td><td class="c">bzip2</td><td class="c center">2,390</td><td class="c center">0.70</td><td class="c center">0.376</td><td class="c center">629</td><td class="c center">9,650</td><td class="c center">15.4</td></tr>
+        <tr><td>GNU C 编译器</td><td class="c">gcc</td><td class="c center">794</td><td class="c center">1.20</td><td class="c center">0.376</td><td class="c center">358</td><td class="c center">8,050</td><td class="c center">22.5</td></tr>
+        <tr class="alt"><td>组合最优化</td><td class="c">mcf</td><td class="c center">221</td><td class="c center">2.66</td><td class="c center">0.376</td><td class="c center">221</td><td class="c center">9,120</td><td class="c center">41.2</td></tr>
+        <tr><td>围棋（AI）</td><td class="c">go</td><td class="c center">1,274</td><td class="c center">1.10</td><td class="c center">0.376</td><td class="c center">527</td><td class="c center">10,490</td><td class="c center">19.9</td></tr>
+        <tr class="alt"><td>基因序列检索</td><td class="c">hmmer</td><td class="c center">2,616</td><td class="c center">0.60</td><td class="c center">0.376</td><td class="c center">590</td><td class="c center">9,330</td><td class="c center">15.8</td></tr>
+        <tr><td>国际象棋（AI）</td><td class="c">sjeng</td><td class="c center">1,948</td><td class="c center">0.80</td><td class="c center">0.376</td><td class="c center">586</td><td class="c center">12,100</td><td class="c center">20.7</td></tr>
+        <tr class="alt"><td>量子计算机·模拟</td><td class="c">libquantum</td><td class="c center">659</td><td class="c center">0.44</td><td class="c center">0.376</td><td class="c center">109</td><td class="c center">20,720</td><td class="c center">190.0</td></tr>
+        <tr><td>视频压缩</td><td class="c">h264avc</td><td class="c center">3,793</td><td class="c center">0.50</td><td class="c center">0.376</td><td class="c center">713</td><td class="c center">22,130</td><td class="c center">31.0</td></tr>
+        <tr class="alt"><td>离散事件仿真库</td><td class="c">omnetpp</td><td class="c center">367</td><td class="c center">2.10</td><td class="c center">0.376</td><td class="c center">290</td><td class="c center">6,250</td><td class="c center">21.5</td></tr>
+        <tr><td>游戏／路径发现</td><td class="c">astar</td><td class="c center">1,250</td><td class="c center">1.00</td><td class="c center">0.376</td><td class="c center">470</td><td class="c center">7,020</td><td class="c center">14.9</td></tr>
+        <tr class="alt"><td>XML 处理</td><td class="c">xalancbmk</td><td class="c center">1,045</td><td class="c center">0.70</td><td class="c center">0.376</td><td class="c center">275</td><td class="c center">6,900</td><td class="c center">25.1</td></tr>
+        <tr><td>几何平均</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="c center red">25.7</td></tr>
+      </tbody>
+    </table>
+    <div class="figure-cap">表：在 2.66 GHz 的 Intel Core i7 920 上执行 <span class="mono">SPECintC2006</span> 的结果（原书 图 1.18）。各列依次为说明、名称、指令数（×10<sup>9</sup>）、CPI、时钟周期时间（纳秒）、执行时间（秒）、基准时间（秒）与 <span class="mono">SPECratio</span>，最后一行给出 <span class="mono">SPECratio</span> 的几何平均 25.7。</div>
+  </div>
+  <div class="page-no">20 / 27</div>
+</section>
+
+<!-- ======================================================== 21 （例）功耗相关的基准测试 -->
+<section class="slide" id="s21">
+  <div class="slide__head">
+    <h2 class="slide__title">（例）功耗相关的基准测试</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--top" style="gap:24px">
+      <div class="col shrink0">
+        <table class="tbl" style="width:620px">
+          <thead>
+            <tr>
+              <th style="width:200px" class="center">负荷水平</th>
+              <th style="width:210px" class="center">性能<br>（ssj_ops）</th>
+              <th style="width:210px" class="center">平均功耗<br>（瓦特）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="c center">100%</td><td class="c center">865,618</td><td class="c center">258</td></tr>
+            <tr class="alt"><td class="c center">90%</td><td class="c center">786,688</td><td class="c center">242</td></tr>
+            <tr><td class="c center">80%</td><td class="c center">698,051</td><td class="c center">224</td></tr>
+            <tr class="alt"><td class="c center">70%</td><td class="c center">607,826</td><td class="c center">204</td></tr>
+            <tr><td class="c center">60%</td><td class="c center">521,391</td><td class="c center">185</td></tr>
+            <tr class="alt"><td class="c center">50%</td><td class="c center">436,757</td><td class="c center">170</td></tr>
+            <tr><td class="c center">40%</td><td class="c center">345,919</td><td class="c center">157</td></tr>
+            <tr class="alt"><td class="c center">30%</td><td class="c center">262,071</td><td class="c center">146</td></tr>
+            <tr><td class="c center">20%</td><td class="c center">176,061</td><td class="c center">135</td></tr>
+            <tr class="alt"><td class="c center">10%</td><td class="c center">86,784</td><td class="c center">121</td></tr>
+            <tr><td class="c center">0%</td><td class="c center">0</td><td class="c center">80</td></tr>
+            <tr class="alt"><td>合计</td><td class="c center">4,787,166</td><td class="c center">1,922</td></tr>
+            <tr><td><span class="mono">Σssj_ops</span> ／ <span class="mono">Σ</span>功耗＝</td><td class="c center"></td><td class="c center red">2.490</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col grow">
+        <div class="figure-cap" style="text-align:left;margin-top:0">表：在双路 2.66 GHz 的 Intel Xeon X5650 上，使用 16 G 字节 DRAM 与 1 台 100 G 字节磁盘执行 <span class="mono">SPECpower_ssj2008</span> 的结果（原书 图 1.19）。表中给出负荷水平 100%～0% 时的性能（<span class="mono">ssj_ops</span>）与平均功耗（瓦特），并给出合计值与 <span class="mono">Σssj_ops</span>／<span class="mono">Σ</span>功耗 ＝ 2.490。</div>
+        <div class="callout callout--blue callout--slim mt12">
+          <span class="callout__tag">说明</span>
+          <span>负荷为 0% 时性能为 0，但平均功耗仍有 <span class="mono">80</span> 瓦，说明<span class="kw-blue">空闲状态也在耗电</span>；因此评价能效时不仅要看峰值性能，还要看整个负荷范围上的性能／功耗比。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">21 / 27</div>
+</section>
+
+<!-- ======================================================== 22 讲义内容 -->
+<section class="slide" id="s22">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">性能评价</div>
+        <div class="toc__items">
+          <div class="toc__item">吞吐量、响应时间、CPU 执行时间</div>
+          <div class="toc__item">时钟周期与 CPI</div>
+          <div class="toc__item">MIPS</div>
+          <div class="toc__item">基准测试程序</div>
+          <div class="toc__item toc__item--active">阿姆达尔定律</div>
+          <div class="toc__item toc__item--active">摩尔定律</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">22 / 27</div>
+</section>
+
+<!-- ======================================================== 23 阿姆达尔定律 -->
+<section class="slide" id="s23">
+  <div class="slide__head">
+    <h2 class="slide__title">阿姆达尔定律（Amdahl's law）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>某项改进所带来的性能提升，会被<span class="kw">使用该改进功能的占比</span>所制约。</li>
+    </ul>
+
+    <div class="center mt12">
+      <div style="display:inline-block;border:1.6px solid #10314f;border-radius:4px;padding:12px 24px">
+        <span style="font-size:22px">改进后的执行时间 ＝ </span>
+        <span class="nowrap" style="display:inline-block;vertical-align:middle">
+          <span style="display:block;border-bottom:2px solid var(--ink);padding:0 12px;font-size:17px">受改进影响的执行时间</span>
+          <span style="display:block;padding:0 12px;font-size:17px">改进倍数</span>
+        </span>
+        <span style="font-size:22px"> ＋ </span>
+        <span style="font-size:17px;display:inline-block;vertical-align:middle;text-align:left">不受改进影响的<br>执行时间</span>
+      </div>
+    </div>
+
+    <ul class="bullets bullets--compact mt12">
+      <li>例：<span class="mono">90%</span> 为 CPU 处理、<span class="mono">10%</span> 为 I/O 处理。
+        <ul class="bullets bullets--sub">
+          <li>使用<span class="kw">快 10 倍</span>的 CPU 时，整体时间会怎样？</li>
+          <li>如果是<span class="kw">快 100 倍</span>呢？</li>
+          <li>如果是<span class="kw">无限快</span>的 CPU 呢？</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="callout callout--blue callout--slim mt12">
+      <span class="callout__tag">说明</span>
+      <span>不受改进影响的那部分（这里是 I/O 处理的 <span class="mono">10%</span>）在改进后<span class="kw-blue">完全不会变快</span>，因此无论把 CPU 加速多少倍，整体时间都无法低于这部分所占的比例——这就是阿姆达尔定律的要点。</span>
+    </div>
+  </div>
+  <div class="page-no">23 / 27</div>
+</section>
+
+<!-- ======================================================== 24 摩尔定律 -->
+<section class="slide" id="s24">
+  <div class="slide__head">
+    <h2 class="slide__title">摩尔定律（Moore's law）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <svg width="1030" height="371" viewBox="0 0 1000 360" role="img"
+         aria-label="1980 年代中期以后处理器性能提升示意图：纵轴为以 VAX-11/780 为基准的性能（对数刻度），横轴为年份，标注 25%/年、52%/年、22%/年 三个增长阶段">
+      <!-- 纵轴标题（置于左下角，避免与左上角的刻度标注重叠） -->
+      <text x="14" y="342" font-size="11" fill="#6b7c8d">性能（相对值，VAX-11/780 = 1，对数刻度）</text>
+      <!-- 对数刻度虚线 -->
+      <line x1="70" y1="28" x2="865" y2="28" stroke="#d6dee7" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="70" y1="82.4" x2="865" y2="82.4" stroke="#d6dee7" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="70" y1="136.8" x2="865" y2="136.8" stroke="#d6dee7" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="70" y1="191.2" x2="865" y2="191.2" stroke="#d6dee7" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="70" y1="245.6" x2="865" y2="245.6" stroke="#d6dee7" stroke-width="1" stroke-dasharray="3 3"/>
+      <!-- 坐标轴 -->
+      <line x1="70" y1="20" x2="70" y2="300" stroke="#10314f" stroke-width="1.4"/>
+      <line x1="70" y1="300" x2="880" y2="300" stroke="#10314f" stroke-width="1.4"/>
+      <text x="34" y="33" font-size="12" font-family="monospace" fill="#10314f">100,000</text>
+      <text x="42" y="87" font-size="12" font-family="monospace" fill="#10314f">10,000</text>
+      <text x="50" y="141" font-size="12" font-family="monospace" fill="#10314f">1,000</text>
+      <text x="56" y="196" font-size="12" font-family="monospace" fill="#10314f">100</text>
+      <text x="62" y="250" font-size="12" font-family="monospace" fill="#10314f">10</text>
+      <text x="66" y="304" font-size="12" font-family="monospace" fill="#10314f">1</text>
+      <text x="76" y="316" font-size="11" font-family="monospace" fill="#41505f">1978</text>
+      <text x="184" y="316" font-size="11" font-family="monospace" fill="#41505f">1982</text>
+      <text x="296" y="316" font-size="11" font-family="monospace" fill="#41505f">1986</text>
+      <text x="409" y="316" font-size="11" font-family="monospace" fill="#41505f">1990</text>
+      <text x="680" y="316" font-size="11" font-family="monospace" fill="#41505f">2002</text>
+      <text x="795" y="316" font-size="11" font-family="monospace" fill="#41505f">2007</text>
+      <text x="862" y="316" font-size="11" font-family="monospace" fill="#41505f">2012</text>
+      <text x="452" y="334" font-size="12" fill="#41505f">年份</text>
+      <!-- 性能提升折线（以各年代代表机型为节点） -->
+      <polyline points="70,300 156,273.3 249,237.8 340,213.6 431,184.4 567,139.8 658,108.2 749,89.8 795,87.1 840,73.7 863,52"
+                fill="none" stroke="#10314f" stroke-width="2.2"/>
+      <g fill="#2a6fb8" stroke="#10314f" stroke-width="1">
+        <circle cx="70" cy="300" r="3.6"/>
+        <circle cx="156" cy="273.3" r="3.6"/>
+        <circle cx="249" cy="237.8" r="3.6"/>
+        <circle cx="340" cy="213.6" r="3.6"/>
+        <circle cx="431" cy="184.4" r="3.6"/>
+        <circle cx="567" cy="139.8" r="3.6"/>
+        <circle cx="658" cy="108.2" r="3.6"/>
+        <circle cx="749" cy="89.8" r="3.6"/>
+        <circle cx="795" cy="87.1" r="3.6"/>
+        <circle cx="840" cy="73.7" r="3.6"/>
+        <circle cx="863" cy="52" r="3.6"/>
+      </g>
+      <!-- 代表机型标注 -->
+      <text x="76" y="286" font-size="11" fill="#41505f">VAX-11/785 5 MHz（1978 年）</text>
+      <text x="162" y="259" font-size="11" fill="#41505f">Sun-4/260 16.7 MHz（1986 年）</text>
+      <text x="255" y="232" font-size="11" fill="#41505f">MIPS M/120（1988 年）</text>
+      <text x="346" y="207" font-size="11" fill="#41505f">IBM POWERstation 100（1990 年）</text>
+      <text x="437" y="172" font-size="11" fill="#41505f">Digital AlphaServer 4000 600 MHz（1996 年）</text>
+      <text x="573" y="124" font-size="11" fill="#41505f">Intel Pentium III 600 MHz（1999 年）</text>
+      <text x="664" y="94" font-size="11" fill="#41505f">Intel Core 2 Duo 2.6 GHz（2006 年）</text>
+      <text x="700" y="44" font-size="11" fill="#41505f">Intel Core i7 4 核 3.4 GHz（2010 年）</text>
+      <text x="776" y="118" font-size="11" fill="#41505f">Intel Xeon 4 核 3.6 GHz（2012 年）</text>
+      <!-- 三个增长阶段标注 -->
+      <rect x="86" y="150" width="86" height="22" rx="3" fill="#fdfbe9" stroke="#10314f" stroke-width="1"/>
+      <text x="94" y="165" font-size="12" fill="#10314f">25%/年</text>
+      <rect x="352" y="138" width="86" height="22" rx="3" fill="#e4f0f7" stroke="#10314f" stroke-width="1"/>
+      <text x="360" y="153" font-size="12" fill="#10314f">52%/年</text>
+      <rect x="726" y="152" width="86" height="22" rx="3" fill="#e4f0f7" stroke="#10314f" stroke-width="1"/>
+      <text x="734" y="167" font-size="12" fill="#10314f">22%/年</text>
+    </svg>
+    <div class="figure-cap">图：1980 年代中期以后处理器性能的提升（原书 图 1.17 重绘为中文示意图）。纵轴为以 VAX-11/780 为基准的性能（对数刻度），横轴为年份；图中按年代标出三个增长阶段——约 <span class="mono">25%/年</span>（早期 RISC、VAX 时代）、<span class="mono">52%/年</span>（1980 年代后期～2000 年代初）、<span class="mono">22%/年</span>（2000 年代中期以后），并给出各阶段的代表机型。</div>
+    <ul class="bullets bullets--compact mt10">
+      <li>每 <span class="kw">1.5 年</span>，单位面积的晶体管数变为 <span class="kw">2 倍</span>。</li>
+      <li>→ 带来<span class="kw-blue">容量与性能的提升</span>、以及<span class="kw-blue">价格的下降</span>。</li>
+    </ul>
+  </div>
+  <div class="page-no">24 / 27</div>
+</section>
+
+<!-- ======================================================== 25 确认问题（术语配对） -->
+<section class="slide" id="s25">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>
+      <span>请回答与以下说明相符的术语。</span>
+      <div class="mt10">
+        <div><span class="qno">(1)</span>每 1.5 年，单位面积的晶体管数变为 2 倍，这一法则（预测）。</div>
+        <div class="mt8"><span class="qno">(2)</span>某项改进所带来的性能提升，会被使用该改进功能的占比所制约，这一法则。</div>
+        <div class="mt8"><span class="qno">(3)</span>为评价计算机性能而选定的程序集。</div>
+      </div>
+    </div>
+
+    <div class="panel mt16" style="height:220px">
+      <div class="panel__title panel__title--teal">作答区</div>
+      <div class="note">(1)</div>
+      <div class="note mt24">(2)</div>
+      <div class="note mt24">(3)</div>
+    </div>
+  </div>
+  <div class="page-no">25 / 27</div>
+</section>
+
+<!-- ======================================================== 26 确认问题（原讲义未给解答） -->
+<section class="slide" id="s26">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <div class="qbox" style="font-size:19px">
+      <span class="qbox__tag">问题</span>
+      <span>请回答与以下说明相符的术语。</span>
+      <div class="mt10">
+        <div><span class="qno">(1)</span>每 1.5 年，单位面积的晶体管数变为 2 倍，这一法则（预测）。</div>
+        <div class="mt8"><span class="qno">(2)</span>某项改进所带来的性能提升，会被使用该改进功能的占比所制约，这一法则。</div>
+        <div class="mt8"><span class="qno">(3)</span>为评价计算机性能而选定的程序集。</div>
+      </div>
+    </div>
+
+    <div class="abox abox--slim mt12">
+      <span class="abox__tag">答案</span>
+      原讲义此页未给出解答（問題回答無し ver.），仅重复了上一页的题面。
+    </div>
+
+    <div class="panel mt16" style="height:200px">
+      <div class="panel__title panel__title--red">作答区</div>
+      <div class="note">(1)</div>
+      <div class="note mt24">(2)</div>
+      <div class="note mt24">(3)</div>
+    </div>
+  </div>
+  <div class="page-no">26 / 27</div>
+</section>
+
+<!-- ======================================================== 27 参考文献 -->
+<section class="slide" id="s27">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:20px">
+    <div class="refs">
+      <div class="refs__item">
+        《计算机组成与设计：硬件 / 软件接口》第 5 版（上）
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span>
+      </div>
+      <div class="refs__item">
+        David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社
+      </div>
+      <div class="refs__item">
+        山下茂《计算机组成原理 1》课程讲义
+        <span class="refs__en">山下茂「計算機構成論１」講義資料</span>
+      </div>
+    </div>
+
+    <div class="callout mt16" style="font-size:17px">
+      <span class="callout__tag">图片声明</span>
+      <span>本页图片为教科书扫描件，禁止转载与分发。<br>
+        <span class="refs__en" style="margin-top:2px">画像は教科書からのスキャンです。転載・頒布を禁止します。</span></span>
+    </div>
+
+    <div class="callout callout--blue mt12" style="font-size:17px">
+      <span class="callout__tag">本讲小结</span>
+      <span>性能可从<span class="kw-blue">吞吐量</span>与<span class="kw-blue">响应时间</span>两个角度衡量；CPU 执行时间由<span class="kw">时钟周期数</span>与<span class="kw">时钟周期时间</span>决定，而时钟周期数 ＝ 指令数 × <span class="kw">CPI</span>。评价时还要用到 <span class="kw">MIPS</span>、<span class="kw">基准测试程序</span>（SPEC ratio 取几何平均）；<span class="kw">阿姆达尔定律</span>告诉我们改进的收益受改进部分占比的限制，<span class="kw">摩尔定律</span>则描述了单位面积晶体管数每 1.5 年翻一番的长期趋势。</span>
+    </div>
+  </div>
+  <div class="page-no">27 / 27</div>
+</section>
+
+</div>
+</body>
+</html>

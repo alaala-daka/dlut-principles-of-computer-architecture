@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机组成原理 第12讲 算术运算的执行（3）· 中文翻译幻灯片</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+<div class="deck" data-chapter="12">
+
+<!-- ======================================================== 1 封面 -->
+<section class="slide cover" id="s01">
+  <div class="cover__veil"></div>
+  <div class="cover__inner">
+    <div class="cover__kicker">计算机组成原理 · 第 12 讲</div>
+    <h1 class="cover__title">算术运算的<em>执行</em>（3）</h1>
+    <p class="cover__sub">浮点数表示 · 浮点加法 · 误差与舍入</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__meta">
+    大连理工大学 · 立命馆大学国际信息软件学院<br>
+    薛昕惟
+  </div>
+  <div class="cover__badge">
+    原讲义「計算機構成論 第12回 ―算術演算の実行(3)―」<br>
+    中文翻译版
+  </div>
+  <div class="page-no" style="color:#8fb0cc">1 / 34</div>
+</section>
+
+<!-- ======================================================== 2 讲义内容 -->
+<section class="slide" id="s02">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">算术运算的执行</div>
+        <div class="toc__items">
+          <div class="toc__item toc__item--active">小数的二进制数表示<span class="toc__item--jp">小数の2進数表記</span></div>
+          <div class="toc__item">浮点数的加法<span class="toc__item--jp">浮動小数点数の加算</span></div>
+          <div class="toc__item">（浮点数的乘法）<span class="toc__item--jp">(浮動小数点数の乗算)</span></div>
+          <div class="toc__item">误差与舍入<span class="toc__item--jp">誤差と丸め</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">2 / 34</div>
+</section>
+
+<!-- ======================================================== 3 二进制小数（复习） -->
+<section class="slide" id="s03">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制小数（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets">
+      <li>和十进制数一样，使用<span class="kw">小数点</span>。</li>
+      <li>小数点后第 1 位相当于 <span class="mono">2<sup>-1</sup></span>。</li>
+    </ul>
+
+    <pre class="code code--plain mt20" style="font-size:23px;line-height:1.75">例）11.11<sub>2</sub> = 1*2<sup>1</sup>+1*2<sup>0</sup>+1*2<sup>-1</sup>+1*2<sup>-2</sup>
+          = 2+1+0.5+0.25
+          = 3.75<sub>10</sub>
+
+      0.0011<sub>2</sub> = 1*2<sup>-3</sup>+1*2<sup>-4</sup>
+             = 0.125+0.0625
+             = 0.1875<sub>10</sub></pre>
+  </div>
+  <div class="page-no">3 / 34</div>
+</section>
+
+<!-- ======================================================== 4 二进制小数的问题点（复习） -->
+<section class="slide" id="s04">
+  <div class="slide__head">
+    <h2 class="slide__title">二进制小数的问题点（复习）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets">
+      <li><span class="kw">误差</span>（日文：誤差 / error）的产生
+        <ul class="bullets bullets--sub">
+          <li>例）<span class="mono">0.1<sub>10</sub></span> <span class="mono">= 0.000110011001100…<sub>2</sub></span></li>
+          <li><span class="mono" style="padding-left:44px">= 0.0625 + 0.03125 + …</span></li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="callout callout--red mt24" style="font-size:24px;padding:20px 22px">
+      <span class="callout__tag">结论</span>
+      <span>十进制的<span class="kw">有限小数</span>，无法用<span class="kw">有限位</span>的二进制数表示出来！</span>
+    </div>
+  </div>
+  <div class="page-no">4 / 34</div>
+</section>
+
+<!-- ======================================================== 5 小数的二进制数表示：定点格式 -->
+<section class="slide" id="s05">
+  <div class="slide__head">
+    <h2 class="slide__title">小数的二进制数表示：定点格式</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li><span class="kw">定点格式</span>（日文：固定小数点形式 / fixed-point format）</li>
+    </ul>
+    <ul class="bullets bullets--sub" style="margin-top:6px">
+      <li><span class="kw-blue">整数部分</span>与<span class="kw-blue">小数部分</span>的位数<b>预先固定</b>。</li>
+    </ul>
+
+    <table class="tbl tbl--sm mt12 center" style="width:1160px;margin-left:auto;margin-right:auto">
+      <tbody>
+        <tr>
+          <td style="width:72px;background:#c9c9ef;font-size:22px;padding:0"></td>
+          <td class="c" style="width:72.6px;background:#fdf7d6;font-size:21px">2<sup>6</sup></td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">2<sup>5</sup></td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">2<sup>4</sup></td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">2<sup>3</sup></td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">2<sup>2</sup></td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">2<sup>1</sup></td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">2<sup>0</sup></td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">2<sup>-1</sup></td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">2<sup>-2</sup></td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">2<sup>-3</sup></td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">2<sup>-4</sup></td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">2<sup>-5</sup></td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">2<sup>-6</sup></td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">2<sup>-7</sup></td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">2<sup>-8</sup></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="row mt8" style="gap:0;font-size:20px;color:var(--ink-soft)">
+      <div style="width:72px;text-align:center">符号</div>
+      <div style="width:435px;text-align:center">整数部分</div>
+      <div class="grow" style="text-align:center">小数部分</div>
+    </div>
+
+    <ul class="bullets bullets--compact mt16">
+      <li>优点：容易理解。</li>
+      <li>缺点：<span class="kw">可表示的值范围窄</span>。
+        <ul class="bullets bullets--deep" style="margin-top:4px">
+          <li>上例中可表示的小数部分的最小值（非零）：<span class="mono">2<sup>-8</sup></span></li>
+          <li>上例中最大的绝对值：<span class="mono">2<sup>7</sup>-2<sup>-8</sup></span>（<span class="mono">=127.99609375</span>）</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="page-no">5 / 34</div>
+</section>
+
+<!-- ======================================================== 6 小数的二进制数表示：科学记数法 -->
+<section class="slide" id="s06">
+  <div class="slide__head">
+    <h2 class="slide__title">小数的二进制数表示：科学记数法</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <ul class="bullets bullets--compact">
+      <li><span class="kw">科学记数法</span>（日文：科学記数法 / scientific notation）</li>
+    </ul>
+    <ul class="bullets bullets--sub" style="margin-top:6px">
+      <li>整数部分只保留 <b>1 位</b>。</li>
+      <li>用「<span class="mono">尾数 × 基数<sup>指数</sup></span>」这种形式来表示。</li>
+    </ul>
+
+    <div class="tbl-stack mt16">
+      <div class="mono" style="font-size:23px;line-height:1.85;padding-left:34px">
+        （例）3.1415<sub>10</sub><span style="padding-left:56px">→</span><span style="padding-left:56px">3.1415<sub>10</sub>×10<sup>0</sup></span>
+      </div>
+      <div class="mono" style="font-size:23px;line-height:1.85;padding-left:34px">
+        0.01234<sub>10</sub><span style="padding-left:66px">→</span><span style="padding-left:56px">1.234<sub>10</sub>×10<sup>-2</sup></span>
+      </div>
+      <div class="mono" style="font-size:23px;line-height:1.85;padding-left:34px">
+        3155760000<sub>10</sub><span style="padding-left:24px">→</span><span style="padding-left:24px">3.15576<sub>10</sub>×10<sup>9</sup></span>
+      </div>
+      <div class="center" style="font-size:23px;font-weight:700;padding-left:150px">正则化（正規化）</div>
+    </div>
+
+    <pre class="code code--plain mt16" style="font-size:22px;line-height:1.6">二进制数也一样，
+用 1.010101<sub>2</sub> × 2<sup>-2</sup> 这样的形式来表示</pre>
+  </div>
+  <div class="page-no">6 / 34</div>
+</section>
+
+<!-- ======================================================== 7 小数的二进制数表示：浮点数格式 -->
+<section class="slide" id="s07">
+  <div class="slide__head">
+    <h2 class="slide__title">小数的二进制数表示：浮点数格式</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <ul class="bullets bullets--compact">
+      <li><span class="kw">浮点数</span>（日文：浮動小数点 / floating point）格式</li>
+    </ul>
+
+    <table class="tbl tbl--sm mt12" style="width:1160px;margin:0 auto">
+      <tbody>
+        <tr>
+          <td style="width:72px;background:#c9c9ef;font-size:22px;padding:0"></td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="row mt8" style="gap:0;font-size:20px;color:var(--ink-soft)">
+      <div style="width:72px;text-align:center">符号</div>
+      <div style="width:400px;text-align:center">指数部分</div>
+      <div class="grow" style="text-align:center">尾数部分</div>
+    </div>
+
+    <div class="center mt12" style="font-size:22px;font-weight:700;color:var(--ink-soft)">小数点的位置是<span class="kw">流动的</span></div>
+
+    <ul class="bullets bullets--compact mt16">
+      <li>能够表示的数值的<span class="kw">范围广</span>。</li>
+      <li>能够表示的数的<span class="kw">步长</span>（间隔）是流动的。
+        <ul class="bullets bullets--deep" style="margin-top:4px">
+          <li>e.g., <span class="mono">1.0×2<sup>-16</sup></span>、<span class="mono">1.0×2<sup>15</sup></span></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="page-no">7 / 34</div>
+</section>
+
+<!-- ======================================================== 8 浮点数格式：溢出与下溢 -->
+<section class="slide" id="s08">
+  <div class="slide__head">
+    <h2 class="slide__title">小数的二进制数表示：浮点数格式（溢出与下溢）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <table class="tbl tbl--sm" style="width:1160px;margin:0 auto">
+      <tbody>
+        <tr>
+          <td style="width:72px;background:#c9c9ef;font-size:22px;padding:0"></td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#fdf7d6;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+          <td class="c" style="background:#d5f2e4;font-size:21px">　</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="row mt8" style="gap:0;font-size:20px;color:var(--ink-soft)">
+      <div style="width:72px;text-align:center">符号</div>
+      <div style="width:400px;text-align:center">指数部分</div>
+      <div class="grow" style="text-align:center">尾数部分</div>
+    </div>
+
+    <ul class="bullets bullets--compact mt16">
+      <li>能够表示的数值的<span class="kw">范围广</span>。</li>
+    </ul>
+
+    <div class="center" style="font-size:20px;font-weight:700;color:var(--accent);margin:2px 0">但是（But）↓</div>
+
+    <ul class="bullets bullets--compact">
+      <li><span class="kw">溢出</span>（日文：オーバーフロー / overflow）还是会发生的。
+        <ul class="bullets bullets--deep" style="margin-top:4px">
+          <li>指数值的指数大到无法收进指数部分之中。</li>
+        </ul>
+      </li>
+      <li><span class="kw">下溢</span>（日文：アンダーフロー / underflow）也会发生。
+        <ul class="bullets bullets--deep" style="margin-top:4px">
+          <li>负的指数太大（绝对值过大），无法收进指数部分之中。</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="page-no">8 / 34</div>
+</section>
+
+<!-- ======================================================== 9 浮点格式的数值表示（IEEE754 位域） -->
+<section class="slide" id="s09">
+  <div class="slide__head">
+    <h2 class="slide__title">浮点数格式的数值表示（IEEE754 位域）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--center">
+      <div class="col shrink0" style="width:290px;font-size:21px;font-weight:700">IEEE754 的规定</div>
+      <div class="col grow">
+        <div class="center" style="display:inline-block;background:#fdfbe9;border:1.5px solid #10314f;padding:6px 16px;font-size:20px;font-weight:700;color:var(--accent)">
+          (-1)<sup>符号</sup>×(1+尾数)×2<sup>(指数-偏置值)</sup>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt12" style="font-size:20px;font-weight:700">
+      单精度（32bit）<span class="note" style="font-size:16px;margin-left:14px">相当于 C 语言的 float 型</span>
+    </div>
+    <div class="row" style="gap:0"><div class="shrink0" style="width:36px;height:22px;border:1.3px solid #10314f;background:#c9c9ef;box-sizing:border-box"></div><div class="grow" style="flex:8 1 0;display:flex;background:#fdf7d6"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div><div class="grow" style="flex:23 1 0;display:flex;background:#d5f2e4"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div></div>
+    <div class="row" style="gap:0;font-size:16px;color:var(--ink-soft)">
+      <div style="width:36px;text-align:center">符号<br>(1bit)</div>
+      <div style="width:290px;text-align:center">指数部分<br>(8bit)</div>
+      <div class="grow" style="text-align:center">尾数部分<br>(23bit)</div>
+    </div>
+
+    <div class="mt10" style="font-size:20px;font-weight:700">
+      双精度（64bit）<span class="note" style="font-size:16px;margin-left:14px">相当于 C 语言的 double 型</span>
+    </div>
+    <div class="row" style="gap:0"><div class="shrink0" style="width:36px;height:22px;border:1.3px solid #10314f;background:#c9c9ef;box-sizing:border-box"></div><div class="grow" style="flex:11 1 0;display:flex;background:#fdf7d6"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div><div class="grow" style="flex:20 1 0;display:flex;background:#d5f2e4"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div></div>
+    <div class="row" style="gap:0;font-size:16px;color:var(--ink-soft)">
+      <div style="width:36px;text-align:center">符号<br>(1bit)</div>
+      <div style="width:398px;text-align:center">指数部分<br>(11bit)</div>
+      <div class="grow" style="text-align:center">尾数部分<br>(20bit)</div>
+    </div>
+
+    <div class="row" style="gap:0"><div class="grow" style="flex:32 1 0;display:flex;background:#d5f2e4"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div></div>
+    <div class="center" style="font-size:16px;color:var(--ink-soft)">尾数部分（续）(32bit)</div>
+  </div>
+  <div class="page-no">9 / 34</div>
+</section>
+
+<!-- ======================================================== 10 浮点格式的数值表示：单精度 -->
+<section class="slide" id="s10">
+  <div class="slide__head">
+    <h2 class="slide__title">浮点数格式的数值表示：单精度</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--center">
+      <div class="col shrink0" style="width:120px;font-size:21px;font-weight:700">单精度</div>
+      <div class="col grow center">
+        <span style="display:inline-block;background:#fdfbe9;border:1.5px solid #10314f;padding:6px 16px;font-size:20px;font-weight:700;color:var(--accent)">
+          (-1)<sup>符号</sup>×(1+尾数)×2<sup>(指数-偏置值)</sup>
+        </span>
+      </div>
+    </div>
+
+    <div class="row" style="gap:0"><div class="shrink0" style="width:36px;height:22px;border:1.3px solid #10314f;background:#c9c9ef;box-sizing:border-box"></div><div class="grow" style="flex:8 1 0;display:flex;background:#fdf7d6"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div><div class="grow" style="flex:23 1 0;display:flex;background:#d5f2e4"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div></div>
+    <div class="row" style="gap:0;font-size:15px;color:var(--ink-soft);width:880px;margin:0 auto">
+      <div style="width:26px;text-align:center">符号<br>(1bit)</div>
+      <div style="width:254px;text-align:center">指数部分<br>(8bit)</div>
+      <div class="grow" style="text-align:center">尾数部分<br>(23bit)</div>
+    </div>
+
+    <ul class="bullets bullets--compact mt16">
+      <li>正则化之后，尾数（二进制数）的<b>首位必定是 1</b>
+        <br>→ 因此尾数部分的 23bit 中<b>不保存</b>这个 1。</li>
+      <li><span class="kw-blue">尾数部分表示 0～1 的小数。</span></li>
+      <li>用指数位无法直接比较大小。
+        <ul class="bullets bullets--deep" style="margin-top:4px">
+          <li><span class="mono">-1：11111111</span>、<span class="mono">1：00000001</span></li>
+          <li>→ 为了让最小值成为 <span class="mono">00000001</span>，给它<span class="kw">加上偏置值</span>（bias）。
+            所谓加偏置值，就是在原本的数量上再加一个数量，使整体的数值看起来比实际更大。</li>
+          <li>单精度的情况下，在指数部分保存 <b>实际的值 +127</b>。</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="callout callout--blue mt10" style="font-size:17px">
+      <span class="callout__tag">单精度的范围</span>
+      <span>最小值是 <span class="mono">1.00..00<sub>2</sub>×2<sup>-126</sup></span>，最大值是 <span class="mono">1.11..11<sub>2</sub>×2<sup>127</sup></span>。</span>
+    </div>
+  </div>
+  <div class="page-no">10 / 34</div>
+</section>
+
+<!-- ======================================================== 11 浮点格式的数值表示：双精度 -->
+<section class="slide" id="s11">
+  <div class="slide__head">
+    <h2 class="slide__title">浮点数格式的数值表示：双精度</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="row row--center">
+      <div class="col shrink0" style="width:120px;font-size:21px;font-weight:700">双精度</div>
+      <div class="col grow center">
+        <span style="display:inline-block;background:#fdfbe9;border:1.5px solid #10314f;padding:6px 16px;font-size:20px;font-weight:700;color:var(--accent)">
+          (-1)<sup>符号</sup>×(1+尾数)×2<sup>(指数-偏置值)</sup>
+        </span>
+      </div>
+    </div>
+
+    <div class="row" style="gap:0"><div class="shrink0" style="width:36px;height:22px;border:1.3px solid #10314f;background:#c9c9ef;box-sizing:border-box"></div><div class="grow" style="flex:11 1 0;display:flex;background:#fdf7d6"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div><div class="grow" style="flex:20 1 0;display:flex;background:#d5f2e4"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div></div>
+    <div class="row" style="gap:0;font-size:15px;color:var(--ink-soft);width:880px;margin:0 auto">
+      <div style="width:26px;text-align:center">符号<br>(1bit)</div>
+      <div style="width:254px;text-align:center">指数部分<br>(11bit)</div>
+      <div class="grow" style="text-align:center">尾数部分<br>(20bit)</div>
+    </div>
+
+    <div class="row" style="gap:0"><div class="grow" style="flex:32 1 0;display:flex;background:#d5f2e4"><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div><div class="grow" style="border:1.3px solid #10314f;border-right:none;box-sizing:border-box"></div></div></div>
+    <div class="center" style="font-size:15px;color:var(--ink-soft)">尾数部分（续）(32bit)</div>
+
+    <ul class="bullets bullets--compact mt16">
+      <li>正则化之后，尾数（二进制数）的<b>首位必定是 1</b>。
+        <ul class="bullets bullets--deep" style="margin-top:4px">
+          <li>尾数部分表示 0～1 的小数。</li>
+        </ul>
+      </li>
+      <li>指数部分要<span class="kw">加上偏置值（1023）</span>。</li>
+    </ul>
+
+    <div class="callout callout--blue mt10" style="font-size:17px">
+      <span class="callout__tag">双精度的范围</span>
+      <span>最小值是 <span class="mono">1.00..00<sub>2</sub>×2<sup>-1022</sup></span>，最大值是 <span class="mono">1.11..11<sub>2</sub>×2<sup>1023</sup></span>。</span>
+    </div>
+  </div>
+  <div class="page-no">11 / 34</div>
+</section>
+
+<!-- ======================================================== 12 特殊值的表示 -->
+<section class="slide" id="s12">
+  <div class="slide__head">
+    <h2 class="slide__title">浮点数格式的数值表示：特殊值的表示</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:26px">
+    <div style="font-size:24px;font-weight:700;margin-bottom:10px">特殊值的表示</div>
+
+    <table class="tbl" style="width:920px;margin:0 auto">
+      <thead>
+        <tr>
+          <th style="width:260px;text-align:center">指数</th>
+          <th style="width:260px;text-align:center">尾数</th>
+          <th style="text-align:center">内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="text-align:center">全部为 0</td><td style="text-align:center"><span class="mono">0</span></td><td style="text-align:center">0</td></tr>
+        <tr class="alt"><td style="text-align:center">全部为 0</td><td style="text-align:center"><span class="mono">≠0</span></td><td style="text-align:center"><span class="kw">±非规格化数</span></td></tr>
+        <tr><td style="text-align:center"><span class="mono">1-254</span></td><td style="text-align:center">任意</td><td style="text-align:center">±浮点数</td></tr>
+        <tr class="alt"><td style="text-align:center">全部为 1</td><td style="text-align:center"><span class="mono">0</span></td><td style="text-align:center"><span class="mono">±∞</span></td></tr>
+        <tr><td style="text-align:center">全部为 1</td><td style="text-align:center"><span class="mono">≠0</span></td><td style="text-align:center"><span class="kw">非数（NaN）</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="note mt20 center" style="font-size:19px">※非规格化数：用于表示接近于 0 的值。</div>
+  </div>
+  <div class="page-no">12 / 34</div>
+</section>
+
+<!-- ======================================================== 13 确认问题（题目页） -->
+<section class="slide" id="s13">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:14px">
+    <table class="tbl tbl--sm" style="width:560px;margin:0 0 0 auto">
+      <thead>
+        <tr>
+          <th style="width:120px;text-align:center">　</th>
+          <th style="text-align:center">符号</th>
+          <th style="text-align:center">指数部分</th>
+          <th style="text-align:center">尾数部分</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="text-align:center">单精度</td><td class="c" style="text-align:center">1bit</td><td class="c" style="text-align:center">8bit</td><td class="c" style="text-align:center">23bit</td></tr>
+        <tr class="alt"><td style="text-align:center">双精度</td><td class="c" style="text-align:center">1bit</td><td class="c" style="text-align:center">11bit</td><td class="c" style="text-align:center">52bit</td></tr>
+      </tbody>
+    </table>
+
+    <div class="qbox mt20" style="font-size:21px;line-height:2.0">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(1)</span>请把 <span class="mono">-0.75<sub>10</sub></span> 用单精度表示出来。<br>
+      <span class="qno">(2)</span>请把 <span class="mono">0.75<sub>10</sub></span> 用双精度表示出来。<br>
+      <span class="qno">(3)</span>请把 <span class="mono">1.75<sub>10</sub></span> 用单精度表示出来。<br>
+      <span class="qno">(4)</span>请把 <span class="mono">-∞</span> 用双精度表示出来。<br>
+      <span class="qno">(5)</span>请回答单精度情况下 NaN 的指数部分。
+    </div>
+  </div>
+  <div class="page-no">13 / 34</div>
+</section>
+
+<!-- ======================================================== 14 确认问题（解答页） -->
+<section class="slide" id="s14">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（解答）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <table class="tbl tbl--sm" style="width:560px;margin:0 0 0 auto">
+      <thead>
+        <tr>
+          <th style="width:120px;text-align:center">　</th>
+          <th style="text-align:center">符号</th>
+          <th style="text-align:center">指数部分</th>
+          <th style="text-align:center">尾数部分</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="text-align:center">单精度</td><td class="c" style="text-align:center">1bit</td><td class="c" style="text-align:center">8bit</td><td class="c" style="text-align:center">23bit</td></tr>
+        <tr class="alt"><td style="text-align:center">双精度</td><td class="c" style="text-align:center">1bit</td><td class="c" style="text-align:center">11bit</td><td class="c" style="text-align:center">52bit</td></tr>
+      </tbody>
+    </table>
+
+    <div class="abox mt12" style="font-size:19px;line-height:1.85">
+      <span class="abox__tag">答案</span>
+      <span class="qno">(1)</span>请把 <span class="mono">-0.75<sub>10</sub></span> 用单精度表示出来。<br>
+      <span style="padding-left:28px"><span class="mono">-0.75<sub>10</sub> = -0.11<sub>2</sub> = -1.1<sub>2</sub>×2<sup>-1</sup></span>　→　<span class="kw">指数部分为 -1+127</span></span><br>
+      <span class="qno">(2)</span>请把 <span class="mono">0.75<sub>10</sub></span> 用双精度表示出来。<br>
+      <span style="padding-left:28px"><span class="kw">指数部分为 -1+1023</span></span><br>
+      <span class="qno">(3)</span>请把 <span class="mono">1.75<sub>10</sub></span> 用单精度表示出来。<br>
+      <span style="padding-left:28px"><span class="mono">1.75<sub>10</sub> = 1.11<sub>2</sub>×2<sup>0</sup></span>　→　<span class="kw">指数部分为 0+127</span></span><br>
+      <span class="qno">(4)</span>请把 <span class="mono">-∞</span> 用双精度表示出来。<br>
+      <span class="qno">(5)</span>请回答单精度情况下 NaN 的指数部分。
+    </div>
+  </div>
+  <div class="page-no">14 / 34</div>
+</section>
+
+<!-- ======================================================== 15 确认问题（偏置值的推导） -->
+<section class="slide" id="s15">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（偏置值要自己会推导）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:34px">
+    <div class="panel" style="padding:34px 44px">
+      <div class="center" style="font-size:27px;line-height:2.0;color:var(--ink)">
+        单精度、双精度的符号、指数部分、尾数部分的<br>
+        位宽不记也没关系，<br>
+        <span class="kw">但「偏置值」请做到自己能够推导出来</span><br>
+        <span class="mono" style="font-size:25px">(2<sup>n-1</sup>-1)</span>　<span style="font-size:23px">（n：指数部分的位数）</span>
+      </div>
+    </div>
+
+    <div class="callout callout--blue mt24" style="font-size:18px">
+      <span class="callout__tag">补充</span>
+      <span>n = 8（单精度）时偏置值为 <span class="mono">2<sup>7</sup>-1 = 127</span>；
+        n = 11（双精度）时偏置值为 <span class="mono">2<sup>10</sup>-1 = 1023</span>，与上文给出的值一致。</span>
+    </div>
+  </div>
+  <div class="page-no">15 / 34</div>
+</section>
+
+<!-- ======================================================== 16 讲义内容 -->
+<section class="slide" id="s16">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">算术运算的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">小数的二进制数表示<span class="toc__item--jp">小数の2進数表記</span></div>
+          <div class="toc__item toc__item--active">浮点数的加法<span class="toc__item--jp">浮動小数点数の加算</span></div>
+          <div class="toc__item">（浮点数的乘法）<span class="toc__item--jp">(浮動小数点数の乗算)</span></div>
+          <div class="toc__item">误差与舍入<span class="toc__item--jp">誤差と丸め</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">16 / 34</div>
+</section>
+
+<!-- ======================================================== 17 浮点数的加法（流程图） -->
+<section class="slide" id="s17">
+  <div class="slide__head">
+    <h2 class="slide__title">浮点数的加法（处理流程）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:6px">
+    <div class="pipe" style="gap:64px;align-items:flex-start">
+      <div class="pipe__col shrink0" style="width:330px">
+        <div class="pipe__node pipe__node--oval">开始</div>
+        <div class="pipe__arrow" style="height:8px"></div>
+        <div class="pipe__node" style="width:330px;white-space:normal;padding:5px 10px">小数点对齐<br><small>（把指数较小的一方移位）</small></div>
+        <div class="pipe__arrow" style="height:8px"></div>
+        <div class="pipe__node">尾数相加</div>
+        <div class="pipe__arrow" style="height:8px"></div>
+        <div class="pipe__node">规格化</div>
+        <div class="pipe__arrow" style="height:8px"></div>
+        <svg width="330" height="34" viewBox="0 0 330 34" aria-hidden="true">
+          <path d="M20 0 L20 10 L165 10 L295 10 L165 10 L165 28" fill="none" stroke="#10314f" stroke-width="1.5"/>
+          <path d="M160 22 L165 30 L170 22" fill="none" stroke="#10314f" stroke-width="1.5"/>
+          <path d="M160 4 L165 12 L170 4" fill="none" stroke="#10314f" stroke-width="1.5"/>
+        </svg>
+        <div class="pipe__node">尾数有效位对齐<br><small>（舍入）</small></div>
+        <div class="pipe__arrow" style="height:8px"></div>
+        <svg width="330" height="34" viewBox="0 0 330 34" aria-hidden="true">
+          <path d="M20 0 L20 10 L165 10 L295 10 L165 10 L165 28" fill="none" stroke="#10314f" stroke-width="1.5"/>
+          <path d="M160 22 L165 30 L170 22" fill="none" stroke="#10314f" stroke-width="1.5"/>
+          <path d="M160 4 L165 12 L170 4" fill="none" stroke="#10314f" stroke-width="1.5"/>
+        </svg>
+        <div class="pipe__node pipe__node--oval">结束</div>
+      </div>
+
+      <div class="col shrink0" style="width:230px;padding-top:96px">
+        <svg width="230" height="64" viewBox="0 0 230 64" aria-hidden="true">
+          <path d="M0 6 L214 6 L214 58" fill="none" stroke="#cf2036" stroke-width="1.5"/>
+          <path d="M209 52 L214 60 L219 52" fill="none" stroke="#cf2036" stroke-width="1.5"/>
+        </svg>
+        <div class="note" style="font-size:15px;margin-top:-52px;padding-left:86px">发生溢出、下溢</div>
+        <div class="pipe__node pipe__node--oval mt10" style="background:#fdeff1;border-color:#cf2036;color:#a3182a">异常</div>
+        <svg class="mt16" width="230" height="64" viewBox="0 0 230 64" aria-hidden="true">
+          <path d="M0 58 L214 58 L214 6" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+          <path d="M209 14 L214 6 L219 14" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+        </svg>
+        <div class="note" style="font-size:15px;margin-top:-52px">非规格化 → 重做</div>
+        <div class="pipe__node pipe__node--oval mt10" style="background:#eef5fd;border-color:#1660a8;color:#17466f">回到「尾数相加」重做</div>
+      </div>
+    </div>
+
+    <div class="callout mt16" style="font-size:17px">
+      <span class="callout__tag">要点</span>
+      <span>「规格化」之后若发生<span class="kw">溢出、下溢</span>，则转入<span class="kw">异常</span>；
+        若结果为<span class="kw">非规格化</span>，则回到<span class="kw">尾数相加</span>重做；
+        其余情况做完<span class="kw">尾数有效位对齐</span>后结束。</span>
+    </div>
+  </div>
+  <div class="page-no">17 / 34</div>
+</section>
+
+<!-- ======================================================== 18 浮点数的加法（十进制示例） -->
+<section class="slide" id="s18">
+  <div class="slide__head">
+    <h2 class="slide__title">浮点数的加法（十进制示例）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:8px">
+    <div class="row row--top">
+      <div class="col shrink0" style="width:330px">
+        <div class="pipe__col">
+          <div class="pipe__node pipe__node--oval">开始</div>
+          <div class="pipe__arrow" style="height:8px"></div>
+          <div class="pipe__node" style="width:330px;white-space:normal;padding:5px 10px">小数点对齐<br><small>（把指数较小的一方移位）</small></div>
+          <div class="pipe__arrow" style="height:8px"></div>
+          <div class="pipe__node">尾数相加</div>
+          <div class="pipe__arrow" style="height:8px"></div>
+          <div class="pipe__node">规格化</div>
+          <div class="pipe__arrow" style="height:8px"></div>
+          <div class="pipe__node pipe__node--oval" style="background:#fff7e6;border-color:#c2801a">溢出、下溢？</div>
+          <div class="pipe__arrow" style="height:8px"></div>
+          <div class="pipe__node">尾数有效位对齐</div>
+          <div class="pipe__arrow" style="height:8px"></div>
+          <div class="pipe__node pipe__node--oval" style="background:#fff7e6;border-color:#c2801a">非规格化？</div>
+          <div class="pipe__arrow" style="height:8px"></div>
+          <div class="pipe__node pipe__node--oval">结束</div>
+        </div>
+        <div class="note mt12" style="font-size:15px">各判断的「其它情况」继续向下；发生溢出、下溢时转入「异常」；非规格化时回到「尾数相加」重做。</div>
+      </div>
+
+      <div class="col grow">
+        <div class="note" style="font-size:17px">为简单起见，用十进制数说明。假定尾数 4 位、指数 2 位。</div>
+        <div class="center" style="font-size:22px;line-height:1.2">↓</div>
+        <div class="mono" style="font-size:22px;padding-left:6px">9.999<sub>10</sub>×10<sup>1</sup>+1.610<sub>10</sub>×10<sup>-1</sup></div>
+        <div class="center" style="font-size:22px;line-height:1.2">↓</div>
+        <div class="mono" style="font-size:22px;padding-left:6px">9.999<sub>10</sub>×10<sup>1</sup>+0.016<sub>10</sub>×10<sup>1</sup></div>
+        <div class="note" style="font-size:15px;padding-left:150px">只能保持 4 位</div>
+        <div class="mono mt10" style="font-size:22px;padding-left:6px">10.015<sub>10</sub>×10<sup>1</sup></div>
+        <div class="note" style="font-size:15px;padding-left:150px">↑ 尾数相加的结果</div>
+        <div class="mono mt10" style="font-size:22px;padding-left:6px">1.0015<sub>10</sub>×10<sup>2</sup></div>
+        <div class="note" style="font-size:15px;padding-left:150px">↑ 规格化之后</div>
+        <div class="mono mt10" style="font-size:22px;padding-left:6px">1.002<sub>10</sub>×10<sup>2</sup></div>
+        <div class="note" style="font-size:15px;padding-left:150px">↑ 舍入到 4 位（round）</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">18 / 34</div>
+</section>
+
+<!-- ======================================================== 19 浮点加法单元（整体框图） -->
+<section class="slide" id="s19">
+  <div class="slide__head" style="padding-top:22px">
+    <h2 class="slide__title">浮点加法单元：整体框图</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:6px">
+    <div class="center"><svg class="fpadd" viewBox="0 0 980 710" width="900" style="width:900px;height:486px" role="img" aria-label="浮点数加法器框图">
+<defs>
+<marker id="faD" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#a9b3be"/></marker>
+<marker id="faR" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#cf2036"/></marker>
+<marker id="faB" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#1660a8"/></marker>
+</defs>
+<rect x="0" y="0" width="980" height="710" fill="#fff"/>
+<text x="0" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<text x="872" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<g class="dimb">
+<rect x="0" y="88" width="208" height="30" fill="#fff" opacity=".62"/>
+<rect x="865" y="88" width="115" height="200" fill="#fff" opacity=".62"/>
+<rect x="180" y="200" width="240" height="80" fill="#fff" opacity=".62"/>
+<rect x="300" y="360" width="260" height="110" fill="#fff" opacity=".62"/>
+<rect x="770" y="190" width="190" height="150" fill="#fff" opacity=".62"/>
+<rect x="410" y="375" width="270" height="95" fill="#fff" opacity=".62"/>
+</g>
+<g class="dim">
+<rect x="0" y="290" width="300" height="110" fill="#fff" opacity=".84"/>
+<rect x="110" y="190" width="140" height="80" fill="#fff" opacity=".84"/>
+</g>
+<g class="dim"><rect x="430" y="370" width="140" height="110" fill="#fff" opacity=".84"/></g>
+<g class="dim"><rect x="460" y="450" width="180" height="140" fill="#fff" opacity=".84"/></g>
+<path class="l" d="M290 90 L290 108 L80 108 L80 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 108 L290 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 140 L212 140 L212 178" marker-end="url(#faD)"/>
+<path class="l" data-h="align" d="M345 112 L345 146" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 110 L1022 110 L1022 126 L1085 126 L1085 170" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 116 L122 116" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 152 L644 152 L644 178" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 170 L305 170 L305 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M290 90 L290 122 L290 318" marker-end="url(#faR)"/>
+<path class="l" d="M290 122 L600 122 L600 138 L632 138 L632 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M360 318 L360 390 L390 390" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 196 L696 196" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M910 196 L966 196 L966 394 L880 394" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M345 90 L345 156 L415 156 L415 266" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M345 156 L505 156 L505 400 L560 400" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M505 400 L800 400 L800 574" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M965 95 L965 188 L845 188 L845 210" marker-end="url(#faB)"/>
+<path class="l" data-h="add" d="M965 188 L965 348 L745 348" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M845 188 L880 188 L880 360 L800 360 L800 388 L777 388" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M1085 458 L116 458 L116 200" marker-end="url(#faR)"/>
+<path class="l" data-h="redo" d="M1085 458 L1085 660" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 390 L298 308" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 375 L250 375 L250 368" marker-end="url(#faR)"/>
+<path class="l" d="M298 318 L298 268 L408 268 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M298 268 L450 268 L450 320" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L560 268 L560 325" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L618 268 L618 330" marker-end="url(#faR)"/>
+<path class="l" d="M408 200 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="add" d="M660 242 L660 300 L688 300" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M800 330 L800 470 L655 470" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M800 330 L800 350" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M777 400 L777 454 L745 454" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M700 424 L655 424" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M660 424 L590 424 L590 330" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M740 474 L740 500" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M800 474 L800 500 L780 500" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M620 572 L620 654" marker-end="url(#faR)"/>
+<circle cx="800" cy="400" r="2.6" fill="#9fb0c0"/>
+<circle cx="800" cy="360" r="2.6" fill="#9fb0c0"/>
+<g class="dim">
+<rect x="180" y="60" width="170" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="180" y1="90" x2="350" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="212" y1="60" x2="212" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="290" y1="60" x2="290" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="865" y="60" width="115" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="865" y1="90" x2="980" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="910" y1="60" x2="910" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="654" width="290" height="34" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="490" y1="688" x2="780" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="536" y1="654" x2="536" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="620" y1="654" x2="620" y2="688" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="408" y="240" width="252" height="38" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M88 182 L158 182 L128 222 L118 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M655 182 L730 182 L700 222 L685 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M745 182 L825 182 L795 222 L775 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="250" y="250" width="115" height="48" rx="24" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+<path d="M368 200 L438 200 L408 240 L398 240 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M650 300 L770 300 L740 340 L680 340 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M450 400 L570 400 L540 440 L480 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="450" y="410" width="110" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M560 400 L680 400 L650 440 L590 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="655" y="454" width="170" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="500" width="290" height="36" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="358" y="218" width="100" height="16" rx="8" fill="none" stroke="#cf2036" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="118" y="400" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+<rect x="680" y="628" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+</g>
+<g font-size="17" fill="#10314f" text-anchor="middle" font-family="Cascadia Mono, Consolas, monospace">
+<g class="dim"><text x="196" y="81">S</text><text x="251" y="81">指数</text><text x="321" y="81">尾数</text></g>
+<g class="dim"><text x="886" y="81">S</text><text x="936" y="81">指数</text><text x="972" y="81">尾数</text></g>
+<g class="dim"><text x="160" y="205">MUX1</text><text x="692" y="205">MUX2</text><text x="782" y="205">MUX3</text><text x="534" y="265">右移</text></g>
+<g class="dim"><text x="307" y="281">控制</text><text x="413" y="224" font-size="13">ALU</text></g>
+<g class="dim"><text x="707" y="325">ALU</text></g>
+<g class="dim"><text x="510" y="425">MUX4</text><text x="505" y="438" font-size="16">减小/增大</text></g>
+<g class="dim"><text x="620" y="425">MUX5</text><text x="740" y="481">左移或右移</text></g>
+<g class="dim"><text x="635" y="524">舍入用硬件</text></g>
+<g class="dim"><text x="513" y="678">S</text><text x="578" y="678">指数</text><text x="700" y="678">尾数</text></g>
+</g>
+<g font-size="13.5" font-weight="700" text-anchor="middle" font-family="Microsoft YaHei, sans-serif">
+<text x="420" y="238" fill="#a9b3be">指数之差</text>
+<text x="262" y="368" fill="#a9b3be">较大的指数</text>
+<text x="605" y="253" fill="#a9b3be">较小一方的尾数</text>
+<text x="855" y="255" fill="#a9b3be">较大一方的尾数</text>
+<text x="838" y="372" fill="#a9b3be">控制信号</text>
+<text x="190" y="432" fill="#a9b3be">尾数有效位</text>
+<text x="190" y="449" fill="#a9b3be">对齐后</text>
+<text x="645" y="620" fill="#a9b3be">非规格化则重做</text>
+</g>
+</svg></div>
+    <div class="note center" style="font-size:15px">浮点加法器的整体结构：S（符号）、指数、尾数 三部分输入，经 MUX1〜MUX5、右移、控制、舍入用硬件后输出 S／指数／尾数。（MUX：多路选择器；ALU：算术逻辑单元）</div>
+    <div class="callout mt8" style="font-size:15px;padding:8px 12px">
+      <span class="callout__tag">说明</span>
+      <span>上图按原讲义的加法单元（加算ユニット）框图重绘为中文版：红色导线为指数／符号通路，蓝色导线为尾数通路，灰色细线为控制信号；本页<b>高亮</b>部分表示该环节正在工作。</span>
+    </div>
+  </div>
+  <div class="page-no">19 / 34</div>
+</section>
+
+<!-- ======================================================== 20 加法单元：小数点对齐 -->
+<section class="slide" id="s20">
+  <div class="slide__head" style="padding-top:22px">
+    <h2 class="slide__title">浮点加法单元：小数点对齐</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:6px">
+    <div class="center"><svg class="fpadd" viewBox="0 0 980 710" width="900" style="width:900px;height:486px" role="img" aria-label="浮点数加法器框图">
+<defs>
+<marker id="faD" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#a9b3be"/></marker>
+<marker id="faR" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#cf2036"/></marker>
+<marker id="faB" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#1660a8"/></marker>
+</defs>
+<rect x="0" y="0" width="980" height="710" fill="#fff"/>
+<text x="0" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<text x="872" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<g class="dimb">
+<rect x="0" y="88" width="208" height="30" fill="#fff" opacity=".62"/>
+<rect x="865" y="88" width="115" height="200" fill="#fff" opacity=".62"/>
+<rect x="180" y="200" width="240" height="80" fill="#fff" opacity=".62"/>
+<rect x="300" y="360" width="260" height="110" fill="#fff" opacity=".62"/>
+<rect x="770" y="190" width="190" height="150" fill="#fff" opacity=".62"/>
+<rect x="410" y="375" width="270" height="95" fill="#fff" opacity=".62"/>
+</g>
+<g class="dim">
+<rect x="0" y="290" width="300" height="110" fill="#fff" opacity=".84"/>
+<rect x="110" y="190" width="140" height="80" fill="#fff" opacity=".84"/>
+</g>
+<g class="dim"><rect x="430" y="370" width="140" height="110" fill="#fff" opacity=".84"/></g>
+<g class="dim"><rect x="460" y="450" width="180" height="140" fill="#fff" opacity=".84"/></g>
+<path class="l" d="M290 90 L290 108 L80 108 L80 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 108 L290 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 140 L212 140 L212 178" marker-end="url(#faD)"/>
+<path class="l" data-h="align" d="M345 112 L345 146" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 110 L1022 110 L1022 126 L1085 126 L1085 170" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 116 L122 116" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 152 L644 152 L644 178" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 170 L305 170 L305 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M290 90 L290 122 L290 318" marker-end="url(#faR)"/>
+<path class="l" d="M290 122 L600 122 L600 138 L632 138 L632 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M360 318 L360 390 L390 390" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 196 L696 196" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M910 196 L966 196 L966 394 L880 394" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M345 90 L345 156 L415 156 L415 266" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M345 156 L505 156 L505 400 L560 400" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M505 400 L800 400 L800 574" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M965 95 L965 188 L845 188 L845 210" marker-end="url(#faB)"/>
+<path class="l" data-h="add" d="M965 188 L965 348 L745 348" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M845 188 L880 188 L880 360 L800 360 L800 388 L777 388" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M1085 458 L116 458 L116 200" marker-end="url(#faR)"/>
+<path class="l" data-h="redo" d="M1085 458 L1085 660" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 390 L298 308" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 375 L250 375 L250 368" marker-end="url(#faR)"/>
+<path class="l" d="M298 318 L298 268 L408 268 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M298 268 L450 268 L450 320" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L560 268 L560 325" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L618 268 L618 330" marker-end="url(#faR)"/>
+<path class="l" d="M408 200 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="add" d="M660 242 L660 300 L688 300" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M800 330 L800 470 L655 470" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M800 330 L800 350" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M777 400 L777 454 L745 454" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M700 424 L655 424" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M660 424 L590 424 L590 330" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M740 474 L740 500" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M800 474 L800 500 L780 500" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M620 572 L620 654" marker-end="url(#faR)"/>
+<circle cx="800" cy="400" r="2.6" fill="#9fb0c0"/>
+<circle cx="800" cy="360" r="2.6" fill="#9fb0c0"/>
+<g class="dim">
+<rect x="180" y="60" width="170" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="180" y1="90" x2="350" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="212" y1="60" x2="212" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="290" y1="60" x2="290" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="865" y="60" width="115" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="865" y1="90" x2="980" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="910" y1="60" x2="910" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="654" width="290" height="34" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="490" y1="688" x2="780" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="536" y1="654" x2="536" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="620" y1="654" x2="620" y2="688" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g>
+<rect x="408" y="240" width="252" height="38" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M88 182 L158 182 L128 222 L118 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M655 182 L730 182 L700 222 L685 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M745 182 L825 182 L795 222 L775 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="250" y="250" width="115" height="48" rx="24" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+<path d="M368 200 L438 200 L408 240 L398 240 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M650 300 L770 300 L740 340 L680 340 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M450 400 L570 400 L540 440 L480 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="450" y="410" width="110" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g>
+<path d="M560 400 L680 400 L650 440 L590 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="655" y="454" width="170" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="500" width="290" height="36" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="358" y="218" width="100" height="16" rx="8" fill="none" stroke="#cf2036" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="118" y="400" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+<rect x="680" y="628" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+</g>
+<g font-size="17" fill="#10314f" text-anchor="middle" font-family="Cascadia Mono, Consolas, monospace">
+<g class="dim"><text x="196" y="81">S</text><text x="251" y="81">指数</text><text x="321" y="81">尾数</text></g>
+<g class="dim"><text x="886" y="81">S</text><text x="936" y="81">指数</text><text x="972" y="81">尾数</text></g>
+<g><text x="160" y="205">MUX1</text><text x="692" y="205">MUX2</text><text x="782" y="205">MUX3</text><text x="534" y="265">右移</text></g>
+<g class="dim"><text x="307" y="281">控制</text><text x="413" y="224" font-size="13">ALU</text></g>
+<g class="dim"><text x="707" y="325">ALU</text></g>
+<g class="dim"><text x="510" y="425">MUX4</text><text x="505" y="438" font-size="16">减小/增大</text></g>
+<g><text x="620" y="425">MUX5</text><text x="740" y="481">左移或右移</text></g>
+<g class="dim"><text x="635" y="524">舍入用硬件</text></g>
+<g class="dim"><text x="513" y="678">S</text><text x="578" y="678">指数</text><text x="700" y="678">尾数</text></g>
+</g>
+<g font-size="13.5" font-weight="700" text-anchor="middle" font-family="Microsoft YaHei, sans-serif">
+<text x="420" y="238" fill="#a9b3be">指数之差</text>
+<text x="262" y="368" fill="#a9b3be">较大的指数</text>
+<text x="605" y="253" fill="#9a3412">较小一方的尾数</text>
+<text x="855" y="255" fill="#a9b3be">较大一方的尾数</text>
+<text x="838" y="372" fill="#9a3412">控制信号</text>
+<text x="190" y="432" fill="#a9b3be">尾数有效位</text>
+<text x="190" y="449" fill="#a9b3be">对齐后</text>
+<text x="645" y="620" fill="#a9b3be">非规格化则重做</text>
+</g>
+</svg></div>
+    <div class="note center" style="font-size:15px">高亮部分：MUX3（取出较小一方的尾数）→「右移」（按指数之差右移），以及 MUX2 与「控制」（取出较大一方的指数）。</div>
+    <div class="callout mt8" style="font-size:15px;padding:8px 12px">
+      <span class="callout__tag">说明</span>
+      <span>先把两个数的<b>小数点对齐</b>：由 ALU 求出指数之差，再用它控制「右移」，把指数较小一方的尾数右移对齐。</span>
+    </div>
+  </div>
+  <div class="page-no">20 / 34</div>
+</section>
+
+<!-- ======================================================== 21 加法单元：尾数相加 -->
+<section class="slide" id="s21">
+  <div class="slide__head" style="padding-top:22px">
+    <h2 class="slide__title">浮点加法单元：尾数相加</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:6px">
+    <div class="center"><svg class="fpadd" viewBox="0 0 980 710" width="900" style="width:900px;height:486px" role="img" aria-label="浮点数加法器框图">
+<defs>
+<marker id="faD" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#a9b3be"/></marker>
+<marker id="faR" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#cf2036"/></marker>
+<marker id="faB" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#1660a8"/></marker>
+</defs>
+<rect x="0" y="0" width="980" height="710" fill="#fff"/>
+<text x="0" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<text x="872" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<g class="dimb">
+<rect x="0" y="88" width="208" height="30" fill="#fff" opacity=".62"/>
+<rect x="865" y="88" width="115" height="200" fill="#fff" opacity=".62"/>
+<rect x="180" y="200" width="240" height="80" fill="#fff" opacity=".62"/>
+<rect x="300" y="360" width="260" height="110" fill="#fff" opacity=".62"/>
+<rect x="770" y="190" width="190" height="150" fill="#fff" opacity=".62"/>
+<rect x="410" y="375" width="270" height="95" fill="#fff" opacity=".62"/>
+</g>
+<g class="dim">
+<rect x="0" y="290" width="300" height="110" fill="#fff" opacity=".84"/>
+<rect x="110" y="190" width="140" height="80" fill="#fff" opacity=".84"/>
+</g>
+<g class="dim"><rect x="430" y="370" width="140" height="110" fill="#fff" opacity=".84"/></g>
+<g class="dim"><rect x="460" y="450" width="180" height="140" fill="#fff" opacity=".84"/></g>
+<path class="l" d="M290 90 L290 108 L80 108 L80 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 108 L290 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 140 L212 140 L212 178" marker-end="url(#faD)"/>
+<path class="l" data-h="align" d="M345 112 L345 146" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 110 L1022 110 L1022 126 L1085 126 L1085 170" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 116 L122 116" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 152 L644 152 L644 178" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 170 L305 170 L305 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M290 90 L290 122 L290 318" marker-end="url(#faR)"/>
+<path class="l" d="M290 122 L600 122 L600 138 L632 138 L632 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M360 318 L360 390 L390 390" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 196 L696 196" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M910 196 L966 196 L966 394 L880 394" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M345 90 L345 156 L415 156 L415 266" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M345 156 L505 156 L505 400 L560 400" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M505 400 L800 400 L800 574" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M965 95 L965 188 L845 188 L845 210" marker-end="url(#faB)"/>
+<path class="l" data-h="add" d="M965 188 L965 348 L745 348" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M845 188 L880 188 L880 360 L800 360 L800 388 L777 388" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M1085 458 L116 458 L116 200" marker-end="url(#faR)"/>
+<path class="l" data-h="redo" d="M1085 458 L1085 660" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 390 L298 308" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 375 L250 375 L250 368" marker-end="url(#faR)"/>
+<path class="l" d="M298 318 L298 268 L408 268 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M298 268 L450 268 L450 320" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L560 268 L560 325" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L618 268 L618 330" marker-end="url(#faR)"/>
+<path class="l" d="M408 200 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="add" d="M660 242 L660 300 L688 300" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M800 330 L800 470 L655 470" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M800 330 L800 350" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M777 400 L777 454 L745 454" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M700 424 L655 424" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M660 424 L590 424 L590 330" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M740 474 L740 500" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M800 474 L800 500 L780 500" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M620 572 L620 654" marker-end="url(#faR)"/>
+<circle cx="800" cy="400" r="2.6" fill="#9fb0c0"/>
+<circle cx="800" cy="360" r="2.6" fill="#9fb0c0"/>
+<g class="dim">
+<rect x="180" y="60" width="170" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="180" y1="90" x2="350" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="212" y1="60" x2="212" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="290" y1="60" x2="290" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="865" y="60" width="115" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="865" y1="90" x2="980" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="910" y1="60" x2="910" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="654" width="290" height="34" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="490" y1="688" x2="780" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="536" y1="654" x2="536" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="620" y1="654" x2="620" y2="688" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="408" y="240" width="252" height="38" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M88 182 L158 182 L128 222 L118 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M655 182 L730 182 L700 222 L685 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M745 182 L825 182 L795 222 L775 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="250" y="250" width="115" height="48" rx="24" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+<path d="M368 200 L438 200 L408 240 L398 240 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g>
+<path d="M650 300 L770 300 L740 340 L680 340 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M450 400 L570 400 L540 440 L480 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="450" y="410" width="110" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M560 400 L680 400 L650 440 L590 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="655" y="454" width="170" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="500" width="290" height="36" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="358" y="218" width="100" height="16" rx="8" fill="none" stroke="#cf2036" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="118" y="400" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+<rect x="680" y="628" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+</g>
+<g font-size="17" fill="#10314f" text-anchor="middle" font-family="Cascadia Mono, Consolas, monospace">
+<g class="dim"><text x="196" y="81">S</text><text x="251" y="81">指数</text><text x="321" y="81">尾数</text></g>
+<g class="dim"><text x="886" y="81">S</text><text x="936" y="81">指数</text><text x="972" y="81">尾数</text></g>
+<g class="dim"><text x="160" y="205">MUX1</text><text x="692" y="205">MUX2</text><text x="782" y="205">MUX3</text><text x="534" y="265">右移</text></g>
+<g class="dim"><text x="307" y="281">控制</text><text x="413" y="224" font-size="13">ALU</text></g>
+<g><text x="707" y="325">ALU</text></g>
+<g class="dim"><text x="510" y="425">MUX4</text><text x="505" y="438" font-size="16">减小/增大</text></g>
+<g class="dim"><text x="620" y="425">MUX5</text><text x="740" y="481">左移或右移</text></g>
+<g class="dim"><text x="635" y="524">舍入用硬件</text></g>
+<g class="dim"><text x="513" y="678">S</text><text x="578" y="678">指数</text><text x="700" y="678">尾数</text></g>
+</g>
+<g font-size="13.5" font-weight="700" text-anchor="middle" font-family="Microsoft YaHei, sans-serif">
+<text x="420" y="238" fill="#9a3412">指数之差</text>
+<text x="262" y="368" fill="#a9b3be">较大的指数</text>
+<text x="605" y="253" fill="#a9b3be">较小一方的尾数</text>
+<text x="855" y="255" fill="#a9b3be">较大一方的尾数</text>
+<text x="838" y="372" fill="#a9b3be">控制信号</text>
+<text x="190" y="432" fill="#a9b3be">尾数有效位</text>
+<text x="190" y="449" fill="#a9b3be">对齐后</text>
+<text x="645" y="620" fill="#a9b3be">非规格化则重做</text>
+</g>
+</svg></div>
+    <div class="note center" style="font-size:15px">高亮部分：对齐后的两个尾数送入下方的 <b>ALU</b> 做加法（图中两条红色尾数导线与 ALU）。</div>
+    <div class="callout mt8" style="font-size:15px;padding:8px 12px">
+      <span class="callout__tag">说明</span>
+      <span>小数点对齐之后，把<b>较大一方的尾数</b>与<b>右移后的较小一方尾数</b>送入 <b>ALU</b> 相加，得到尾数之和。</span>
+    </div>
+  </div>
+  <div class="page-no">21 / 34</div>
+</section>
+
+<!-- ======================================================== 22 加法单元：规格化 -->
+<section class="slide" id="s22">
+  <div class="slide__head" style="padding-top:22px">
+    <h2 class="slide__title">浮点加法单元：规格化</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:6px">
+    <div class="center"><svg class="fpadd" viewBox="0 0 980 710" width="900" style="width:900px;height:486px" role="img" aria-label="浮点数加法器框图">
+<defs>
+<marker id="faD" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#a9b3be"/></marker>
+<marker id="faR" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#cf2036"/></marker>
+<marker id="faB" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#1660a8"/></marker>
+</defs>
+<rect x="0" y="0" width="980" height="710" fill="#fff"/>
+<text x="0" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<text x="872" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<g class="dimb">
+<rect x="0" y="88" width="208" height="30" fill="#fff" opacity=".62"/>
+<rect x="865" y="88" width="115" height="200" fill="#fff" opacity=".62"/>
+<rect x="180" y="200" width="240" height="80" fill="#fff" opacity=".62"/>
+<rect x="300" y="360" width="260" height="110" fill="#fff" opacity=".62"/>
+<rect x="770" y="190" width="190" height="150" fill="#fff" opacity=".62"/>
+<rect x="410" y="375" width="270" height="95" fill="#fff" opacity=".62"/>
+</g>
+<g class="dim">
+<rect x="0" y="290" width="300" height="110" fill="#fff" opacity=".84"/>
+<rect x="110" y="190" width="140" height="80" fill="#fff" opacity=".84"/>
+</g>
+<g class="dim"><rect x="430" y="370" width="140" height="110" fill="#fff" opacity=".84"/></g>
+<g class="dim"><rect x="460" y="450" width="180" height="140" fill="#fff" opacity=".84"/></g>
+<path class="l" d="M290 90 L290 108 L80 108 L80 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 108 L290 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 140 L212 140 L212 178" marker-end="url(#faD)"/>
+<path class="l" data-h="align" d="M345 112 L345 146" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 110 L1022 110 L1022 126 L1085 126 L1085 170" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 116 L122 116" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 152 L644 152 L644 178" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 170 L305 170 L305 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M290 90 L290 122 L290 318" marker-end="url(#faR)"/>
+<path class="l" d="M290 122 L600 122 L600 138 L632 138 L632 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M360 318 L360 390 L390 390" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 196 L696 196" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M910 196 L966 196 L966 394 L880 394" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M345 90 L345 156 L415 156 L415 266" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M345 156 L505 156 L505 400 L560 400" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M505 400 L800 400 L800 574" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M965 95 L965 188 L845 188 L845 210" marker-end="url(#faB)"/>
+<path class="l" data-h="add" d="M965 188 L965 348 L745 348" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M845 188 L880 188 L880 360 L800 360 L800 388 L777 388" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M1085 458 L116 458 L116 200" marker-end="url(#faR)"/>
+<path class="l" data-h="redo" d="M1085 458 L1085 660" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 390 L298 308" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 375 L250 375 L250 368" marker-end="url(#faR)"/>
+<path class="l" d="M298 318 L298 268 L408 268 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M298 268 L450 268 L450 320" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L560 268 L560 325" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L618 268 L618 330" marker-end="url(#faR)"/>
+<path class="l" d="M408 200 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="add" d="M660 242 L660 300 L688 300" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M800 330 L800 470 L655 470" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M800 330 L800 350" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M777 400 L777 454 L745 454" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M700 424 L655 424" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M660 424 L590 424 L590 330" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M740 474 L740 500" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M800 474 L800 500 L780 500" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M620 572 L620 654" marker-end="url(#faR)"/>
+<circle cx="800" cy="400" r="2.6" fill="#9fb0c0"/>
+<circle cx="800" cy="360" r="2.6" fill="#9fb0c0"/>
+<g class="dim">
+<rect x="180" y="60" width="170" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="180" y1="90" x2="350" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="212" y1="60" x2="212" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="290" y1="60" x2="290" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="865" y="60" width="115" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="865" y1="90" x2="980" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="910" y1="60" x2="910" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="654" width="290" height="34" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="490" y1="688" x2="780" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="536" y1="654" x2="536" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="620" y1="654" x2="620" y2="688" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="408" y="240" width="252" height="38" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M88 182 L158 182 L128 222 L118 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M655 182 L730 182 L700 222 L685 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M745 182 L825 182 L795 222 L775 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="250" y="250" width="115" height="48" rx="24" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+<path d="M368 200 L438 200 L408 240 L398 240 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M650 300 L770 300 L740 340 L680 340 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M450 400 L570 400 L540 440 L480 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="450" y="410" width="110" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M560 400 L680 400 L650 440 L590 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="655" y="454" width="170" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="500" width="290" height="36" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="358" y="218" width="100" height="16" rx="8" fill="none" stroke="#cf2036" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="118" y="400" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+<rect x="680" y="628" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+</g>
+<g font-size="17" fill="#10314f" text-anchor="middle" font-family="Cascadia Mono, Consolas, monospace">
+<g class="dim"><text x="196" y="81">S</text><text x="251" y="81">指数</text><text x="321" y="81">尾数</text></g>
+<g class="dim"><text x="886" y="81">S</text><text x="936" y="81">指数</text><text x="972" y="81">尾数</text></g>
+<g class="dim"><text x="160" y="205">MUX1</text><text x="692" y="205">MUX2</text><text x="782" y="205">MUX3</text><text x="534" y="265">右移</text></g>
+<g class="dim"><text x="307" y="281">控制</text><text x="413" y="224" font-size="13">ALU</text></g>
+<g class="dim"><text x="707" y="325">ALU</text></g>
+<g class="dim"><text x="510" y="425">MUX4</text><text x="505" y="438" font-size="16">减小/增大</text></g>
+<g class="dim"><text x="620" y="425">MUX5</text><text x="740" y="481">左移或右移</text></g>
+<g class="dim"><text x="635" y="524">舍入用硬件</text></g>
+<g class="dim"><text x="513" y="678">S</text><text x="578" y="678">指数</text><text x="700" y="678">尾数</text></g>
+</g>
+<g font-size="13.5" font-weight="700" text-anchor="middle" font-family="Microsoft YaHei, sans-serif">
+<text x="420" y="238" fill="#a9b3be">指数之差</text>
+<text x="262" y="368" fill="#9a3412">较大的指数</text>
+<text x="605" y="253" fill="#a9b3be">较小一方的尾数</text>
+<text x="855" y="255" fill="#a9b3be">较大一方的尾数</text>
+<text x="838" y="372" fill="#a9b3be">控制信号</text>
+<text x="190" y="432" fill="#a9b3be">尾数有效位</text>
+<text x="190" y="449" fill="#a9b3be">对齐后</text>
+<text x="645" y="620" fill="#a9b3be">非规格化则重做</text>
+</g>
+</svg></div>
+    <div class="note center" style="font-size:15px">高亮部分：ALU 的输出经反馈回到「控制」，由「减小/增大」（MUX4）调整指数，MUX1 选择符号（红色回路）。</div>
+    <div class="callout mt8" style="font-size:15px;padding:8px 12px">
+      <span class="callout__tag">说明</span>
+      <span>若尾数之和不是规格化形式，就通过反馈回路<b>调整指数（减小/增大）</b>并重新计算，使结果成为规格化数。</span>
+    </div>
+  </div>
+  <div class="page-no">22 / 34</div>
+</section>
+
+<!-- ======================================================== 23 加法单元：尾数有效位对齐 -->
+<section class="slide" id="s23">
+  <div class="slide__head" style="padding-top:22px">
+    <h2 class="slide__title">浮点加法单元：尾数有效位对齐</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:6px">
+    <div class="center"><svg class="fpadd" viewBox="0 0 980 710" width="900" style="width:900px;height:486px" role="img" aria-label="浮点数加法器框图">
+<defs>
+<marker id="faD" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#a9b3be"/></marker>
+<marker id="faR" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#cf2036"/></marker>
+<marker id="faB" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#1660a8"/></marker>
+</defs>
+<rect x="0" y="0" width="980" height="710" fill="#fff"/>
+<text x="0" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<text x="872" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<g class="dimb">
+<rect x="0" y="88" width="208" height="30" fill="#fff" opacity=".62"/>
+<rect x="865" y="88" width="115" height="200" fill="#fff" opacity=".62"/>
+<rect x="180" y="200" width="240" height="80" fill="#fff" opacity=".62"/>
+<rect x="300" y="360" width="260" height="110" fill="#fff" opacity=".62"/>
+<rect x="770" y="190" width="190" height="150" fill="#fff" opacity=".62"/>
+<rect x="410" y="375" width="270" height="95" fill="#fff" opacity=".62"/>
+</g>
+<g class="dim">
+<rect x="0" y="290" width="300" height="110" fill="#fff" opacity=".84"/>
+<rect x="110" y="190" width="140" height="80" fill="#fff" opacity=".84"/>
+</g>
+<g class="dim"><rect x="430" y="370" width="140" height="110" fill="#fff" opacity=".84"/></g>
+<g class="dim"><rect x="460" y="450" width="180" height="140" fill="#fff" opacity=".84"/></g>
+<path class="l" d="M290 90 L290 108 L80 108 L80 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 108 L290 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 140 L212 140 L212 178" marker-end="url(#faD)"/>
+<path class="l" data-h="align" d="M345 112 L345 146" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 110 L1022 110 L1022 126 L1085 126 L1085 170" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 116 L122 116" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 152 L644 152 L644 178" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 170 L305 170 L305 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M290 90 L290 122 L290 318" marker-end="url(#faR)"/>
+<path class="l" d="M290 122 L600 122 L600 138 L632 138 L632 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M360 318 L360 390 L390 390" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 196 L696 196" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M910 196 L966 196 L966 394 L880 394" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M345 90 L345 156 L415 156 L415 266" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M345 156 L505 156 L505 400 L560 400" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M505 400 L800 400 L800 574" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M965 95 L965 188 L845 188 L845 210" marker-end="url(#faB)"/>
+<path class="l" data-h="add" d="M965 188 L965 348 L745 348" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M845 188 L880 188 L880 360 L800 360 L800 388 L777 388" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M1085 458 L116 458 L116 200" marker-end="url(#faR)"/>
+<path class="l" data-h="redo" d="M1085 458 L1085 660" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 390 L298 308" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 375 L250 375 L250 368" marker-end="url(#faR)"/>
+<path class="l" d="M298 318 L298 268 L408 268 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M298 268 L450 268 L450 320" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L560 268 L560 325" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L618 268 L618 330" marker-end="url(#faR)"/>
+<path class="l" d="M408 200 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="add" d="M660 242 L660 300 L688 300" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M800 330 L800 470 L655 470" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M800 330 L800 350" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M777 400 L777 454 L745 454" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M700 424 L655 424" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M660 424 L590 424 L590 330" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M740 474 L740 500" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M800 474 L800 500 L780 500" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M620 572 L620 654" marker-end="url(#faR)"/>
+<circle cx="800" cy="400" r="2.6" fill="#9fb0c0"/>
+<circle cx="800" cy="360" r="2.6" fill="#9fb0c0"/>
+<g class="dim">
+<rect x="180" y="60" width="170" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="180" y1="90" x2="350" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="212" y1="60" x2="212" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="290" y1="60" x2="290" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="865" y="60" width="115" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="865" y1="90" x2="980" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="910" y1="60" x2="910" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="654" width="290" height="34" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="490" y1="688" x2="780" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="536" y1="654" x2="536" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="620" y1="654" x2="620" y2="688" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="408" y="240" width="252" height="38" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M88 182 L158 182 L128 222 L118 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M655 182 L730 182 L700 222 L685 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M745 182 L825 182 L795 222 L775 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="250" y="250" width="115" height="48" rx="24" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+<path d="M368 200 L438 200 L408 240 L398 240 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M650 300 L770 300 L740 340 L680 340 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M450 400 L570 400 L540 440 L480 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="450" y="410" width="110" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M560 400 L680 400 L650 440 L590 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="655" y="454" width="170" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="500" width="290" height="36" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="358" y="218" width="100" height="16" rx="8" fill="none" stroke="#cf2036" stroke-width="1.5"/>
+</g>
+<g>
+<rect x="118" y="400" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+<rect x="680" y="628" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+</g>
+<g font-size="17" fill="#10314f" text-anchor="middle" font-family="Cascadia Mono, Consolas, monospace">
+<g class="dim"><text x="196" y="81">S</text><text x="251" y="81">指数</text><text x="321" y="81">尾数</text></g>
+<g class="dim"><text x="886" y="81">S</text><text x="936" y="81">指数</text><text x="972" y="81">尾数</text></g>
+<g class="dim"><text x="160" y="205">MUX1</text><text x="692" y="205">MUX2</text><text x="782" y="205">MUX3</text><text x="534" y="265">右移</text></g>
+<g class="dim"><text x="307" y="281">控制</text><text x="413" y="224" font-size="13">ALU</text></g>
+<g class="dim"><text x="707" y="325">ALU</text></g>
+<g class="dim"><text x="510" y="425">MUX4</text><text x="505" y="438" font-size="16">减小/增大</text></g>
+<g class="dim"><text x="620" y="425">MUX5</text><text x="740" y="481">左移或右移</text></g>
+<g class="dim"><text x="635" y="524">舍入用硬件</text></g>
+<g class="dim"><text x="513" y="678">S</text><text x="578" y="678">指数</text><text x="700" y="678">尾数</text></g>
+</g>
+<g font-size="13.5" font-weight="700" text-anchor="middle" font-family="Microsoft YaHei, sans-serif">
+<text x="420" y="238" fill="#a9b3be">指数之差</text>
+<text x="262" y="368" fill="#a9b3be">较大的指数</text>
+<text x="605" y="253" fill="#a9b3be">较小一方的尾数</text>
+<text x="855" y="255" fill="#9a3412">较大一方的尾数</text>
+<text x="838" y="372" fill="#a9b3be">控制信号</text>
+<text x="190" y="432" fill="#9a3412">尾数有效位</text>
+<text x="190" y="449" fill="#9a3412">对齐后</text>
+<text x="645" y="620" fill="#a9b3be">非规格化则重做</text>
+</g>
+</svg></div>
+    <div class="note center" style="font-size:15px">高亮部分：MUX5（选择左移或右移）→「左移或右移」→「舍入用硬件」→ 输出尾数（蓝色回路）。</div>
+    <div class="callout mt8" style="font-size:15px;padding:8px 12px">
+      <span class="callout__tag">说明</span>
+      <span>把尾数移位到规定的有效位数，再由<b>舍入用硬件</b>完成舍入处理，最后输出结果。</span>
+    </div>
+  </div>
+  <div class="page-no">23 / 34</div>
+</section>
+
+<!-- ======================================================== 24 加法单元：非规格化则重做 -->
+<section class="slide" id="s24">
+  <div class="slide__head" style="padding-top:22px">
+    <h2 class="slide__title">浮点加法单元：若非规格化则重做</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:6px">
+    <div class="center"><svg class="fpadd" viewBox="0 0 980 710" width="900" style="width:900px;height:486px" role="img" aria-label="浮点数加法器框图">
+<defs>
+<marker id="faD" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#a9b3be"/></marker>
+<marker id="faR" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#cf2036"/></marker>
+<marker id="faB" markerWidth="9" markerHeight="9" refX="7.2" refY="3" orient="auto"><path d="M0,0 L7.2,3 L0,6 z" fill="#1660a8"/></marker>
+</defs>
+<rect x="0" y="0" width="980" height="710" fill="#fff"/>
+<text x="0" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<text x="872" y="100" font-size="16" fill="#10314f" font-weight="700">S 指数 尾数</text>
+<g class="dimb">
+<rect x="0" y="88" width="208" height="30" fill="#fff" opacity=".62"/>
+<rect x="865" y="88" width="115" height="200" fill="#fff" opacity=".62"/>
+<rect x="180" y="200" width="240" height="80" fill="#fff" opacity=".62"/>
+<rect x="300" y="360" width="260" height="110" fill="#fff" opacity=".62"/>
+<rect x="770" y="190" width="190" height="150" fill="#fff" opacity=".62"/>
+<rect x="410" y="375" width="270" height="95" fill="#fff" opacity=".62"/>
+</g>
+<g class="dim">
+<rect x="0" y="290" width="300" height="110" fill="#fff" opacity=".84"/>
+<rect x="110" y="190" width="140" height="80" fill="#fff" opacity=".84"/>
+</g>
+<g class="dim"><rect x="430" y="370" width="140" height="110" fill="#fff" opacity=".84"/></g>
+<g class="dim"><rect x="460" y="450" width="180" height="140" fill="#fff" opacity=".84"/></g>
+<path class="l" d="M290 90 L290 108 L80 108 L80 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 108 L290 176" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 140 L212 140 L212 178" marker-end="url(#faD)"/>
+<path class="l" data-h="align" d="M345 112 L345 146" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 110 L1022 110 L1022 126 L1085 126 L1085 170" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 116 L122 116" marker-end="url(#faD)"/>
+<path class="l" d="M910 90 L910 152 L644 152 L644 178" marker-end="url(#faD)"/>
+<path class="l" d="M290 90 L290 170 L305 170 L305 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M290 90 L290 122 L290 318" marker-end="url(#faR)"/>
+<path class="l" d="M290 122 L600 122 L600 138 L632 138 L632 178" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M360 318 L360 390 L390 390" marker-end="url(#faR)"/>
+<path class="l" d="M910 90 L910 196 L696 196" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M910 196 L966 196 L966 394 L880 394" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M345 90 L345 156 L415 156 L415 266" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M345 156 L505 156 L505 400 L560 400" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M505 400 L800 400 L800 574" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M965 95 L965 188 L845 188 L845 210" marker-end="url(#faB)"/>
+<path class="l" data-h="add" d="M965 188 L965 348 L745 348" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M845 188 L880 188 L880 360 L800 360 L800 388 L777 388" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M1085 458 L116 458 L116 200" marker-end="url(#faR)"/>
+<path class="l" data-h="redo" d="M1085 458 L1085 660" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 390 L298 308" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 375 L250 375 L250 368" marker-end="url(#faR)"/>
+<path class="l" d="M298 318 L298 268 L408 268 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="norm" d="M298 268 L450 268 L450 320" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L560 268 L560 325" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M298 268 L618 268 L618 330" marker-end="url(#faR)"/>
+<path class="l" d="M408 200 L408 250" marker-end="url(#faD)"/>
+<path class="l" data-h="add" d="M660 242 L660 300 L688 300" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M800 330 L800 470 L655 470" marker-end="url(#faR)"/>
+<path class="l" data-h="add" d="M800 330 L800 350" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M777 400 L777 454 L745 454" marker-end="url(#faR)"/>
+<path class="l" data-h="align" d="M700 424 L655 424" marker-end="url(#faR)"/>
+<path class="l" data-h="norm" d="M660 424 L590 424 L590 330" marker-end="url(#faR)"/>
+<path class="l" data-h="sig" d="M740 474 L740 500" marker-end="url(#faB)"/>
+<path class="l" data-h="sig" d="M800 474 L800 500 L780 500" marker-end="url(#faB)"/>
+<path class="l" data-h="redo" d="M620 572 L620 654" marker-end="url(#faR)"/>
+<circle cx="800" cy="400" r="2.6" fill="#9fb0c0"/>
+<circle cx="800" cy="360" r="2.6" fill="#9fb0c0"/>
+<g class="dim">
+<rect x="180" y="60" width="170" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="180" y1="90" x2="350" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="212" y1="60" x2="212" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="290" y1="60" x2="290" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="865" y="60" width="115" height="30" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="865" y1="90" x2="980" y2="90" stroke="#10314f" stroke-width="1.5"/>
+<line x1="910" y1="60" x2="910" y2="90" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="654" width="290" height="34" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<line x1="490" y1="688" x2="780" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="536" y1="654" x2="536" y2="688" stroke="#10314f" stroke-width="1.5"/>
+<line x1="620" y1="654" x2="620" y2="688" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="408" y="240" width="252" height="38" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M88 182 L158 182 L128 222 L118 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M655 182 L730 182 L700 222 L685 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<path d="M745 182 L825 182 L795 222 L775 222 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="250" y="250" width="115" height="48" rx="24" fill="#e4f0f7" stroke="#10314f" stroke-width="1.5"/>
+<path d="M368 200 L438 200 L408 240 L398 240 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M650 300 L770 300 L740 340 L680 340 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M450 400 L570 400 L540 440 L480 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="450" y="410" width="110" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<path d="M560 400 L680 400 L650 440 L590 440 z" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+<rect x="655" y="454" width="170" height="42" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="490" y="500" width="290" height="36" fill="#fff" stroke="#10314f" stroke-width="1.5"/>
+</g>
+<g>
+<rect x="358" y="218" width="100" height="16" rx="8" fill="none" stroke="#cf2036" stroke-width="1.5"/>
+</g>
+<g class="dim">
+<rect x="118" y="400" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+<rect x="680" y="628" width="60" height="16" rx="8" fill="none" stroke="#1660a8" stroke-width="1.5"/>
+</g>
+<g font-size="17" fill="#10314f" text-anchor="middle" font-family="Cascadia Mono, Consolas, monospace">
+<g class="dim"><text x="196" y="81">S</text><text x="251" y="81">指数</text><text x="321" y="81">尾数</text></g>
+<g class="dim"><text x="886" y="81">S</text><text x="936" y="81">指数</text><text x="972" y="81">尾数</text></g>
+<g class="dim"><text x="160" y="205">MUX1</text><text x="692" y="205">MUX2</text><text x="782" y="205">MUX3</text><text x="534" y="265">右移</text></g>
+<g class="dim"><text x="307" y="281">控制</text><text x="413" y="224" font-size="13">ALU</text></g>
+<g class="dim"><text x="707" y="325">ALU</text></g>
+<g class="dim"><text x="510" y="425">MUX4</text><text x="505" y="438" font-size="16">减小/增大</text></g>
+<g class="dim"><text x="620" y="425">MUX5</text><text x="740" y="481">左移或右移</text></g>
+<g class="dim"><text x="635" y="524">舍入用硬件</text></g>
+<g class="dim"><text x="513" y="678">S</text><text x="578" y="678">指数</text><text x="700" y="678">尾数</text></g>
+</g>
+<g font-size="13.5" font-weight="700" text-anchor="middle" font-family="Microsoft YaHei, sans-serif">
+<text x="420" y="238" fill="#a9b3be">指数之差</text>
+<text x="262" y="368" fill="#a9b3be">较大的指数</text>
+<text x="605" y="253" fill="#a9b3be">较小一方的尾数</text>
+<text x="855" y="255" fill="#a9b3be">较大一方的尾数</text>
+<text x="838" y="372" fill="#a9b3be">控制信号</text>
+<text x="190" y="432" fill="#a9b3be">尾数有效位</text>
+<text x="190" y="449" fill="#a9b3be">对齐后</text>
+<text x="645" y="620" fill="#9a3412">非规格化则重做</text>
+</g>
+</svg></div>
+    <div class="note center" style="font-size:15px">高亮部分：贯穿框图左侧与右侧的加粗红色反馈回路（控制 → MUX4／MUX5，舍入用硬件 → 输出）。</div>
+    <div class="callout mt8" style="font-size:15px;padding:8px 12px">
+      <span class="callout__tag">说明</span>
+      <span>如果结果仍然是<b>非规格化数</b>，就通过反馈回路回到前面的步骤<b>重做</b>一次（对应流程图中的「非規格 → やり直し」）。</span>
+    </div>
+  </div>
+  <div class="page-no">24 / 34</div>
+</section>
+
+<!-- ======================================================== 25 讲义内容 -->
+<section class="slide" id="s25">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">算术运算的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">小数的二进制数表示<span class="toc__item--jp">小数の2進数表記</span></div>
+          <div class="toc__item">浮点数的加法<span class="toc__item--jp">浮動小数点数の加算</span></div>
+          <div class="toc__item toc__item--active">（浮点数的乘法）<span class="toc__item--jp">(浮動小数点数の乗算)</span></div>
+          <div class="toc__item">误差与舍入<span class="toc__item--jp">誤差と丸め</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">25 / 34</div>
+</section>
+
+<!-- ======================================================== 26 浮点数的乘法（发展内容） -->
+<section class="slide" id="s26">
+  <div class="slide__head">
+    <h2 class="slide__title">浮点数的乘法（发展内容）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:20px">
+    <ul class="bullets">
+      <li>与人工做乘法的方式相同。
+        <ul class="bullets bullets--sub">
+          <li>把指数与指数相加（<span class="kw">注意偏置值</span>）。</li>
+          <li>计算尾数。</li>
+          <li>规格化。</li>
+          <li>舍入。</li>
+          <li>确定符号。</li>
+        </ul>
+      </li>
+    </ul>
+
+    <ul class="bullets bullets--compact mt24">
+      <li>详细内容请查阅教科书。</li>
+    </ul>
+    <div class="note" style="font-size:17px;padding-left:30px">（如果有兴趣，请到图书馆查阅。）</div>
+
+    <div class="callout callout--blue mt24" style="font-size:17px">
+      <span class="callout__tag">补充</span>
+      <span>两个数的指数各自都已经加了偏置值，所以指数相加后偏置值被加了两次，需要<span class="kw">减去一个偏置值</span>才能得到正确的指数。</span>
+    </div>
+  </div>
+  <div class="page-no">26 / 34</div>
+</section>
+
+<!-- ======================================================== 27 讲义内容 -->
+<section class="slide" id="s27">
+  <div class="slide__head">
+    <h2 class="slide__title">讲义内容</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body">
+    <div class="toc">
+      <div class="toc__group">
+        <div class="toc__lead">算术运算的执行</div>
+        <div class="toc__items">
+          <div class="toc__item">小数的二进制数表示<span class="toc__item--jp">小数の2進数表記</span></div>
+          <div class="toc__item">浮点数的加法<span class="toc__item--jp">浮動小数点数の加算</span></div>
+          <div class="toc__item">（浮点数的乘法）<span class="toc__item--jp">(浮動小数点数の乗算)</span></div>
+          <div class="toc__item toc__item--active">误差与舍入<span class="toc__item--jp">誤差と丸め</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">27 / 34</div>
+</section>
+
+<!-- ======================================================== 28 误差与舍入 -->
+<section class="slide" id="s28">
+  <div class="slide__head">
+    <h2 class="slide__title">误差与舍入</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:16px">
+    <ul class="bullets bullets--compact">
+      <li>双精度下，1 和 2 之间能够表示的数的个数是多少？</li>
+    </ul>
+    <div style="font-size:21px;padding-left:34px;margin-top:6px">
+      <span class="mono">2<sup>52</sup>-1</span> 个
+    </div>
+    <div style="font-size:21px;padding-left:34px;margin-top:4px;color:var(--ink-soft)">
+      → 比这更多的个数都无法表示，所以只能用<b>最接近的表示</b>来表达。
+    </div>
+
+    <ul class="bullets bullets--compact mt16">
+      <li>「<span class="kw">舍入</span>」（日文：丸め / rounding）</li>
+    </ul>
+    <div style="font-size:20px;padding-left:34px;margin-top:4px;color:var(--ink-soft)">
+      把数值做<b>四舍五入、进位取整或截断</b>，收进指定的位数之中。
+    </div>
+    <div class="tbl-stack" style="padding-left:64px;margin-top:6px;font-size:20px">
+      <div>四舍五入　<span class="mono">1.4→1.0　1.5→2.0</span></div>
+      <div>进位取整　<span class="mono">1.4→2.0　1.5→2.0</span></div>
+      <div>截断　　　<span class="mono">1.4→1.0　1.5→1.0</span></div>
+    </div>
+
+    <div class="callout callout--red mt16" style="font-size:18px">
+      <span class="callout__tag">结论</span>
+      <span>这样就会产生与<b>本来应当表示的值</b>之间的误差，称为<span class="kw">舍入误差</span>（日文：丸め誤差 / rounding error）。</span>
+    </div>
+  </div>
+  <div class="page-no">28 / 34</div>
+</section>
+
+<!-- ======================================================== 29 误差与计算 -->
+<section class="slide" id="s29">
+  <div class="slide__head">
+    <h2 class="slide__title">误差与计算</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <ul class="bullets bullets--compact">
+      <li>当尾数的有效位取 3 位时，</li>
+    </ul>
+    <div class="mono" style="font-size:23px;padding-left:34px;margin-top:2px">
+      2.26<sub>10</sub>×10<sup>0</sup>+2.34<sub>10</sub>×10<sup>2</sup>+1.26<sub>10</sub>×10<sup>0</sup> 会变成怎样？
+    </div>
+
+    <div class="duo mt16">
+      <div class="col">
+        <div class="center" style="font-size:20px;font-weight:700">过程中也保持有效位 3 位</div>
+        <pre class="code code--plain center mt8" style="font-size:19px;line-height:1.45">  0.0200<sub>10</sub> ×10<sup>2</sup>
+  2.3400<sub>10</sub> ×10<sup>2</sup>
++ 0.0100<sub>10</sub> ×10<sup>2</sup>
+──────────────────
+  2.3700<sub>10</sub> ×10<sup>2</sup></pre>
+        <div class="center" style="font-size:22px;line-height:1">⇩</div>
+        <div class="center mono" style="font-size:21px;font-weight:700">2.37<sub>10</sub> ×10<sup>2</sup></div>
+      </div>
+      <div class="col">
+        <div class="center" style="font-size:20px;font-weight:700">过程中保持有效位 5 位</div>
+        <pre class="code code--plain center mt8" style="font-size:19px;line-height:1.45">  0.0226<sub>10</sub> ×10<sup>2</sup>
+  2.3400<sub>10</sub> ×10<sup>2</sup>
++ 0.0126<sub>10</sub> ×10<sup>2</sup>
+──────────────────
+  2.3752<sub>10</sub> ×10<sup>2</sup></pre>
+        <div class="center" style="font-size:22px;line-height:1">⇩</div>
+        <div class="center mono" style="font-size:21px;font-weight:700">2.38<sub>10</sub> ×10<sup>2</sup></div>
+      </div>
+    </div>
+
+    <div class="callout callout--red mt16" style="font-size:19px">
+      <span class="callout__tag">规定</span>
+      <span>IEEE754 规定：<b>计算过程中要额外多保留 2 位有效位</b>。</span>
+    </div>
+  </div>
+  <div class="page-no">29 / 34</div>
+</section>
+
+<!-- ======================================================== 30 信息丢失 -->
+<section class="slide" id="s30">
+  <div class="slide__head">
+    <h2 class="slide__title">信息丢失</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <div class="duo">
+      <div class="col">
+        <div class="mono center" style="font-size:19px">(-1.5<sub>10</sub>×10<sup>38</sup>) + ((1.5<sub>10</sub>×10<sup>38</sup>) + (1))</div>
+        <div class="mono center mt10" style="font-size:19px">…+((1.5<sub>10</sub>×10<sup>38</sup>) + <b>0.00…</b>×10<sup>38</sup>)</div>
+        <div class="center mono" style="font-size:21px;font-weight:700;margin-top:6px">= 0</div>
+      </div>
+      <div class="col">
+        <div class="mono center" style="font-size:19px">((-1.5<sub>10</sub>×10<sup>38</sup>) + (1.5<sub>10</sub>×10<sup>38</sup>)) + (1)</div>
+        <div class="mono center mt10" style="font-size:19px">0 + 1</div>
+        <div class="center mono" style="font-size:21px;font-weight:700;margin-top:6px">= 1</div>
+      </div>
+    </div>
+
+    <div class="duo mt10">
+      <div class="callout" style="font-size:16px">
+        <span class="callout__tag">现象</span>
+        <span>把<b>绝对值大的数与绝对值小的数</b>相加时，绝对值小的数会被<span class="kw">忽略</span>掉。</span>
+      </div>
+      <div class="callout callout--blue" style="font-size:16px">
+        <span class="callout__tag">结论</span>
+        <span>根据<b>计算顺序</b>的不同，有可能回避掉这种误差。</span>
+      </div>
+    </div>
+
+    <div class="callout callout--red mt12" style="font-size:17px">
+      <span class="callout__tag">术语</span>
+      <span>这种现象称为<span class="kw">信息丢失</span>（日文：情報落ち / loss of information）。</span>
+    </div>
+  </div>
+  <div class="page-no">30 / 34</div>
+</section>
+
+<!-- ======================================================== 31 有效位丢失 -->
+<section class="slide" id="s31">
+  <div class="slide__head">
+    <h2 class="slide__title">有效位丢失（相消）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:10px">
+    <ul class="bullets bullets--compact">
+      <li>在浮点数的运算中，<b>有效位数变少</b>的现象。
+        <ul class="bullets bullets--sub" style="margin-top:4px">
+          <li>发生在<b>非常接近的数值之间做减法</b>、以及计算结果接近于 0 的加减运算时。</li>
+        </ul>
+      </li>
+    </ul>
+
+    <pre class="code code--plain mt12" style="font-size:19px;line-height:1.62">√1001 - √999
+= (3.1638584<sub>10</sub>×10<sup>1</sup>) - (3.1606961<sub>10</sub>×10<sup>1</sup>)   ← 有效位 8 位
+= (3.1623<sub>10</sub>×10<sup>-2</sup>)                ← 有效位 5 位
+= (3.1623000<sub>10</sub>×10<sup>-2</sup>)             ← 用 0 填充后看起来像 8 位，但…
+        真正的差是…
+    3.16227805545…×10<sup>-2</sup></pre>
+
+    <div class="callout callout--red mt12" style="font-size:17px">
+      <span class="callout__tag">术语</span>
+      <span>这种现象称为<span class="kw">有效位丢失</span>（相消，日文：桁落ち / cancellation）。</span>
+    </div>
+  </div>
+  <div class="page-no">31 / 34</div>
+</section>
+
+<!-- ======================================================== 32 确认问题（填空） -->
+<section class="slide" id="s32">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（填空）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="qbox" style="font-size:19px;line-height:1.85">
+      <span class="qbox__tag">问题</span>
+      <span class="qno">(1)</span>科学记数法中，小数用 <span class="slot">(1)</span> × <span class="slot">(2)</span><sup><span class="slot">(3)</span></sup> 这种形式来表示。<br>
+      <span class="qno">(2)</span>IEEE754 中，有 32 位的 <span class="slot">(4)</span> 精度和 64 位的 <span class="slot">(5)</span> 精度。<br>
+      <span class="qno">(3)</span>IEEE754 规定，计算过程中有效位要额外多保留 <span class="slot">(6)</span> 位。<br>
+      <span class="qno">(4)</span>把数值舍入时所产生的误差，称为 <span class="slot">(7)</span>。<br>
+      <span class="qno">(5)</span>在非常接近的浮点数之间做减法等运算时，计算结果的有效位数变少的现象，称为 <span class="slot">(8)</span>。<br>
+      <span class="qno">(6)</span>把绝对值大的数与绝对值小的数相加时，绝对值小的数变成 0 的现象，称为 <span class="slot">(9)</span>。
+    </div>
+
+    <div class="note mt12" style="font-size:15px">
+      ※ 原讲义此页只给出题面，(1)〜(9) 的答案请在下页的作答区填写。
+    </div>
+  </div>
+  <div class="page-no">32 / 34</div>
+</section>
+
+<!-- ======================================================== 33 确认问题（作答页） -->
+<section class="slide" id="s33">
+  <div class="slide__head">
+    <h2 class="slide__title">确认问题（作答区）</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:12px">
+    <div class="abox abox--slim">
+      <span class="abox__tag">答案</span>
+      原讲义此页未给出解答（問題回答無し ver.）。请参照上一页的题面自行作答。
+    </div>
+
+    <div class="panel mt12" style="height:392px">
+      <div class="panel__title">作答区</div>
+      <div style="font-size:19px;line-height:2.3;padding-left:6px">
+        <div><span class="slot">(1)</span>　　<span class="slot">(2)</span>　　<span class="slot">(3)</span></div>
+        <div><span class="slot">(4)</span>　　<span class="slot">(5)</span></div>
+        <div><span class="slot">(6)</span></div>
+        <div><span class="slot">(7)</span></div>
+        <div><span class="slot">(8)</span></div>
+        <div><span class="slot">(9)</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">33 / 34</div>
+</section>
+
+<!-- ======================================================== 34 参考文献 -->
+<section class="slide" id="s34">
+  <div class="slide__head">
+    <h2 class="slide__title">参考文献</h2>
+    <div class="slide__rule"></div>
+  </div>
+  <div class="slide__body" style="padding-top:26px">
+    <div class="refs">
+      <div class="refs__item">《计算机组成与设计：硬件 / 软件接口》第 5 版（上）
+        <span class="refs__en">コンピュータの構成と設計 上 第5版</span></div>
+      <div class="refs__item">David A. Patterson、John L. Hennessy 著，成田光彰 译，日经 BP 社</div>
+      <div class="refs__item">山下茂《计算机组成原理 1》课程讲义
+        <span class="refs__en">山下茂「計算機構成論１」講義資料</span></div>
+    </div>
+    <div class="callout mt24" style="font-size:18px">
+      <span class="callout__tag">本讲小结</span>
+      <span>十进制有限小数在二进制中往往是无限循环小数，因此引入了<span class="kw">浮点数</span>（符号／指数部分／尾数部分）与
+        <span class="kw">IEEE754</span> 标准；浮点加法依次经过<span class="kw">小数点对齐 → 尾数相加 → 规格化 → 尾数有效位对齐（舍入）</span>，
+        并把溢出、下溢作为<span class="kw">异常</span>处理、把非规格化结果<span class="kw">重做</span>；
+        由于表示位数有限，还会产生<span class="kw">舍入误差</span>、<span class="kw">信息丢失</span>与<span class="kw">有效位丢失</span>。</span>
+    </div>
+  </div>
+  <div class="page-no">34 / 34</div>
+</section>
+
+</div>
+</body>
+</html>

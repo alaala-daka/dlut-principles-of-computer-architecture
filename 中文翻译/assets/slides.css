@@ -34,6 +34,12 @@
 .deck[data-chapter="6"] { --accent: #4d7c0f; --accent-dark: #3a5e0b; --accent-soft: #f2f8e8; --accent-line: #cfe3a8; }
 .deck[data-chapter="7"] { --accent: #be123c; --accent-dark: #8f0d2d; --accent-soft: #fdedf1; --accent-line: #f3c2ce; }
 .deck[data-chapter="8"] { --accent: #cf2036; --accent-dark: #a3182a; --accent-soft: #fdeff1; --accent-line: #f3c2c9; }
+.deck[data-chapter="9"] { --accent: #a21caf; --accent-dark: #7e1589; --accent-soft: #fbeefc; --accent-line: #eec2f2; }
+.deck[data-chapter="10"] { --accent: #0891b2; --accent-dark: #066a84; --accent-soft: #e8f7fb; --accent-line: #b3e2ef; }
+.deck[data-chapter="11"] { --accent: #15803d; --accent-dark: #0f5c2c; --accent-soft: #eaf7ee; --accent-line: #b7e0c4; }
+.deck[data-chapter="12"] { --accent: #9a3412; --accent-dark: #71260d; --accent-soft: #fdefe9; --accent-line: #f2c6b0; }
+.deck[data-chapter="13"] { --accent: #4338ca; --accent-dark: #322a97; --accent-soft: #edecfc; --accent-line: #c3c0f0; }
+.deck[data-chapter="14"] { --accent: #6d28d9; --accent-dark: #521da3; --accent-soft: #f3ecfd; --accent-line: #d6c4f7; }
 
 * { box-sizing: border-box; }
 
@@ -1153,6 +1159,142 @@ pre.code--vh .ln--on .cmt { color: var(--accent-dark); font-weight: 500; }
 
 .three { display: flex; gap: 14px; align-items: flex-start; }
 .three > * { min-width: 0; }
+
+/* ------------------------------------------------- 問題 / 答え（练习与答案） */
+/* 原讲义中「確認問題」「練習」等提问块 */
+.qbox {
+  border: 1px solid #f3d79a;
+  border-left: 5px solid var(--amber);
+  border-radius: 8px;
+  background: #fffdf5;
+  padding: 10px 14px;
+  font-size: 18px;
+  line-height: 1.55;
+  color: #6b4c00;
+}
+
+.qbox__tag {
+  flex: 0 0 auto;
+  font-weight: 700;
+  color: #8a6200;
+  margin-right: 8px;
+}
+
+/* 原讲义中已给出的解答（問題回答あり ver.） */
+.abox {
+  border: 1px solid #bcd7f2;
+  border-left: 5px solid var(--blue);
+  border-radius: 8px;
+  background: #f2f8fe;
+  padding: 10px 14px;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #17466f;
+}
+
+.abox__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  font-weight: 700;
+  color: #0f4c81;
+  margin-right: 8px;
+}
+
+.abox__tag::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--blue);
+  flex: 0 0 auto;
+}
+
+.abox--teal {
+  border-color: #b5e0d8;
+  border-left-color: var(--teal);
+  background: #f0faf7;
+  color: #0a5b50;
+}
+
+.abox--teal .abox__tag { color: #0a5b50; }
+.abox--teal .abox__tag::before { background: var(--teal); }
+
+.abox--red {
+  border-color: var(--accent-line);
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.abox--red .abox__tag { color: var(--accent-dark); }
+.abox--red .abox__tag::before { background: var(--accent); }
+
+.abox--slim { padding: 7px 12px; font-size: 16px; }
+
+/* 答案中的指令序列：与普通代码块同构，蓝色左标 */
+pre.code--ans {
+  border-left-color: var(--blue);
+  background: #f7fbff;
+  font-size: 15px;
+  line-height: 1.45;
+  padding: 7px 12px;
+}
+
+pre.code--ans .ln { display: block; }
+pre.code--ans .ln--on {
+  background: #e6f1fd;
+  box-shadow: inset 3px 0 0 var(--blue);
+  font-weight: 700;
+}
+
+/* 完成 / 未完成 的填空格 */
+.slot {
+  display: inline-block;
+  min-width: 46px;
+  border-bottom: 1.6px solid var(--accent);
+  text-align: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* 小题编号（(1)(2)… 与 ①②… 之外的练习编号） */
+.qno {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+/* ----------------------------------------- 浮動小数点加算ユニット（第12回） */
+/* 同一张加法器框图在 p19–p24 重复出现，每页用不同的 data-h 值高亮当页环节 */
+.fpadd svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.fpadd .dim { opacity: .5; }
+
+.fpadd .l {
+  fill: none;
+  stroke: #9fb0c0;
+  stroke-width: 1.5;
+}
+
+.fpadd .l[data-h="add"] { stroke: #cf2036; }
+.fpadd .l[data-h="sig"] { stroke: #1660a8; }
+.fpadd .l[data-h="norm"] { stroke: #cf2036; }
+.fpadd .l[data-h="redo"] { stroke: #cf2036; }
+.fpadd .l[data-h] { stroke-width: 2.2; }
+
+.fpadd .box { fill: #fdfbe9; stroke: #10314f; stroke-width: 1.5; }
+.fpadd .box--mux { fill: #e4f0f7; }
+.fpadd .box--reg { fill: #eef3f9; }
+.fpadd text { font-family: var(--sans); fill: #10314f; }
+.fpadd .t-mono { font-family: var(--mono); }
 
 @media print {
   html, body { background: #fff; }
